@@ -1,0 +1,127 @@
+# generated: 2025-12-31
+# project: Timelog
+# project_key: timelog
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2025-12-31
+project: Timelog
+project_key: timelog
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Project Foundation + Seed Data (5 stories)
+  epic-1: in-progress
+  1-1-project-initialization: done
+  1-2-database-schema-core-tables: ready-for-dev
+  1-3-database-schema-time-entry-supporting-tables: ready-for-dev
+  1-4-rls-policies-for-all-roles: ready-for-dev
+  1-5-seed-data-for-development: ready-for-dev
+  epic-1-retrospective: optional
+
+  # Epic 2: Authentication & Authorization (4 stories)
+  epic-2: in-progress
+  2-1-company-email-login: ready-for-dev
+  2-2-session-persistence-logout: ready-for-dev
+  2-3-role-based-access-control-middleware: ready-for-dev
+  2-4-session-timeout-handling: ready-for-dev
+  epic-2-retrospective: optional
+
+  # Epic 3: Master Data Administration (5 stories)
+  epic-3: backlog
+  3-1-service-type-management: backlog
+  3-2-client-management: backlog
+  3-3-task-management: backlog
+  3-4-soft-delete-protection: backlog
+  3-5-master-data-admin-ui-layout: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Quick Time Entry (10 stories)
+  epic-4: backlog
+  4-1-bottom-navigation-component: backlog
+  4-2-time-entry-form-cascading-selectors: backlog
+  4-3-time-entry-form-service-task-duration: backlog
+  4-4-time-entry-form-date-selection-submission: backlog
+  4-5-edit-own-time-entry: backlog
+  4-6-delete-own-time-entry: backlog
+  4-7-recent-combinations-quick-entry: backlog
+  4-8-form-validation-error-states: backlog
+  4-9-skeleton-loading-states: backlog
+  4-10-form-draft-auto-save: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Personal Dashboard (8 stories)
+  epic-5: backlog
+  5-1-dashboard-layout-period-selector: backlog
+  5-2-todays-entries-view: backlog
+  5-3-weekly-entries-view: backlog
+  5-4-monthly-entries-view: backlog
+  5-5-total-hours-statistics: backlog
+  5-6-filter-by-client: backlog
+  5-7-search-entries: backlog
+  5-8-empty-states: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Team Dashboard (6 stories)
+  epic-6: backlog
+  6-1-team-dashboard-layout: backlog
+  6-2-team-members-who-logged-today: backlog
+  6-3-team-members-who-havent-logged-today: backlog
+  6-4-aggregated-team-hours: backlog
+  6-5-multi-department-support: backlog
+  6-6-near-real-time-updates: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: User Administration (7 stories)
+  epic-7: backlog
+  7-1-user-list-view: backlog
+  7-2-create-new-user: backlog
+  7-3-edit-user-information: backlog
+  7-4-deactivate-user: backlog
+  7-5-assign-roles: backlog
+  7-6-assign-manager-departments: backlog
+  7-7-filter-users: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: PWA & UX Polish (9 stories)
+  epic-8: backlog
+  8-1-pwa-installation: backlog
+  8-2-service-worker-caching: backlog
+  8-3-offline-message-display: backlog
+  8-4-touch-optimized-ui: backlog
+  8-5-pull-to-refresh: backlog
+  8-6-audit-log-database-trigger: backlog
+  8-7-first-time-user-flow: backlog
+  8-8-contextual-guidance-tooltips: backlog
+  8-9-success-animations-haptic-feedback: backlog
+  epic-8-retrospective: optional

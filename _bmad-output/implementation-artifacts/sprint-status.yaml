@@ -45,7 +45,7 @@ development_status:
   1-1-project-initialization: done
   1-2-database-schema-core-tables: done
   1-3-database-schema-time-entry-supporting-tables: done
-  1-4-rls-policies-for-all-roles: ready-for-dev
+  1-4-rls-policies-for-all-roles: done
   1-5-seed-data-for-development: ready-for-dev
   epic-1-retrospective: optional
 
@@ -62,21 +62,21 @@ development_status:
   3-1-service-type-management: ready-for-dev
   3-2-client-management: ready-for-dev
   3-3-task-management: ready-for-dev
-  3-4-soft-delete-protection: backlog
-  3-5-master-data-admin-ui-layout: backlog
+  3-4-soft-delete-protection: ready-for-dev
+  3-5-master-data-admin-ui-layout: ready-for-dev
   epic-3-retrospective: optional
 
   # Epic 4: Quick Time Entry (10 stories)
-  epic-4: backlog
-  4-1-bottom-navigation-component: backlog
-  4-2-time-entry-form-cascading-selectors: backlog
-  4-3-time-entry-form-service-task-duration: backlog
-  4-4-time-entry-form-date-selection-submission: backlog
-  4-5-edit-own-time-entry: backlog
-  4-6-delete-own-time-entry: backlog
-  4-7-recent-combinations-quick-entry: backlog
-  4-8-form-validation-error-states: backlog
-  4-9-skeleton-loading-states: backlog
+  epic-4: in-progress
+  4-1-bottom-navigation-component: ready-for-dev
+  4-2-time-entry-form-cascading-selectors: ready-for-dev
+  4-3-time-entry-form-service-task-duration: ready-for-dev
+  4-4-time-entry-form-date-selection-submission: ready-for-dev
+  4-5-edit-own-time-entry: ready-for-dev
+  4-6-delete-own-time-entry: ready-for-dev
+  4-7-recent-combinations-quick-entry: ready-for-dev
+  4-8-form-validation-error-states: ready-for-dev
+  4-9-skeleton-loading-states: ready-for-dev
   4-10-form-draft-auto-save: backlog
   epic-4-retrospective: optional
 

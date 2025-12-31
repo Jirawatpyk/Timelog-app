@@ -10,8 +10,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { serviceSchema, clientSchema, uuidSchema, type ServiceInput, type ClientInput } from '@/schemas/master-data.schema';
-import type { Service, Client, ActionResult } from '@/types/domain';
+import { serviceSchema, clientSchema, taskSchema, uuidSchema, type ServiceInput, type ClientInput, type TaskInput } from '@/schemas/master-data.schema';
+import type { Service, Client, Task, ActionResult } from '@/types/domain';
 
 /**
  * Check if user is authenticated and has admin role
@@ -293,6 +293,141 @@ export async function toggleClientActive(
   // Update active status
   const { data, error } = await supabase
     .from('clients')
+    .update({ active })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+// ============================================================================
+// Task Actions
+// Story 3.3: Task Management (AC: 2, 4, 5)
+// ============================================================================
+
+/**
+ * Create a new task
+ *
+ * @param input - Task input data
+ * @returns ActionResult with created task or error
+ */
+export async function createTask(input: TaskInput): Promise<ActionResult<Task>> {
+  // Validate input first
+  const parsed = taskSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Insert task
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert({ name: parsed.data.name })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Task name already exists' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Update an existing task
+ *
+ * @param id - Task ID to update
+ * @param input - Updated task data
+ * @returns ActionResult with updated task or error
+ */
+export async function updateTask(
+  id: string,
+  input: TaskInput
+): Promise<ActionResult<Task>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Validate input
+  const parsed = taskSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update task
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ name: parsed.data.name })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Task name already exists' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Toggle task active status
+ *
+ * @param id - Task ID to toggle
+ * @param active - New active status
+ * @returns ActionResult with updated task or error
+ */
+export async function toggleTaskActive(
+  id: string,
+  active: boolean
+): Promise<ActionResult<Task>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update active status
+  const { data, error } = await supabase
+    .from('tasks')
     .update({ active })
     .eq('id', id)
     .select()

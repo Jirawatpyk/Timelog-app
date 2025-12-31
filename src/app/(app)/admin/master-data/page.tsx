@@ -11,6 +11,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ServicesList } from './components/ServicesList';
 import { ClientsList } from './components/ClientsList';
+import { TasksList } from './components/TasksList';
 
 export default async function MasterDataPage() {
   return (
@@ -33,8 +34,7 @@ export default async function MasterDataPage() {
         </TabsContent>
 
         <TabsContent value="tasks">
-          {/* Story 3.3 */}
-          <p className="text-muted-foreground py-4">Coming soon...</p>
+          <TasksList />
         </TabsContent>
       </Tabs>
     </div>

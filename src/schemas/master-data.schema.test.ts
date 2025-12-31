@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { serviceSchema, clientSchema, uuidSchema, type ServiceInput, type ClientInput } from './master-data.schema';
+import { serviceSchema, clientSchema, taskSchema, uuidSchema, type ServiceInput, type ClientInput, type TaskInput } from './master-data.schema';
 
 describe('serviceSchema', () => {
   describe('valid inputs', () => {
@@ -210,6 +210,96 @@ describe('clientSchema', () => {
     it('rejects non-string name', () => {
       const input = { name: 123 };
       const result = clientSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+/**
+ * Task Schema Tests
+ * Story 3.3: Task Management (AC: 3)
+ */
+describe('taskSchema', () => {
+  describe('valid inputs', () => {
+    it('accepts valid task name', () => {
+      const input: TaskInput = { name: 'Translation' };
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.name).toBe('Translation');
+      }
+    });
+
+    it('accepts task name with spaces', () => {
+      const input: TaskInput = { name: 'Quality Check' };
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts 100 character name (max length)', () => {
+      const longName = 'A'.repeat(100);
+      const input: TaskInput = { name: longName };
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('trims whitespace from name', () => {
+      const input: TaskInput = { name: '  Editing  ' };
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.name).toBe('Editing');
+      }
+    });
+  });
+
+  describe('invalid inputs', () => {
+    it('rejects empty string', () => {
+      const input = { name: '' };
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Task name is required');
+      }
+    });
+
+    it('rejects whitespace-only string', () => {
+      const input = { name: '   ' };
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Task name is required');
+      }
+    });
+
+    it('rejects name exceeding 100 characters', () => {
+      const longName = 'A'.repeat(101);
+      const input = { name: longName };
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Task name must be 100 characters or less');
+      }
+    });
+
+    it('rejects missing name field', () => {
+      const input = {};
+      const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects non-string name', () => {
+      const input = { name: 123 };
+      const result = taskSchema.safeParse(input);
 
       expect(result.success).toBe(false);
     });

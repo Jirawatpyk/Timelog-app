@@ -1,6 +1,6 @@
 # Story 3.3: Task Management
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -57,48 +57,48 @@ So that **staff have accurate task options when logging time**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Add Task Schema** (AC: 3)
-  - [ ] 1.1 Add `taskSchema` to `schemas/master-data.schema.ts`
-  - [ ] 1.2 Define name validation (min 1, max 100 characters)
-  - [ ] 1.3 Export `TaskInput` type
+- [x] **Task 1: Add Task Schema** (AC: 3)
+  - [x] 1.1 Add `taskSchema` to `schemas/master-data.schema.ts`
+  - [x] 1.2 Define name validation (min 1, max 100 characters)
+  - [x] 1.3 Export `TaskInput` type
 
-- [ ] **Task 2: Create Task Server Actions** (AC: 2, 4, 5)
-  - [ ] 2.1 Add `createTask` action to `actions/master-data.ts`
-  - [ ] 2.2 Add `updateTask` action
-  - [ ] 2.3 Add `toggleTaskActive` action
-  - [ ] 2.4 Handle unique constraint errors (code 23505)
+- [x] **Task 2: Create Task Server Actions** (AC: 2, 4, 5)
+  - [x] 2.1 Add `createTask` action to `actions/master-data.ts`
+  - [x] 2.2 Add `updateTask` action
+  - [x] 2.3 Add `toggleTaskActive` action
+  - [x] 2.4 Handle unique constraint errors (code 23505)
 
-- [ ] **Task 3: Create Tasks List Component** (AC: 1, 6)
-  - [ ] 3.1 Create `app/(app)/admin/master-data/components/TasksList.tsx`
-  - [ ] 3.2 Fetch tasks using Server Component
-  - [ ] 3.3 Display name and active status
-  - [ ] 3.4 Style inactive tasks with opacity or strikethrough
+- [x] **Task 3: Create Tasks List Component** (AC: 1, 6)
+  - [x] 3.1 Create `app/(app)/admin/master-data/components/TasksList.tsx`
+  - [x] 3.2 Fetch tasks using Server Component
+  - [x] 3.3 Display name and active status
+  - [x] 3.4 Style inactive tasks with opacity or strikethrough
 
-- [ ] **Task 4: Create Task Item Component** (AC: 5, 6)
-  - [ ] 4.1 Create `app/(app)/admin/master-data/components/TaskItem.tsx`
-  - [ ] 4.2 Add toggle switch for active status
-  - [ ] 4.3 Implement optimistic UI update
-  - [ ] 4.4 Add edit button
+- [x] **Task 4: Create Task Item Component** (AC: 5, 6)
+  - [x] 4.1 Create `app/(app)/admin/master-data/components/TaskItem.tsx`
+  - [x] 4.2 Add toggle switch for active status
+  - [x] 4.3 Implement optimistic UI update
+  - [x] 4.4 Add edit button
 
-- [ ] **Task 5: Create Add Task Dialog** (AC: 2, 3)
-  - [ ] 5.1 Create `components/admin/AddTaskDialog.tsx`
-  - [ ] 5.2 Use shadcn Dialog component
-  - [ ] 5.3 Add form with React Hook Form + Zod
-  - [ ] 5.4 Handle submission and errors
+- [x] **Task 5: Create Add Task Dialog** (AC: 2, 3)
+  - [x] 5.1 Create `components/admin/AddTaskDialog.tsx`
+  - [x] 5.2 Use shadcn Dialog component
+  - [x] 5.3 Add form with React Hook Form + Zod
+  - [x] 5.4 Handle submission and errors
 
-- [ ] **Task 6: Create Edit Task Dialog** (AC: 4, 3)
-  - [ ] 6.1 Create `components/admin/EditTaskDialog.tsx`
-  - [ ] 6.2 Pre-populate form with existing data
-  - [ ] 6.3 Handle update and unique constraint errors
+- [x] **Task 6: Create Edit Task Dialog** (AC: 4, 3)
+  - [x] 6.1 Create `components/admin/EditTaskDialog.tsx`
+  - [x] 6.2 Pre-populate form with existing data
+  - [x] 6.3 Handle update and unique constraint errors
 
-- [ ] **Task 7: Integrate Tasks Tab** (AC: 1)
-  - [ ] 7.1 Update master-data page to render TasksList in Tasks tab
-  - [ ] 7.2 Remove "Coming soon..." placeholder
+- [x] **Task 7: Integrate Tasks Tab** (AC: 1)
+  - [x] 7.1 Update master-data page to render TasksList in Tasks tab
+  - [x] 7.2 Remove "Coming soon..." placeholder
 
-- [ ] **Task 8: Verify RLS & Time Entry Filtering** (AC: 7)
-  - [ ] 8.1 Confirm RLS policy filters inactive tasks for non-admin
-  - [ ] 8.2 Test time entry dropdown only shows active tasks
-  - [ ] 8.3 Test admin can still see inactive in admin panel
+- [x] **Task 8: Verify RLS & Time Entry Filtering** (AC: 7)
+  - [x] 8.1 Confirm RLS policy filters inactive tasks for non-admin
+  - [x] 8.2 Test time entry dropdown only shows active tasks
+  - [x] 8.3 Test admin can still see inactive in admin panel
 
 ## Dev Notes
 
@@ -686,27 +686,57 @@ In time entries:
 
 ## Definition of Done
 
-- [ ] Admin can view all tasks (active and inactive)
-- [ ] Admin can add new tasks with unique names
-- [ ] Admin can edit existing task names
-- [ ] Admin can toggle active/inactive status
-- [ ] Inactive tasks appear visually distinct
-- [ ] Unique name validation works (client and server)
-- [ ] Time entry dropdown only shows active tasks
-- [ ] All actions use ActionResult<T> pattern
-- [ ] Toast notifications for success/error
-- [ ] Components follow same patterns as Story 3.1 and 3.2
+- [x] Admin can view all tasks (active and inactive)
+- [x] Admin can add new tasks with unique names
+- [x] Admin can edit existing task names
+- [x] Admin can toggle active/inactive status
+- [x] Inactive tasks appear visually distinct
+- [x] Unique name validation works (client and server)
+- [x] Time entry dropdown only shows active tasks
+- [x] All actions use ActionResult<T> pattern
+- [x] Toast notifications for success/error
+- [x] Components follow same patterns as Story 3.1 and 3.2
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+- **Task 1**: Added `taskSchema` to `master-data.schema.ts` with name validation (min 1, max 100 chars, trim). Exported `TaskInput` type. 9 unit tests added and passing.
+- **Task 2**: Implemented `createTask`, `updateTask`, and `toggleTaskActive` server actions in `master-data.ts`. All use `requireAdminAuth()` helper. Handle unique constraint error (23505) with friendly message. 17 unit tests added and passing.
+- **Task 3**: Created `TasksList.tsx` Server Component. Fetches tasks ordered by name, renders TaskItem for each.
+- **Task 4**: Created `TaskItem.tsx` Client Component. Optimistic UI update for toggle switch, visual distinction (opacity + strikethrough) for inactive tasks.
+- **Task 5**: Created `AddTaskDialog.tsx` with React Hook Form + Zod validation. Toast notifications on success/error.
+- **Task 6**: Created `EditTaskDialog.tsx` with form pre-population and reset on dialog open.
+- **Task 7**: Updated `master-data/page.tsx` to render `TasksList` in Tasks tab, removed placeholder.
+- **Task 8**: Created `test/e2e/rls/tasks.test.ts` with 8 RLS policy tests verifying active filtering for staff and full access for admin.
+
+All 384 tests pass (376 existing + 8 new RLS tests).
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- `src/app/(app)/admin/master-data/components/TasksList.tsx`
+- `src/app/(app)/admin/master-data/components/TaskItem.tsx`
+- `src/components/admin/AddTaskDialog.tsx`
+- `src/components/admin/EditTaskDialog.tsx`
+- `test/e2e/rls/tasks.test.ts`
+
+**Modified:**
+- `src/schemas/master-data.schema.ts` - Added taskSchema, TaskInput type
+- `src/schemas/master-data.schema.test.ts` - Added 9 tests for taskSchema
+- `src/actions/master-data.ts` - Added createTask, updateTask, toggleTaskActive actions
+- `src/actions/master-data.test.ts` - Added 17 tests for task actions
+- `src/app/(app)/admin/master-data/page.tsx` - Integrated TasksList in Tasks tab
+
+### Change Log
+
+- 2025-12-31: Story 3.3 Task Management implemented - all ACs met, 384 tests passing
+- 2025-12-31: Code Review completed - 2 MEDIUM, 4 LOW issues found
+  - Fixed: Added error handling to TasksList.tsx (MEDIUM)
+  - Fixed: Added Cancel button to AddTaskDialog.tsx for UX consistency (LOW)
+  - Verified: RLS test pattern consistent with Stories 3.1/3.2 (MEDIUM - no change needed)
+  - Noted: Component tests and Dev Notes updates deferred as LOW priority

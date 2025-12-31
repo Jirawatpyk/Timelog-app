@@ -51,6 +51,28 @@ export const clientSchema = z.object({
 export type ClientInput = z.infer<typeof clientSchema>;
 
 /**
+ * Task validation schema
+ * Story 3.3: Task Management (AC: 3)
+ *
+ * Validates task input with:
+ * - Required name field
+ * - Max 100 characters
+ * - Automatic whitespace trimming
+ */
+export const taskSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Task name is required')
+    .max(100, 'Task name must be 100 characters or less'),
+});
+
+/**
+ * Task input type derived from schema
+ */
+export type TaskInput = z.infer<typeof taskSchema>;
+
+/**
  * UUID validation schema
  *
  * Validates that a string is a valid UUID format

@@ -12,6 +12,9 @@ import {
   createClientAction,
   updateClientAction,
   toggleClientActive,
+  createTask,
+  updateTask,
+  toggleTaskActive,
 } from './master-data';
 
 // Mock Supabase client
@@ -560,6 +563,254 @@ describe('Master Data Server Actions', () => {
       });
 
       const result = await toggleClientActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Update failed');
+      }
+    });
+  });
+
+  /**
+   * Task Actions Tests
+   * Story 3.3: Task Management (AC: 2, 4, 5)
+   */
+  describe('createTask', () => {
+    it('creates task successfully with valid input', async () => {
+      const mockTask = { id: VALID_UUID, name: 'Translation', active: true };
+      mockSingle.mockResolvedValue({ data: mockTask, error: null });
+
+      const result = await createTask({ name: 'Translation' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockTask);
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await createTask({ name: 'Translation' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error when user is not admin', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { insert: mockInsert };
+      });
+
+      const result = await createTask({ name: 'Translation' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authorized');
+      }
+    });
+
+    it('returns validation error for invalid input', async () => {
+      const result = await createTask({ name: '' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Task name is required');
+      }
+    });
+
+    it('returns error for duplicate task name', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '23505', message: 'Unique constraint violation' },
+      });
+
+      const result = await createTask({ name: 'Translation' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Task name already exists');
+      }
+    });
+
+    it('returns generic error for other database errors', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '12345', message: 'Some database error' },
+      });
+
+      const result = await createTask({ name: 'Translation' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Some database error');
+      }
+    });
+
+    it('allows super_admin to create task', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return {
+          select: mockSelect,
+          insert: mockInsert,
+        };
+      });
+
+      const mockTask = { id: VALID_UUID, name: 'Translation', active: true };
+      mockSingle.mockResolvedValue({ data: mockTask, error: null });
+
+      const result = await createTask({ name: 'Translation' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockTask);
+      }
+    });
+  });
+
+  describe('updateTask', () => {
+    it('updates task successfully', async () => {
+      const mockTask = { id: VALID_UUID, name: 'Updated Translation', active: true };
+      mockSingle.mockResolvedValue({ data: mockTask, error: null });
+
+      const result = await updateTask(VALID_UUID, { name: 'Updated Translation' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockTask);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await updateTask('invalid-id', { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await updateTask(VALID_UUID, { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error for duplicate task name', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '23505', message: 'Unique constraint violation' },
+      });
+
+      const result = await updateTask(VALID_UUID, { name: 'Existing Name' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Task name already exists');
+      }
+    });
+
+    it('returns validation error for invalid input', async () => {
+      const result = await updateTask(VALID_UUID, { name: '' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Task name is required');
+      }
+    });
+  });
+
+  describe('toggleTaskActive', () => {
+    it('toggles task active status to false', async () => {
+      const mockTask = { id: VALID_UUID, name: 'Translation', active: false };
+      mockSingle.mockResolvedValue({ data: mockTask, error: null });
+
+      const result = await toggleTaskActive(VALID_UUID, false);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.active).toBe(false);
+      }
+    });
+
+    it('toggles task active status to true', async () => {
+      const mockTask = { id: VALID_UUID, name: 'Translation', active: true };
+      mockSingle.mockResolvedValue({ data: mockTask, error: null });
+
+      const result = await toggleTaskActive(VALID_UUID, true);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.active).toBe(true);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await toggleTaskActive('not-a-uuid', false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await toggleTaskActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error when database update fails', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { message: 'Update failed' },
+      });
+
+      const result = await toggleTaskActive(VALID_UUID, false);
 
       expect(result.success).toBe(false);
       if (!result.success) {

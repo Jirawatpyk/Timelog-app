@@ -11,7 +11,7 @@
  * - Is IDEMPOTENT - safe to run multiple times
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 
 // Load environment variables

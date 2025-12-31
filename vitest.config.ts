@@ -15,10 +15,18 @@ export default defineConfig({
     // Run E2E tests sequentially to avoid database conflicts
     fileParallelism: false,
     testTimeout: 30000,
+    // Include test files in src/ and test/
+    include: ['src/**/*.test.{ts,tsx}', 'test/**/*.test.{ts,tsx}'],
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // Ensure React dev mode is used for testing
+    conditions: ['development', 'browser'],
+  },
+  define: {
+    // Force development mode for React
+    'process.env.NODE_ENV': JSON.stringify('development'),
   },
 });

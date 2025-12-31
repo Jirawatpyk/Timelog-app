@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
+import { ROUTES, canAccessRoute, isPublicRoute, isProtectedRoute } from "@/constants/routes";
+import type { UserRole } from "@/types/domain";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -17,7 +19,7 @@ export async function updateSession(request: NextRequest) {
   // variable. Always create a new one on each request.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
@@ -47,16 +49,65 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    return NextResponse.redirect(url);
+  const pathname = request.nextUrl.pathname;
+
+  // Handle public routes
+  if (isPublicRoute(pathname)) {
+    // Redirect authenticated users away from auth pages to /entry
+    // Exception: /confirm route is allowed for authenticated users
+    if (user && pathname !== '/confirm') {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.ENTRY;
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
+
+  // Protected routes - require authentication
+  if (isProtectedRoute(pathname)) {
+    // Redirect unauthenticated users to login
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.LOGIN;
+      // Check if this might be an expired session (had cookies but no valid user)
+      const hasAuthCookies = request.cookies.getAll().some(
+        (cookie) => cookie.name.startsWith('sb-') && cookie.name.includes('auth-token')
+      );
+      if (hasAuthCookies) {
+        // Session expired - had cookies but they're no longer valid
+        url.searchParams.set('expired', 'true');
+      } else {
+        // No session - just not logged in
+        url.searchParams.set('message', 'Please login to continue');
+      }
+      return NextResponse.redirect(url);
+    }
+
+    // Fetch user role from public.users table
+    // Note: This query runs on every protected route request.
+    // For ~60 users this is acceptable. For larger scale, consider
+    // caching role in JWT custom claim or cookie after login.
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.sub)
+      .single();
+
+    // Handle query errors gracefully - log but allow access check to proceed
+    // with null role (which will deny access to restricted routes)
+    if (profileError) {
+      console.error('Failed to fetch user role:', profileError.message);
+    }
+
+    const userRole: UserRole | null = (profile?.role as UserRole) ?? null;
+
+    // Check route permissions based on role
+    if (!canAccessRoute(userRole, pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.ENTRY;
+      url.searchParams.set('access', 'denied');
+      return NextResponse.redirect(url);
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

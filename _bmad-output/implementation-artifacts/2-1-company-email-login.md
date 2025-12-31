@@ -1,6 +1,6 @@
 # Story 2.1: Company Email Login
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -57,42 +57,42 @@ So that **I can securely access the timelog system**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Review Existing Login Page** (AC: 1, 2)
-  - [ ] 1.1 Review `app/(auth)/login/page.tsx` from starter template
-  - [ ] 1.2 Identify modifications needed for company email focus
-  - [ ] 1.3 Verify Supabase Auth configuration
+- [x] **Task 1: Review Existing Login Page** (AC: 1, 2)
+  - [x] 1.1 Review `app/(auth)/login/page.tsx` from starter template
+  - [x] 1.2 Identify modifications needed for company email focus
+  - [x] 1.3 Verify Supabase Auth configuration
 
-- [ ] **Task 2: Implement Login Form Validation** (AC: 6, 7)
-  - [ ] 2.1 Create Zod schema for login form in `schemas/auth.schema.ts`
-  - [ ] 2.2 Integrate React Hook Form with Zod resolver
-  - [ ] 2.3 Add client-side validation error display
+- [x] **Task 2: Implement Login Form Validation** (AC: 6, 7)
+  - [x] 2.1 Create Zod schema for login form in `schemas/auth.schema.ts`
+  - [x] 2.2 Integrate React Hook Form with Zod resolver
+  - [x] 2.3 Add client-side validation error display
 
-- [ ] **Task 3: Implement Login Server Action** (AC: 2, 3, 4)
-  - [ ] 3.1 Create/update `actions/auth.ts` with login action
-  - [ ] 3.2 Use `ActionResult<T>` return pattern
-  - [ ] 3.3 Call `supabase.auth.signInWithPassword()`
-  - [ ] 3.4 Handle error cases with user-friendly messages
+- [x] **Task 3: Implement Login Server Action** (AC: 2, 3, 4)
+  - [x] 3.1 Create/update `actions/auth.ts` with login action
+  - [x] 3.2 Use `ActionResult<T>` return pattern
+  - [x] 3.3 Call `supabase.auth.signInWithPassword()`
+  - [x] 3.4 Handle error cases with user-friendly messages
 
-- [ ] **Task 4: Implement Loading State** (AC: 5)
-  - [ ] 4.1 Use React useTransition for pending state
-  - [ ] 4.2 Disable form inputs during submission
-  - [ ] 4.3 Show spinner or loading indicator on button
+- [x] **Task 4: Implement Loading State** (AC: 5)
+  - [x] 4.1 Use React useTransition for pending state
+  - [x] 4.2 Disable form inputs during submission
+  - [x] 4.3 Show spinner or loading indicator on button
 
-- [ ] **Task 5: Implement Redirect Logic** (AC: 2)
-  - [ ] 5.1 Redirect to /entry on successful login
-  - [ ] 5.2 Verify middleware allows access after auth
+- [x] **Task 5: Implement Redirect Logic** (AC: 2)
+  - [x] 5.1 Redirect to /entry on successful login
+  - [x] 5.2 Verify middleware allows access after auth
 
-- [ ] **Task 6: Style Login Page** (AC: 1)
-  - [ ] 6.1 Ensure mobile-first responsive design
-  - [ ] 6.2 Use shadcn/ui components (Button, Input, Card)
-  - [ ] 6.3 Add company branding if needed
+- [x] **Task 6: Style Login Page** (AC: 1)
+  - [x] 6.1 Ensure mobile-first responsive design
+  - [x] 6.2 Use shadcn/ui components (Button, Input, Card)
+  - [x] 6.3 Add company branding if needed
 
-- [ ] **Task 7: Test Login Flow** (AC: all)
-  - [ ] 7.1 Test with valid test user credentials
-  - [ ] 7.2 Test with invalid credentials
-  - [ ] 7.3 Test validation error states
-  - [ ] 7.4 Test loading state visibility
-  - [ ] 7.5 Verify redirect to /entry works
+- [x] **Task 7: Test Login Flow** (AC: all)
+  - [x] 7.1 Test with valid test user credentials
+  - [x] 7.2 Test with invalid credentials
+  - [x] 7.3 Test validation error states
+  - [x] 7.4 Test loading state visibility
+  - [x] 7.5 Verify redirect to /entry works
 
 ## Dev Notes
 
@@ -131,53 +131,56 @@ export type LoginInput = z.infer<typeof loginSchema>;
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
 import { loginSchema, type LoginInput } from '@/schemas/auth.schema';
 
-type ActionResult<T> =
+export type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
 
 export async function login(input: LoginInput): Promise<ActionResult<{ userId: string }>> {
-  // Validate input
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: 'Invalid input' };
   }
 
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: parsed.data.email,
-    password: parsed.data.password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
 
-  if (error) {
-    // Generic error message for security
-    return { success: false, error: 'Invalid email or password' };
+    if (error) {
+      return { success: false, error: 'Invalid email or password' };
+    }
+
+    return { success: true, data: { userId: data.user.id } };
+  } catch (err) {
+    console.error('Login error:', err);
+    return { success: false, error: 'Unable to connect. Please check your internet connection.' };
   }
-
-  return { success: true, data: { userId: data.user.id } };
 }
 ```
 
-### Login Page Component
+### Login Form Component
 
 ```typescript
-// src/app/(auth)/login/page.tsx
+// src/components/login-form.tsx
 'use client';
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@/schemas/auth.schema';
 import { login } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
-export default function LoginPage() {
+export function LoginForm() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -191,6 +194,7 @@ export default function LoginPage() {
       const result = await login(data);
       if (result.success) {
         router.push('/entry');
+        router.refresh();
       } else {
         form.setError('root', { message: result.error });
       }
@@ -198,48 +202,28 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card>
       <CardHeader>
         <CardTitle>Login to Timelog</CardTitle>
+        <CardDescription>Enter your company email below to login</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {form.formState.errors.root && (
-            <div className="text-red-500 text-sm">
+            <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
               {form.formState.errors.root.message}
             </div>
           )}
-
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              disabled={isPending}
-              {...form.register('email')}
-            />
-            {form.formState.errors.email && (
-              <span className="text-red-500 text-sm">
-                {form.formState.errors.email.message}
-              </span>
-            )}
-          </div>
-
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              disabled={isPending}
-              {...form.register('password')}
-            />
-            {form.formState.errors.password && (
-              <span className="text-red-500 text-sm">
-                {form.formState.errors.password.message}
-              </span>
-            )}
-          </div>
-
+          {/* Email and password inputs with validation... */}
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Logging in...' : 'Login'}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              'Login'
+            )}
           </Button>
         </form>
       </CardContent>
@@ -357,25 +341,92 @@ src/
 
 ## Definition of Done
 
-- [ ] Login page displays with email and password fields
-- [ ] Form validation works (email format, required fields)
-- [ ] Loading state visible during authentication
-- [ ] Successful login redirects to /entry
-- [ ] Invalid credentials show error message
-- [ ] Root path (/) redirects appropriately
-- [ ] Protected routes redirect to /login when unauthenticated
-- [ ] All test users can log in successfully
+- [x] Login page displays with email and password fields
+- [x] Form validation works (email format, required fields)
+- [x] Loading state visible during authentication
+- [x] Successful login redirects to /entry
+- [x] Invalid credentials show error message
+- [x] Root path (/) redirects appropriately
+- [x] Protected routes redirect to /login when unauthenticated
+- [x] All test users can log in successfully
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Task 1 Complete**: Reviewed existing login page from Supabase starter template. Identified need for:
+   - Zod validation + React Hook Form integration
+   - Server action with ActionResult<T> pattern
+   - useTransition for loading state
+   - Fixed env variable mismatch (NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY → NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+2. **Task 2 Complete**: Created `src/schemas/auth.schema.ts` with Zod validation for email (required + valid format) and password (required). Created 9 unit tests covering all validation scenarios.
+
+3. **Task 3 Complete**: Created `src/actions/auth.ts` with login server action using ActionResult<T> pattern. Uses supabase.auth.signInWithPassword() and returns generic "Invalid email or password" error for security.
+
+4. **Task 4 Complete**: Refactored LoginForm to use React useTransition for pending state. Button shows "Logging in..." text and form inputs are disabled during authentication.
+
+5. **Task 5 Complete**:
+   - Updated LoginForm to redirect to /entry on success
+   - Updated middleware (proxy.ts) with proper protected/public route definitions
+   - Created root page redirect logic in app/page.tsx
+   - Created /entry placeholder page in app/(app)/entry/page.tsx
+
+6. **Task 6 Complete**: Login form uses shadcn/ui components (Card, Button, Input, Label). Mobile-first responsive design maintained from starter template.
+
+7. **Task 7 Complete**: Created 9 E2E tests in test/e2e/auth/login.test.ts covering:
+   - Successful authentication for all 4 roles (staff, manager, admin, super_admin)
+   - Role fetch from public.users table
+   - Invalid credentials handling
+   - Empty credentials handling
+
+### Test Results
+
+- **Unit Tests**: 9/9 passed (auth.schema.test.ts)
+- **E2E Auth Tests**: 9/9 passed (login.test.ts)
+- **Build**: Successful
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- src/schemas/auth.schema.ts - Zod validation schema for login
+- src/schemas/auth.schema.test.ts - Unit tests for validation schema
+- src/actions/auth.ts - Login server action with ActionResult<T> pattern
+- src/app/(app)/entry/page.tsx - Protected entry page placeholder
+- test/e2e/auth/login.test.ts - E2E tests for login API (AC2, AC3, AC4)
+- src/components/login-form.test.tsx - Component tests (AC5, AC6, AC7)
+
+**Modified:**
+- src/components/login-form.tsx (refactored for React Hook Form + Zod + useTransition + Loader2 spinner)
+- src/lib/supabase/client.ts (fixed env variable name)
+- src/lib/supabase/server.ts (fixed env variable name)
+- src/lib/supabase/proxy.ts (fixed env variable name, added proper route protection)
+- src/app/page.tsx (added redirect logic)
+- package.json (added react-hook-form, @hookform/resolvers dependencies)
+
+### Test Coverage Notes
+
+**Covered by E2E API tests (test/e2e/auth/login.test.ts):**
+
+- AC2: Successful authentication for all roles
+- AC3: Session contains role from public.users
+- AC4: Invalid credentials error handling
+
+**Covered by Component tests (src/components/login-form.test.tsx):**
+
+- AC5: Loading state (spinner, disabled inputs)
+- AC6: Email validation display
+- AC7: Password required display
+- Redirect logic after successful login
+- Error message display on failed login
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2025-12-31 | Implemented login flow with Zod validation, server action, and E2E tests (Story 2.1) |
+| 2025-12-31 | Added component tests for AC5/AC6/AC7, code review fixes, marked as done |

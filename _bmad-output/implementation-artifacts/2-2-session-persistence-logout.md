@@ -1,6 +1,6 @@
 # Story 2.2: Session Persistence & Logout
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -56,34 +56,34 @@ So that **I don't have to log in repeatedly but can securely sign out when neede
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Verify Cookie-Based Session** (AC: 1, 2)
-  - [ ] 1.1 Review Supabase SSR cookie configuration from starter
-  - [ ] 1.2 Verify `supabase.auth.getUser()` works after refresh
-  - [ ] 1.3 Test session persistence across browser restart
-  - [ ] 1.4 Verify middleware refreshes session cookies
+- [x] **Task 1: Verify Cookie-Based Session** (AC: 1, 2)
+  - [x] 1.1 Review Supabase SSR cookie configuration from starter
+  - [x] 1.2 Verify `supabase.auth.getUser()` works after refresh
+  - [x] 1.3 Test session persistence across browser restart
+  - [x] 1.4 Verify middleware refreshes session cookies
 
-- [ ] **Task 2: Implement User Context/Hook** (AC: 3)
-  - [ ] 2.1 Create `hooks/use-user.ts` to access current user and role
-  - [ ] 2.2 Fetch role from public.users table
-  - [ ] 2.3 Cache user data appropriately (or use Server Component)
+- [x] **Task 2: Implement User Context/Hook** (AC: 3)
+  - [x] 2.1 Create `hooks/use-user.ts` to access current user and role
+  - [x] 2.2 Fetch role from public.users table
+  - [x] 2.3 Cache user data appropriately (or use Server Component)
 
-- [ ] **Task 3: Implement Logout Server Action** (AC: 5, 6)
-  - [ ] 3.1 Create logout action in `actions/auth.ts`
-  - [ ] 3.2 Call `supabase.auth.signOut()`
-  - [ ] 3.3 Use `ActionResult<T>` return pattern
-  - [ ] 3.4 Handle redirect to /login
+- [x] **Task 3: Implement Logout Server Action** (AC: 5, 6)
+  - [x] 3.1 Create logout action in `actions/auth.ts`
+  - [x] 3.2 Call `supabase.auth.signOut()`
+  - [x] 3.3 Use `ActionResult<T>` return pattern
+  - [x] 3.4 Handle redirect to /login
 
-- [ ] **Task 4: Add Logout UI Component** (AC: 4, 7)
-  - [ ] 4.1 Create logout button component
-  - [ ] 4.2 Add to app layout or user menu
-  - [ ] 4.3 Implement loading state during logout
-  - [ ] 4.4 Style consistently with design system
+- [x] **Task 4: Add Logout UI Component** (AC: 4, 7)
+  - [x] 4.1 Create logout button component
+  - [x] 4.2 Add to app layout or user menu
+  - [x] 4.3 Implement loading state during logout
+  - [x] 4.4 Style consistently with design system
 
-- [ ] **Task 5: Test Session Scenarios** (AC: all)
-  - [ ] 5.1 Test login → refresh → still logged in
-  - [ ] 5.2 Test login → close browser → reopen → still logged in
-  - [ ] 5.3 Test logout → try protected route → redirected
-  - [ ] 5.4 Test role persistence after refresh
+- [x] **Task 5: Test Session Scenarios** (AC: all)
+  - [x] 5.1 Test login → refresh → still logged in
+  - [x] 5.2 Test login → close browser → reopen → still logged in
+  - [x] 5.3 Test logout → try protected route → redirected
+  - [x] 5.4 Test role persistence after refresh
 
 ## Dev Notes
 
@@ -371,25 +371,73 @@ Manual testing steps:
 
 ## Definition of Done
 
-- [ ] Session persists after page refresh
-- [ ] Session persists after browser restart
-- [ ] User role is accessible after session restore
-- [ ] Logout button visible on authenticated pages
-- [ ] Logout clears session and redirects to /login
-- [ ] Protected routes inaccessible after logout
-- [ ] Loading state visible during logout
-- [ ] `use-user` hook works correctly
+- [x] Session persists after page refresh
+- [x] Session persists after browser restart
+- [x] User role is accessible after session restore
+- [x] Logout button visible on authenticated pages
+- [x] Logout clears session and redirects to /login
+- [x] Protected routes inaccessible after logout
+- [x] Loading state visible during logout
+- [x] `use-user` hook works correctly
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Task 1: Verified Cookie-Based Session**
+   - Confirmed existing middleware.ts uses proxy.ts with getClaims() for session refresh
+   - Session tokens persist correctly via @supabase/ssr cookie configuration
+   - Created E2E tests (test/e2e/auth/session.test.ts) - 9 tests pass
+
+2. **Task 2: Implemented User Context/Hook**
+   - Created src/hooks/use-user.ts with UserWithRole interface
+   - Hook fetches user and role from public.users table
+   - Includes auth state change listener and refetch function
+   - Unit tests (src/hooks/use-user.test.ts) - 10 tests pass
+
+3. **Task 3: Implemented Logout Server Action**
+   - Added logout() function to src/actions/auth.ts
+   - Uses ActionResult<T> pattern per project standards
+   - Redirects to /login after successful signOut
+   - Unit tests (src/actions/auth.test.ts) - 4 tests pass
+
+4. **Task 4: Updated Logout UI Component**
+   - Enhanced src/components/logout-button.tsx with:
+     - useTransition for loading state
+     - Server action integration
+     - Loading spinner (Loader2) and LogOut icon
+     - Disabled state during logout
+   - Unit tests (src/components/logout-button.test.tsx) - 7 tests pass
+
+5. **Task 5: Test Session Scenarios**
+   - All 31 Story 2.2 tests pass
+   - Tests cover session persistence, role fetching, logout, and protected routes
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- src/hooks/use-user.ts
+- src/hooks/use-user.test.ts
+- src/actions/auth.test.ts
+- src/components/logout-button.test.tsx
+- test/e2e/auth/session.test.ts
+
+**Modified:**
+- src/actions/auth.ts (added logout function)
+- src/components/logout-button.tsx (added loading state, server action)
+- vitest.config.ts (added React dev mode for testing)
+
+## Change Log
+
+- 2025-12-31: Story 2.2 implementation complete - all 30 tests passing
+- 2025-12-31: Code review fixes applied:
+  - Fixed singleton pattern for Supabase client in use-user.ts
+  - Added isMountedRef pattern to prevent memory leaks
+  - Fixed logout-button to only router.refresh() on failure
+  - Fixed return type annotation on logout() action
+  - Updated session.test.ts with maybeSingle() for seed data resilience
+- 2025-12-31: Post-review tests pass - 31 tests total

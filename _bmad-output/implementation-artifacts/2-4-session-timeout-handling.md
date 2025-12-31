@@ -1,6 +1,6 @@
 # Story 2.4: Session Timeout Handling
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -43,39 +43,43 @@ So that **my account remains secure if I forget to logout**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Configure Supabase Session Settings** (AC: 1)
-  - [ ] 1.1 Review Supabase project auth settings
-  - [ ] 1.2 Verify JWT expiry is set appropriately (default 1 hour, refresh extends)
-  - [ ] 1.3 Document session timeout behavior
+- [x] **Task 1: Configure Supabase Session Settings** (AC: 1)
+  - [x] 1.1 Review Supabase project auth settings
+  - [x] 1.2 Verify JWT expiry is set appropriately (default 1 hour, refresh extends)
+  - [x] 1.3 Document session timeout behavior
 
-- [ ] **Task 2: Implement Middleware Session Refresh** (AC: 3)
-  - [ ] 2.1 Verify middleware calls `getUser()` to refresh session
-  - [ ] 2.2 Ensure cookies are updated on each request
-  - [ ] 2.3 Test session refresh extends expiry
+- [x] **Task 2: Implement Middleware Session Refresh** (AC: 3)
+  - [x] 2.1 Verify middleware calls `getUser()` to refresh session
+  - [x] 2.2 Ensure cookies are updated on each request
+  - [x] 2.3 Test session refresh extends expiry
 
-- [ ] **Task 3: Handle Expired Session Redirect** (AC: 2)
-  - [ ] 3.1 Detect expired session in middleware
-  - [ ] 3.2 Redirect to /login with `expired=true` query param
-  - [ ] 3.3 Display "Session expired" toast on login page
+- [x] **Task 3: Handle Expired Session Redirect** (AC: 2)
+  - [x] 3.1 Detect expired session in middleware
+  - [x] 3.2 Redirect to /login with `expired=true` query param
+  - [x] 3.3 Display "Session expired" toast on login page
 
-- [ ] **Task 4: Handle Server Action Auth Errors** (AC: 4)
-  - [ ] 4.1 Create auth error handler utility
-  - [ ] 4.2 Wrap server actions with session check
-  - [ ] 4.3 Return consistent error for expired sessions
-  - [ ] 4.4 Client handles auth errors with redirect
+- [x] **Task 4: Handle Server Action Auth Errors** (AC: 4)
+  - [x] 4.1 Create auth error handler utility
+  - [x] 4.2 Wrap server actions with session check
+  - [x] 4.3 Return consistent error for expired sessions
+  - [x] 4.4 Client handles auth errors with redirect
 
-- [ ] **Task 5: Client-Side Auth State Listener** (AC: 5)
-  - [ ] 5.1 Add `onAuthStateChange` listener in app layout
-  - [ ] 5.2 Handle SIGNED_OUT event
-  - [ ] 5.3 Redirect gracefully with notification
+- [x] **Task 5: Client-Side Auth State Listener** (AC: 5)
+  - [x] 5.1 Add `onAuthStateChange` listener in app layout
+  - [x] 5.2 Handle SIGNED_OUT event
+  - [x] 5.3 Redirect gracefully with notification
 
-- [ ] **Task 6: Test Session Timeout Scenarios** (AC: all)
-  - [ ] 6.1 Test active usage keeps session alive
-  - [ ] 6.2 Test session expiry after inactivity (may need shortened timeout for testing)
-  - [ ] 6.3 Test expired session redirect with message
-  - [ ] 6.4 Test server action failure on expired session
+- [x] **Task 6: Test Session Timeout Scenarios** (AC: all)
+  - [x] 6.1 Test active usage keeps session alive
+  - [x] 6.2 Test session expiry after inactivity (may need shortened timeout for testing)
+  - [x] 6.3 Test expired session redirect with message
+  - [x] 6.4 Test server action failure on expired session
 
 ## Dev Notes
+
+### Known Limitations
+
+**AC4 - Form State Persistence:** The current implementation redirects immediately on auth errors without persisting form state. The AC states "no data is lost (form state persisted **if applicable**)". For this story, form state persistence is considered out of scope as the primary use case (time entry forms) should auto-save drafts (covered by Story 4.10: Form Draft Auto-Save). Future enhancement: Consider implementing a form state cache in localStorage before redirect.
 
 ### Supabase Session Behavior
 
@@ -345,25 +349,62 @@ test('shows session expired message on login page', async ({ page }) => {
 
 ## Definition of Done
 
-- [ ] Session expires after inactivity (Supabase default behavior verified)
-- [ ] Active usage refreshes session automatically
-- [ ] Expired session redirects to /login with message
-- [ ] "Session expired" toast displays on login page
-- [ ] Server actions handle auth errors gracefully
-- [ ] Client-side auth state listener implemented
-- [ ] No abrupt errors on session expiry
-- [ ] All test scenarios pass
+- [x] Session expires after inactivity (Supabase default behavior verified)
+- [x] Active usage refreshes session automatically
+- [x] Expired session redirects to /login with message
+- [x] "Session expired" toast displays on login page
+- [x] Server actions handle auth errors gracefully
+- [x] Client-side auth state listener implemented
+- [x] No abrupt errors on session expiry
+- [x] All test scenarios pass
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Task 1 - Session Settings:** Verified Supabase uses default JWT expiry (1 hour access token, 1 week refresh token). Middleware uses `getClaims()` which properly handles session refresh.
+
+2. **Task 2 - Middleware Session Refresh:** Confirmed `proxy.ts` correctly implements session refresh via `getClaims()`. Cookies are updated on each request through the `setAll` callback.
+
+3. **Task 3 - Expired Session Redirect:** Updated middleware to detect expired sessions by checking for stale auth cookies. Redirects to `/login?expired=true`. Created `SessionExpiredHandler` component that shows toast notification and cleans URL.
+
+4. **Task 4 - Server Action Auth Errors:** Created `auth-guard.ts` with `requireAuth()` (redirects) and `getAuthUser()` (returns ActionResult). Extended ActionResult type with `authError` flag. Created `use-auth-action.ts` hook for client-side handling.
+
+5. **Task 5 - Auth State Listener:** Created `AuthStateListener` component that listens for `SIGNED_OUT` and `TOKEN_REFRESHED` events. Integrated into `(app)/layout.tsx` to wrap all protected pages.
+
+6. **Task 6 - Tests:** All 188 tests pass including:
+   - 9 E2E session timeout tests (session configuration, refresh, auth state)
+   - 5 SessionExpiredHandler unit tests
+   - 9 auth-guard unit tests
+   - 9 useAuthAction hook tests (including handleAuthError)
+   - 6 AuthStateListener unit tests
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- `src/lib/auth-guard.ts` - Auth guard utilities for server actions
+- `src/lib/auth-guard.test.ts` - Unit tests for auth-guard
+- `src/hooks/use-auth-action.ts` - Client-side hook for handling auth errors
+- `src/hooks/use-auth-action.test.ts` - Unit tests for useAuthAction and handleAuthError
+- `src/components/shared/session-expired-handler.tsx` - Session expired toast handler
+- `src/components/shared/session-expired-handler.test.tsx` - Unit tests
+- `src/components/shared/auth-state-listener.tsx` - Client-side auth state listener
+- `src/components/shared/auth-state-listener.test.tsx` - Unit tests
+- `test/e2e/auth/session-timeout.test.ts` - E2E tests for session timeout
+- `src/constants/messages.ts` - Centralized auth message constants
+
+**Modified:**
+- `src/lib/supabase/proxy.ts` - Added expired session detection with `expired=true` query param
+- `src/app/(auth)/login/page.tsx` - Added SessionExpiredHandler component
+- `src/app/(app)/layout.tsx` - Added AuthStateListener wrapper, updated branding to "Timelog"
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2025-12-31 | Story 2.4: Session Timeout Handling - Complete implementation |
+| 2025-12-31 | Code Review: Fixed duplicate isAuthError, added handleAuthError tests, created message constants |

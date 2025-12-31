@@ -22,13 +22,36 @@ describe('Manager RLS Policies', () => {
 
   beforeAll(async () => {
     // Setup test data using service client (bypasses RLS)
-    // 1. Create departments
-    const { error: deptError } = await serviceClient.from('departments').upsert([
-      { id: testDepartments.deptA.id, name: testDepartments.deptA.name, active: true },
-      { id: testDepartments.deptB.id, name: testDepartments.deptB.name, active: true },
-      { id: testDepartments.deptC.id, name: testDepartments.deptC.name, active: true },
-    ], { onConflict: 'id' });
-    if (deptError) console.error('Error creating departments:', deptError);
+
+    // 1. Create departments - MUST succeed before proceeding
+    // First, delete any existing test departments to avoid conflicts
+    await serviceClient.from('departments').delete().in('id', [
+      testDepartments.deptA.id,
+      testDepartments.deptB.id,
+      testDepartments.deptC.id,
+    ]);
+
+    // Insert departments one by one for better error handling
+    for (const dept of [testDepartments.deptA, testDepartments.deptB, testDepartments.deptC]) {
+      const { error: deptError } = await serviceClient.from('departments').insert({
+        id: dept.id,
+        name: dept.name,
+        active: true,
+      });
+      if (deptError && !deptError.message?.includes('duplicate')) {
+        throw new Error(`Failed to create department ${dept.name}: ${deptError.message}`);
+      }
+    }
+
+    // Verify departments exist
+    const { data: verifyDepts } = await serviceClient
+      .from('departments')
+      .select('id')
+      .in('id', [testDepartments.deptA.id, testDepartments.deptB.id, testDepartments.deptC.id]);
+
+    if (!verifyDepts || verifyDepts.length !== 3) {
+      throw new Error(`Failed to create all departments. Found: ${verifyDepts?.length ?? 0}`);
+    }
 
     // 2. Create auth users first (required for foreign key constraint)
     await createAuthUser(testUsers.manager.id, testUsers.manager.email);
@@ -67,37 +90,37 @@ describe('Manager RLS Policies', () => {
         display_name: testUsers.admin.displayName,
       },
     ], { onConflict: 'id' });
-    if (userError) console.error('Error creating users:', userError);
+    if (userError) throw new Error(`Failed to create users: ${userError.message}`);
 
-    // 3. Setup manager_departments junction - manager manages dept-a and dept-b
+    // 4. Setup manager_departments junction - manager manages dept-a and dept-b
     const { error: mdError } = await serviceClient.from('manager_departments').upsert([
       { manager_id: testUsers.manager.id, department_id: testDepartments.deptA.id },
       { manager_id: testUsers.manager.id, department_id: testDepartments.deptB.id },
     ], { onConflict: 'manager_id,department_id' });
-    if (mdError) console.error('Error creating manager_departments:', mdError);
+    if (mdError) throw new Error(`Failed to create manager_departments: ${mdError.message}`);
 
-    // 4. Create master data
+    // 5. Create master data
     const { error: clientError } = await serviceClient.from('clients').upsert([
       { id: testClients.clientA.id, name: testClients.clientA.name, active: true },
     ], { onConflict: 'id' });
-    if (clientError) console.error('Error creating clients:', clientError);
+    if (clientError) throw new Error(`Failed to create clients: ${clientError.message}`);
 
     const { error: projectError } = await serviceClient.from('projects').upsert([
       { id: testProjects.projectA.id, client_id: testClients.clientA.id, name: testProjects.projectA.name, active: true },
     ], { onConflict: 'id' });
-    if (projectError) console.error('Error creating projects:', projectError);
+    if (projectError) throw new Error(`Failed to create projects: ${projectError.message}`);
 
     const { error: jobError } = await serviceClient.from('jobs').upsert([
       { id: testJobs.jobA.id, project_id: testProjects.projectA.id, name: testJobs.jobA.name, job_no: testJobs.jobA.jobNo, active: true },
     ], { onConflict: 'id' });
-    if (jobError) console.error('Error creating jobs:', jobError);
+    if (jobError) throw new Error(`Failed to create jobs: ${jobError.message}`);
 
     const { error: serviceError } = await serviceClient.from('services').upsert([
       { id: testServices.serviceA.id, name: testServices.serviceA.name, active: true },
     ], { onConflict: 'id' });
-    if (serviceError) console.error('Error creating services:', serviceError);
+    if (serviceError) throw new Error(`Failed to create services: ${serviceError.message}`);
 
-    // 5. Create test entries in all three departments
+    // 6. Create test entries in all three departments
     const { error: entryError } = await serviceClient.from('time_entries').upsert([
       // Manager's own entry in dept-a
       {
@@ -144,11 +167,11 @@ describe('Manager RLS Policies', () => {
         notes: 'Entry in dept-c - manager should NOT see this',
       },
     ], { onConflict: 'id' });
-    if (entryError) console.error('Error creating time_entries:', entryError);
+    if (entryError) throw new Error(`Failed to create time_entries: ${entryError.message}`);
   });
 
   afterAll(async () => {
-    // Cleanup test data
+    // Cleanup test data in reverse order of creation
     await serviceClient.from('time_entries').delete().in('id', [
       'b2222222-2222-4222-a222-222222222221',
       'b2222222-2222-4222-a222-222222222222',

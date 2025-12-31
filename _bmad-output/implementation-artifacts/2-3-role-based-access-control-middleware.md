@@ -1,6 +1,6 @@
-# Story 2.3: Role-Based Access Control Middleware
+.# Story 2.3: Role-Based Access Control Middleware
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -53,35 +53,35 @@ So that **users can only access features appropriate to their role**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Define Route Permission Matrix** (AC: 1-6)
-  - [ ] 1.1 Create `constants/routes.ts` with route definitions
-  - [ ] 1.2 Define role-to-route permission mapping
-  - [ ] 1.3 Document the permission matrix
+- [x] **Task 1: Define Route Permission Matrix** (AC: 1-6)
+  - [x] 1.1 Create `constants/routes.ts` with route definitions
+  - [x] 1.2 Define role-to-route permission mapping
+  - [x] 1.3 Document the permission matrix
 
-- [ ] **Task 2: Enhance Middleware for RBAC** (AC: 1-7)
-  - [ ] 2.1 Update `middleware.ts` to fetch user role
-  - [ ] 2.2 Implement route permission checking
-  - [ ] 2.3 Add role-based redirect logic
-  - [ ] 2.4 Pass "access denied" indicator via query param or cookie
+- [x] **Task 2: Enhance Middleware for RBAC** (AC: 1-7)
+  - [x] 2.1 Update `middleware.ts` to fetch user role
+  - [x] 2.2 Implement route permission checking
+  - [x] 2.3 Add role-based redirect logic
+  - [x] 2.4 Pass "access denied" indicator via query param or cookie
 
-- [ ] **Task 3: Create Access Denied Handler** (AC: 1, 2, 4)
-  - [ ] 3.1 Create toast notification for access denied
-  - [ ] 3.2 Handle query param on /entry page
-  - [ ] 3.3 Show user-friendly message
+- [x] **Task 3: Create Access Denied Handler** (AC: 1, 2, 4)
+  - [x] 3.1 Create toast notification for access denied
+  - [x] 3.2 Handle query param on /entry page
+  - [x] 3.3 Show user-friendly message
 
-- [ ] **Task 4: Create Role Guard Component** (AC: 1-6)
-  - [ ] 4.1 Create `components/shared/RoleGuard.tsx`
-  - [ ] 4.2 Implement client-side role checking (backup)
-  - [ ] 4.3 Support multiple allowed roles
+- [x] **Task 4: Create Role Guard Component** (AC: 1-6)
+  - [x] 4.1 Create `components/shared/RoleGuard.tsx`
+  - [x] 4.2 Implement client-side role checking (backup)
+  - [x] 4.3 Support multiple allowed roles
 
-- [ ] **Task 5: Test All Role Scenarios** (AC: all)
-  - [ ] 5.1 Test staff accessing /entry, /dashboard (allowed)
-  - [ ] 5.2 Test staff accessing /team, /admin (denied)
-  - [ ] 5.3 Test manager accessing /team (allowed)
-  - [ ] 5.4 Test manager accessing /admin (denied)
-  - [ ] 5.5 Test admin accessing all routes (allowed)
-  - [ ] 5.6 Test super_admin accessing all routes (allowed)
-  - [ ] 5.7 Test unauthenticated accessing protected routes (redirect to login)
+- [x] **Task 5: Test All Role Scenarios** (AC: all)
+  - [x] 5.1 Test staff accessing /entry, /dashboard (allowed)
+  - [x] 5.2 Test staff accessing /team, /admin (denied)
+  - [x] 5.3 Test manager accessing /team (allowed)
+  - [x] 5.4 Test manager accessing /admin (denied)
+  - [x] 5.5 Test admin accessing all routes (allowed)
+  - [x] 5.6 Test super_admin accessing all routes (allowed)
+  - [x] 5.7 Test unauthenticated accessing protected routes (redirect to login)
 
 ## Dev Notes
 
@@ -386,26 +386,50 @@ The middleware fetches user role on every request. For optimization:
 
 ## Definition of Done
 
-- [ ] Route constants defined with permission matrix
-- [ ] Middleware enhanced with role-based access control
-- [ ] Staff cannot access /team or /admin
-- [ ] Manager can access /team but not /admin
-- [ ] Admin and Super Admin can access all routes
-- [ ] Access denied toast shown on redirect
-- [ ] Unauthenticated users redirected to /login
-- [ ] RoleGuard component available for client-side backup
-- [ ] All test scenarios pass
+- [x] Route constants defined with permission matrix
+- [x] Middleware enhanced with role-based access control
+- [x] Staff cannot access /team or /admin
+- [x] Manager can access /team but not /admin
+- [x] Admin and Super Admin can access all routes
+- [x] Access denied toast shown on redirect
+- [x] Unauthenticated users redirected to /login
+- [x] RoleGuard component available for client-side backup
+- [x] All test scenarios pass
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+- **Task 1:** Created `src/constants/routes.ts` with ROUTES constants, ROUTE_PERMISSIONS matrix, and helper functions (canAccessRoute, isPublicRoute, isProtectedRoute). 30 unit tests pass.
+- **Task 2:** Updated `src/lib/supabase/proxy.ts` to fetch user role from public.users table and check route permissions using canAccessRoute. Redirects unauthorized users to /entry?access=denied.
+- **Task 3:** Created `src/components/shared/access-denied-handler.tsx` that listens for ?access=denied query param and shows toast notification. Added to /entry page with Suspense boundary. Added Toaster to root layout. 5 unit tests pass.
+- **Task 4:** Created `src/components/shared/role-guard.tsx` for client-side role protection. Uses useUser hook and redirects unauthorized users. 11 unit tests pass.
+- **Task 5:** Created comprehensive E2E tests in `test/e2e/rbac/route-access.test.ts` covering all AC scenarios. 22 tests pass.
+- All 150 tests pass, lint passes, build succeeds.
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- src/constants/routes.ts
+- src/constants/routes.test.ts
+- src/components/shared/access-denied-handler.tsx
+- src/components/shared/access-denied-handler.test.tsx
+- src/components/shared/role-guard.tsx
+- src/components/shared/role-guard.test.tsx
+- test/e2e/rbac/route-access.test.ts
+
+**Modified:**
+- src/lib/supabase/proxy.ts
+- src/app/layout.tsx
+- src/app/(app)/entry/page.tsx
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2025-12-31 | Story implementation complete - RBAC middleware, AccessDeniedHandler, RoleGuard component | Claude Opus 4.5 |
+| 2025-12-31 | Code review fixes: Added error handling to proxy.ts, refactored RoleGuard with useMemo, improved AccessDeniedHandler with usePathname, added JSDoc documentation | Claude Opus 4.5 |

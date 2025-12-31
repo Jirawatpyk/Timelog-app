@@ -60,7 +60,7 @@ development_status:
   # Epic 3: Master Data Administration (5 stories)
   epic-3: in-progress
   3-1-service-type-management: done
-  3-2-client-management: ready-for-dev
+  3-2-client-management: in-progress
   3-3-task-management: ready-for-dev
   3-4-soft-delete-protection: ready-for-dev
   3-5-master-data-admin-ui-layout: ready-for-dev

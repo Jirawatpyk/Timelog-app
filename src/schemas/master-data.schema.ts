@@ -29,6 +29,28 @@ export const serviceSchema = z.object({
 export type ServiceInput = z.infer<typeof serviceSchema>;
 
 /**
+ * Client validation schema
+ * Story 3.2: Client Management (AC: 3)
+ *
+ * Validates client input with:
+ * - Required name field
+ * - Max 100 characters
+ * - Automatic whitespace trimming
+ */
+export const clientSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Client name is required')
+    .max(100, 'Client name must be 100 characters or less'),
+});
+
+/**
+ * Client input type derived from schema
+ */
+export type ClientInput = z.infer<typeof clientSchema>;
+
+/**
  * UUID validation schema
  *
  * Validates that a string is a valid UUID format

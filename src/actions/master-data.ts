@@ -10,8 +10,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { serviceSchema, uuidSchema, type ServiceInput } from '@/schemas/master-data.schema';
-import type { Service, ActionResult } from '@/types/domain';
+import { serviceSchema, clientSchema, uuidSchema, type ServiceInput, type ClientInput } from '@/schemas/master-data.schema';
+import type { Service, Client, ActionResult } from '@/types/domain';
 
 /**
  * Check if user is authenticated and has admin role

@@ -1,10 +1,18 @@
 /**
  * Tests for Master Data Server Actions
  * Story 3.1: Service Type Management (AC: 2, 4, 5)
+ * Story 3.2: Client Management (AC: 2, 4, 5)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createService, updateService, toggleServiceActive } from './master-data';
+import {
+  createService,
+  updateService,
+  toggleServiceActive,
+  createClientAction,
+  updateClientAction,
+  toggleClientActive,
+} from './master-data';
 
 // Mock Supabase client
 const mockSingle = vi.fn();
@@ -304,6 +312,254 @@ describe('Master Data Server Actions', () => {
       });
 
       const result = await toggleServiceActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Update failed');
+      }
+    });
+  });
+
+  /**
+   * Client Actions Tests
+   * Story 3.2: Client Management (AC: 2, 4, 5)
+   */
+  describe('createClientAction', () => {
+    it('creates client successfully with valid input', async () => {
+      const mockClient = { id: VALID_UUID, name: 'Netflix', active: true };
+      mockSingle.mockResolvedValue({ data: mockClient, error: null });
+
+      const result = await createClientAction({ name: 'Netflix' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockClient);
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await createClientAction({ name: 'Netflix' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error when user is not admin', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { insert: mockInsert };
+      });
+
+      const result = await createClientAction({ name: 'Netflix' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authorized');
+      }
+    });
+
+    it('returns validation error for invalid input', async () => {
+      const result = await createClientAction({ name: '' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Client name is required');
+      }
+    });
+
+    it('returns error for duplicate client name', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '23505', message: 'Unique constraint violation' },
+      });
+
+      const result = await createClientAction({ name: 'Netflix' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Client name already exists');
+      }
+    });
+
+    it('returns generic error for other database errors', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '12345', message: 'Some database error' },
+      });
+
+      const result = await createClientAction({ name: 'Netflix' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Some database error');
+      }
+    });
+
+    it('allows super_admin to create client', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return {
+          select: mockSelect,
+          insert: mockInsert,
+        };
+      });
+
+      const mockClient = { id: VALID_UUID, name: 'Netflix', active: true };
+      mockSingle.mockResolvedValue({ data: mockClient, error: null });
+
+      const result = await createClientAction({ name: 'Netflix' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockClient);
+      }
+    });
+  });
+
+  describe('updateClientAction', () => {
+    it('updates client successfully', async () => {
+      const mockClient = { id: VALID_UUID, name: 'Updated Netflix', active: true };
+      mockSingle.mockResolvedValue({ data: mockClient, error: null });
+
+      const result = await updateClientAction(VALID_UUID, { name: 'Updated Netflix' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockClient);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await updateClientAction('invalid-id', { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await updateClientAction(VALID_UUID, { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error for duplicate client name', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '23505', message: 'Unique constraint violation' },
+      });
+
+      const result = await updateClientAction(VALID_UUID, { name: 'Existing Name' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Client name already exists');
+      }
+    });
+
+    it('returns validation error for invalid input', async () => {
+      const result = await updateClientAction(VALID_UUID, { name: '' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Client name is required');
+      }
+    });
+  });
+
+  describe('toggleClientActive', () => {
+    it('toggles client active status to false', async () => {
+      const mockClient = { id: VALID_UUID, name: 'Netflix', active: false };
+      mockSingle.mockResolvedValue({ data: mockClient, error: null });
+
+      const result = await toggleClientActive(VALID_UUID, false);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.active).toBe(false);
+      }
+    });
+
+    it('toggles client active status to true', async () => {
+      const mockClient = { id: VALID_UUID, name: 'Netflix', active: true };
+      mockSingle.mockResolvedValue({ data: mockClient, error: null });
+
+      const result = await toggleClientActive(VALID_UUID, true);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.active).toBe(true);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await toggleClientActive('not-a-uuid', false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await toggleClientActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error when database update fails', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { message: 'Update failed' },
+      });
+
+      const result = await toggleClientActive(VALID_UUID, false);
 
       expect(result.success).toBe(false);
       if (!result.success) {

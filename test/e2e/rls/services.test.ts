@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createServiceClient, createAuthUser, deleteAuthUser, createUserClient } from '../../helpers/supabase-test';
+import { createServiceClient, createAuthUser, deleteAuthUser } from '../../helpers/supabase-test';
 import { testUsers, testDepartments } from '../../helpers/test-users';
 
 // Test service IDs

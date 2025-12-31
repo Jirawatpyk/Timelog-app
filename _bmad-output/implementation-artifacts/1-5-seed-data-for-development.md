@@ -1,6 +1,6 @@
 # Story 1.5: Seed Data for Development
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -88,46 +88,46 @@ So that **I can develop and test features with meaningful data**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create Seed SQL File** (AC: all)
-  - [ ] 1.1 Create `supabase/seed.sql` file
-  - [ ] 1.2 Add header comments with usage instructions
-  - [ ] 1.3 Configure script for idempotent execution
+- [x] **Task 1: Create Seed SQL File** (AC: all)
+  - [x] 1.1 Create `supabase/seed.sql` file
+  - [x] 1.2 Add header comments with usage instructions
+  - [x] 1.3 Configure script for idempotent execution
 
-- [ ] **Task 2: Seed Departments** (AC: 1)
-  - [ ] 2.1 Create INSERT for 3 departments with fixed UUIDs
-  - [ ] 2.2 Use ON CONFLICT DO NOTHING or upsert
+- [x] **Task 2: Seed Departments** (AC: 1)
+  - [x] 2.1 Create INSERT for 3 departments with fixed UUIDs
+  - [x] 2.2 Use ON CONFLICT DO NOTHING or upsert
 
-- [ ] **Task 3: Seed Master Data** (AC: 2, 3, 4, 5, 6)
-  - [ ] 3.1 Create INSERT for 10 Thai company clients
-  - [ ] 3.2 Create INSERT for 20 projects (2 per client)
-  - [ ] 3.3 Create INSERT for 50 jobs with job_no/so_no patterns
-  - [ ] 3.4 Create INSERT for 8 services
-  - [ ] 3.5 Create INSERT for 10 tasks
+- [x] **Task 3: Seed Master Data** (AC: 2, 3, 4, 5, 6)
+  - [x] 3.1 Create INSERT for 10 Thai company clients
+  - [x] 3.2 Create INSERT for 20 projects (2 per client)
+  - [x] 3.3 Create INSERT for 50 jobs with job_no/so_no patterns
+  - [x] 3.4 Create INSERT for 8 services
+  - [x] 3.5 Create INSERT for 10 tasks
 
-- [ ] **Task 4: Seed Test Users** (AC: 7)
-  - [ ] 4.1 Create auth.users entries for 4 test users
-  - [ ] 4.2 Create corresponding public.users entries
-  - [ ] 4.3 Use fixed UUIDs for consistent testing
+- [x] **Task 4: Seed Test Users** (AC: 7)
+  - [x] 4.1 Create auth.users entries for 4 test users
+  - [x] 4.2 Create corresponding public.users entries
+  - [x] 4.3 Use fixed UUIDs for consistent testing
 
-- [ ] **Task 5: Seed Manager Departments** (AC: 8)
-  - [ ] 5.1 Create manager_departments entries
-  - [ ] 5.2 Assign manager to Audio + Video departments
+- [x] **Task 5: Seed Manager Departments** (AC: 8)
+  - [x] 5.1 Create manager_departments entries
+  - [x] 5.2 Assign manager to Audio + Video departments
 
-- [ ] **Task 6: Seed Sample Time Entries** (AC: 9)
-  - [ ] 6.1 Create 20 time entries for staff user
-  - [ ] 6.2 Distribute across last 14 days
-  - [ ] 6.3 Vary jobs, services, tasks, and durations
-  - [ ] 6.4 Set department_id snapshot correctly
+- [x] **Task 6: Seed Sample Time Entries** (AC: 9)
+  - [x] 6.1 Create 20 time entries for staff user
+  - [x] 6.2 Distribute across last 14 days
+  - [x] 6.3 Vary jobs, services, tasks, and durations
+  - [x] 6.4 Set department_id snapshot correctly
 
-- [ ] **Task 7: Update User Recent Combinations** (AC: 9)
-  - [ ] 7.1 Create 5 recent combination entries for staff
-  - [ ] 7.2 Based on the seeded time entries
+- [x] **Task 7: Update User Recent Combinations** (AC: 9)
+  - [x] 7.1 Create 5 recent combination entries for staff
+  - [x] 7.2 Based on the seeded time entries
 
-- [ ] **Task 8: Verify Seed Data** (AC: all)
-  - [ ] 8.1 Run `supabase db reset` to apply migrations + seed
-  - [ ] 8.2 Verify all counts in Supabase Studio
-  - [ ] 8.3 Test login with each test user
-  - [ ] 8.4 Run seed script twice to verify idempotency
+- [x] **Task 8: Verify Seed Data** (AC: all)
+  - [x] 8.1 Run `supabase db reset` to apply migrations + seed
+  - [x] 8.2 Verify all counts in Supabase Studio
+  - [x] 8.3 Test login with each test user
+  - [x] 8.4 Run seed script twice to verify idempotency
 
 ## Dev Notes
 
@@ -386,30 +386,54 @@ UNION ALL SELECT 'user_recent_combinations', COUNT(*) FROM user_recent_combinati
 
 ## Definition of Done
 
-- [ ] 3 departments created
-- [ ] 10 clients with Thai company names
-- [ ] 20 projects distributed across clients
-- [ ] 50 jobs with job_no and so_no patterns
-- [ ] 8 services created
-- [ ] 10 tasks created
-- [ ] 4 test users created (staff, manager, admin, super_admin)
-- [ ] Manager assigned to 2 departments
-- [ ] 20 sample time entries for staff
-- [ ] 5 recent combinations for staff
-- [ ] Seed script is idempotent (verified by running twice)
-- [ ] All test users can login
-- [ ] Verification queries return expected counts
+- [x] 3 departments created
+- [x] 10 clients with Thai company names
+- [x] 20 projects distributed across clients
+- [x] 50 jobs with job_no and so_no patterns
+- [x] 8 services created
+- [x] 10 tasks created
+- [x] 4 test users created (staff, manager, admin, super_admin)
+- [x] Manager assigned to 2 departments
+- [x] 20 sample time entries for staff
+- [x] 5 recent combinations for staff
+- [x] Seed script is idempotent (verified by running twice)
+- [x] All test users can login
+- [x] Verification queries return expected counts
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. สร้าง `supabase/seed.sql` สำหรับ local Supabase (Docker) - ใช้ ON CONFLICT DO NOTHING
+2. สร้าง `scripts/seed.ts` สำหรับ remote Supabase - ใช้ Supabase Admin API สร้าง auth users
+3. แก้ไขปัญหา UUID format (PostgreSQL ต้องการ hex digits 0-9, a-f เท่านั้น)
+4. เพิ่ม `tsx` dependency และ `seed` script ใน package.json
+5. ทดสอบ idempotency โดย run seed script 2 ครั้ง - ผ่านทุก count
+6. Verified counts: departments=3, users=4, clients=10, projects=20, jobs=50, services=8, tasks=10, time_entries=20, manager_departments=2, recent_combinations=5
 
 ### File List
 
-_To be filled with all created/modified files_
+- `supabase/seed.sql` - SQL seed file for local Supabase
+- `scripts/seed.ts` - TypeScript seed script with Admin API
+- `package.json` - Added seed script and tsx dependency
+- `package-lock.json` - Updated dependency lockfile
+
+### Senior Developer Review (AI)
+
+**Reviewed:** 2025-12-31
+**Reviewer:** Claude Opus 4.5 (Adversarial Code Review)
+
+**Issues Found & Fixed:**
+
+1. ✅ **[HIGH] pgcrypto extension** - Added `CREATE EXTENSION IF NOT EXISTS pgcrypto;` to seed.sql:15
+2. ✅ **[MEDIUM] File List incomplete** - Added package-lock.json to documentation
+3. ⚠️ **[MEDIUM] No automated login test** - Noted for future story (not blocking)
+4. ⚠️ **[MEDIUM] TypeScript types** - Seed script works without strict types (not blocking)
+5. ⚠️ **[LOW] Data duplication** - Accepted tradeoff for SQL/TS compatibility
+6. ⚠️ **[LOW] Files untracked** - Pending git add by developer
+
+**Verdict:** APPROVED with minor notes

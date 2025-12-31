@@ -1,0 +1,314 @@
+/**
+ * Tests for Master Data Server Actions
+ * Story 3.1: Service Type Management (AC: 2, 4, 5)
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createService, updateService, toggleServiceActive } from './master-data';
+
+// Mock Supabase client
+const mockSingle = vi.fn();
+const mockSelect = vi.fn();
+const mockInsert = vi.fn();
+const mockUpdate = vi.fn();
+const mockEq = vi.fn();
+const mockFrom = vi.fn();
+const mockGetUser = vi.fn();
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => Promise.resolve({
+    auth: {
+      getUser: mockGetUser,
+    },
+    from: mockFrom,
+  })),
+}));
+
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}));
+
+// Valid UUID for testing
+const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
+
+describe('Master Data Server Actions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Default: authenticated admin user
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'admin-user-id' } },
+      error: null,
+    });
+
+    // Default: user is admin
+    mockFrom.mockImplementation((table) => {
+      if (table === 'users') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { role: 'admin' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: mockSelect,
+        insert: mockInsert,
+        update: mockUpdate,
+      };
+    });
+
+    mockSelect.mockReturnValue({ single: mockSingle });
+    mockInsert.mockReturnValue({ select: mockSelect });
+    mockUpdate.mockReturnValue({ eq: mockEq });
+    mockEq.mockReturnValue({ select: mockSelect });
+  });
+
+  describe('createService', () => {
+    it('creates service successfully with valid input', async () => {
+      const mockService = { id: '1', name: 'Dubbing', active: true };
+      mockSingle.mockResolvedValue({ data: mockService, error: null });
+
+      const result = await createService({ name: 'Dubbing' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockService);
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await createService({ name: 'Dubbing' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error when user is not admin', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { insert: mockInsert };
+      });
+
+      const result = await createService({ name: 'Dubbing' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authorized');
+      }
+    });
+
+    it('returns validation error for invalid input', async () => {
+      const result = await createService({ name: '' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Service name is required');
+      }
+    });
+
+    it('returns error for duplicate service name', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '23505', message: 'Unique constraint violation' },
+      });
+
+      const result = await createService({ name: 'Dubbing' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Service name already exists');
+      }
+    });
+
+    it('returns generic error for other database errors', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '12345', message: 'Some database error' },
+      });
+
+      const result = await createService({ name: 'Dubbing' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Some database error');
+      }
+    });
+
+    it('allows super_admin to create service', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return {
+          select: mockSelect,
+          insert: mockInsert,
+        };
+      });
+
+      const mockService = { id: VALID_UUID, name: 'Dubbing', active: true };
+      mockSingle.mockResolvedValue({ data: mockService, error: null });
+
+      const result = await createService({ name: 'Dubbing' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockService);
+      }
+    });
+  });
+
+  describe('updateService', () => {
+    it('updates service successfully', async () => {
+      const mockService = { id: VALID_UUID, name: 'Updated Dubbing', active: true };
+      mockSingle.mockResolvedValue({ data: mockService, error: null });
+
+      const result = await updateService(VALID_UUID, { name: 'Updated Dubbing' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockService);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await updateService('invalid-id', { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await updateService(VALID_UUID, { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error for duplicate service name', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '23505', message: 'Unique constraint violation' },
+      });
+
+      const result = await updateService(VALID_UUID, { name: 'Existing Name' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Service name already exists');
+      }
+    });
+
+    it('returns validation error for invalid input', async () => {
+      const result = await updateService(VALID_UUID, { name: '' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Service name is required');
+      }
+    });
+  });
+
+  describe('toggleServiceActive', () => {
+    it('toggles service active status to false', async () => {
+      const mockService = { id: VALID_UUID, name: 'Dubbing', active: false };
+      mockSingle.mockResolvedValue({ data: mockService, error: null });
+
+      const result = await toggleServiceActive(VALID_UUID, false);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.active).toBe(false);
+      }
+    });
+
+    it('toggles service active status to true', async () => {
+      const mockService = { id: VALID_UUID, name: 'Dubbing', active: true };
+      mockSingle.mockResolvedValue({ data: mockService, error: null });
+
+      const result = await toggleServiceActive(VALID_UUID, true);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.active).toBe(true);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await toggleServiceActive('not-a-uuid', false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await toggleServiceActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error when database update fails', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { message: 'Update failed' },
+      });
+
+      const result = await toggleServiceActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Update failed');
+      }
+    });
+  });
+});

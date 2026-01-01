@@ -1,6 +1,6 @@
 # Story 4.2: Time Entry Form - Cascading Selectors
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -60,48 +60,48 @@ So that **I can accurately categorize my time entry**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create Entry Page Layout** (AC: 1)
-  - [ ] 1.1 Create `app/(app)/entry/page.tsx`
-  - [ ] 1.2 Set up basic form structure
-  - [ ] 1.3 Add page title and container styling
+- [x] **Task 1: Create Entry Page Layout** (AC: 1)
+  - [x] 1.1 Create `app/(app)/entry/page.tsx`
+  - [x] 1.2 Set up basic form structure
+  - [x] 1.3 Add page title and container styling
 
-- [ ] **Task 2: Create TimeEntryForm Component** (AC: 1, 7)
-  - [ ] 2.1 Create `app/(app)/entry/components/TimeEntryForm.tsx`
-  - [ ] 2.2 Set up React Hook Form with Zod validation
-  - [ ] 2.3 Add form state management for cascading
+- [x] **Task 2: Create TimeEntryForm Component** (AC: 1, 7)
+  - [x] 2.1 Create `app/(app)/entry/components/TimeEntryForm.tsx`
+  - [x] 2.2 Set up React Hook Form with Zod validation
+  - [x] 2.3 Add form state management for cascading
 
-- [ ] **Task 3: Implement Client Selector** (AC: 1, 2)
-  - [ ] 3.1 Create `components/entry/ClientSelector.tsx`
-  - [ ] 3.2 Fetch active clients on mount
-  - [ ] 3.3 Implement selection handling
-  - [ ] 3.4 Add loading state
+- [x] **Task 3: Implement Client Selector** (AC: 1, 2)
+  - [x] 3.1 Create `components/entry/ClientSelector.tsx`
+  - [x] 3.2 Fetch active clients on mount
+  - [x] 3.3 Implement selection handling
+  - [x] 3.4 Add loading state
 
-- [ ] **Task 4: Implement Project Selector** (AC: 2, 3, 5, 6, 7)
-  - [ ] 4.1 Create `components/entry/ProjectSelector.tsx`
-  - [ ] 4.2 Fetch projects when client changes
-  - [ ] 4.3 Handle empty state
-  - [ ] 4.4 Disable when no client selected
+- [x] **Task 4: Implement Project Selector** (AC: 2, 3, 5, 6, 7)
+  - [x] 4.1 Create `components/entry/ProjectSelector.tsx`
+  - [x] 4.2 Fetch projects when client changes
+  - [x] 4.3 Handle empty state
+  - [x] 4.4 Disable when no client selected
 
-- [ ] **Task 5: Implement Job Selector** (AC: 3, 4, 5, 6, 7)
-  - [ ] 5.1 Create `components/entry/JobSelector.tsx`
-  - [ ] 5.2 Fetch jobs when project changes
-  - [ ] 5.3 Format display as "{job_no} - {name}"
-  - [ ] 5.4 Handle empty state
+- [x] **Task 5: Implement Job Selector** (AC: 3, 4, 5, 6, 7)
+  - [x] 5.1 Create `components/entry/JobSelector.tsx`
+  - [x] 5.2 Fetch jobs when project changes
+  - [x] 5.3 Format display as "{job_no} - {name}"
+  - [x] 5.4 Handle empty state
 
-- [ ] **Task 6: Implement Cascading Logic** (AC: 4, 5)
-  - [ ] 6.1 Clear project when client changes
-  - [ ] 6.2 Clear job when project changes
-  - [ ] 6.3 Update form values correctly
+- [x] **Task 6: Implement Cascading Logic** (AC: 4, 5)
+  - [x] 6.1 Clear project when client changes
+  - [x] 6.2 Clear job when project changes
+  - [x] 6.3 Update form values correctly
 
-- [ ] **Task 7: Create Server Actions for Data Fetching** (AC: 2, 3)
-  - [ ] 7.1 Create `actions/entry.ts` with getActiveClients
-  - [ ] 7.2 Add getProjectsByClient action
-  - [ ] 7.3 Add getJobsByProject action
+- [x] **Task 7: Create Server Actions for Data Fetching** (AC: 2, 3)
+  - [x] 7.1 Create `actions/entry.ts` with getActiveClients
+  - [x] 7.2 Add getProjectsByClient action
+  - [x] 7.3 Add getJobsByProject action
 
-- [ ] **Task 8: Add TanStack Query Integration** (AC: 7)
-  - [ ] 8.1 Set up QueryClient provider for entry page
-  - [ ] 8.2 Create query hooks for clients, projects, jobs
-  - [ ] 8.3 Implement caching strategy
+- [x] **Task 8: Add TanStack Query Integration** (AC: 7)
+  - [x] 8.1 Set up QueryClient provider for entry page
+  - [x] 8.2 Create query hooks for clients, projects, jobs
+  - [x] 8.3 Implement caching strategy
 
 ## Dev Notes
 
@@ -695,28 +695,70 @@ npm install @tanstack/react-query
 
 ## Definition of Done
 
-- [ ] Entry page created at /entry
-- [ ] Client dropdown shows active clients
-- [ ] Project dropdown enabled after client selection
-- [ ] Job dropdown enabled after project selection
-- [ ] Changing client clears project and job
-- [ ] Changing project clears job
-- [ ] Empty states display correctly
-- [ ] Loading states show during data fetch
-- [ ] TanStack Query properly configured
-- [ ] All selectors have proper validation errors
-- [ ] Form integrates with React Hook Form
+- [x] Entry page created at /entry
+- [x] Client dropdown shows active clients
+- [x] Project dropdown enabled after client selection
+- [x] Job dropdown enabled after project selection
+- [x] Changing client clears project and job
+- [x] Changing project clears job
+- [x] Empty states display correctly
+- [x] Loading states show during data fetch
+- [x] TanStack Query properly configured
+- [x] All selectors have proper validation errors
+- [x] Form integrates with React Hook Form
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. Installed @tanstack/react-query for Entry page client-side caching
+2. Created time-entry schema with Zod validation for cascading selectors
+3. Implemented server actions (getActiveClients, getProjectsByClient, getJobsByProject) with ActionResult pattern
+4. Created TanStack Query hooks (useClients, useProjects, useJobs) with proper caching
+5. Built ClientSelector, ProjectSelector, JobSelector components with loading/empty states
+6. Implemented cascading logic: client change clears project/job, project change clears job
+7. Created Entry page layout with QueryClientProvider
+8. Added comprehensive unit tests for schema, hooks, and selectors
+9. All 641 tests pass, build successful, lint clean
+
+### Code Review Fixes (2026-01-01)
+
+1. **M1 - UUID Validation**: Added UUID format validation to `getProjectsByClient` and `getJobsByProject` server actions
+2. **M2 - Schema Naming**: Accepted `time-entry.schema.ts` naming as more descriptive than generic `entry.schema.ts`
+3. **M3 - Retry Button**: Added retry functionality to ClientSelector error state with `refetch()` button
+4. **M4 - Error Handling**: Added consistent error handling with retry buttons to ProjectSelector and JobSelector
+5. Added 8 new unit tests for error states and retry functionality (35 selector tests total)
 
 ### File List
 
-_To be filled with all created/modified files_
+**New Files:**
+- src/schemas/time-entry.schema.ts
+- src/schemas/time-entry.schema.test.ts
+- src/actions/entry.ts
+- src/app/(app)/entry/layout.tsx
+- src/app/(app)/entry/page.tsx (updated from placeholder)
+- src/app/(app)/entry/providers.tsx
+- src/app/(app)/entry/components/TimeEntryForm.tsx
+- src/app/(app)/entry/components/TimeEntryForm.test.tsx
+- src/hooks/use-entry-data.ts
+- src/hooks/use-entry-data.test.tsx
+- src/components/entry/ClientSelector.tsx
+- src/components/entry/ClientSelector.test.tsx
+- src/components/entry/ProjectSelector.tsx
+- src/components/entry/ProjectSelector.test.tsx
+- src/components/entry/JobSelector.tsx
+- src/components/entry/JobSelector.test.tsx
+- src/components/entry/index.ts
+
+**Modified Files:**
+- package.json (added @tanstack/react-query)
+- package-lock.json
+
+## Change Log
+
+- 2026-01-01: Story 4.2 implemented - Cascading Client → Project → Job selectors with TanStack Query
+- 2026-01-01: Code review completed - Fixed 4 issues (UUID validation, error handling, retry buttons)

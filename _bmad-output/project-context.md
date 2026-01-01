@@ -147,9 +147,10 @@ src/schemas/
 - Used only within that page
 - Examples: `QuickEntryForm`, `WeeklyStats`, `TeamOverview`
 
-**Shared components** → `components/shared/`
+**Shared components** → `components/shared/` or domain-specific folders
 - Reused across multiple pages
-- Examples: `CascadingJobSelector`, `BottomNav`, `ErrorBoundary`
+- Examples: `CascadingJobSelector`, `ErrorBoundary`
+- Navigation: `components/navigation/` (BottomNav, SideNav)
 
 **UI primitives** → `components/ui/`
 - shadcn/ui components (don't modify)

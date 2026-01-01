@@ -68,7 +68,7 @@ development_status:
 
   # Epic 4: Quick Time Entry (10 stories)
   epic-4: in-progress
-  4-1-bottom-navigation-component: ready-for-dev
+  4-1-bottom-navigation-component: done
   4-2-time-entry-form-cascading-selectors: ready-for-dev
   4-3-time-entry-form-service-task-duration: ready-for-dev
   4-4-time-entry-form-date-selection-submission: ready-for-dev

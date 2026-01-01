@@ -3,14 +3,38 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ClientSelector, ProjectSelector, JobSelector } from '@/components/entry';
-import { cascadingSelectorsSchema, type CascadingSelectorsInput } from '@/schemas/time-entry.schema';
+import { z } from 'zod';
+import {
+  ClientSelector,
+  ProjectSelector,
+  JobSelector,
+  ServiceSelector,
+  TaskSelector,
+  DurationInput,
+} from '@/components/entry';
+import {
+  cascadingSelectorsSchema,
+  durationHoursSchema,
+} from '@/schemas/time-entry.schema';
+
+/**
+ * Partial form schema for Stories 4.2 + 4.3
+ * Story 4.4 will add entryDate and notes
+ */
+const partialFormSchema = cascadingSelectorsSchema.extend({
+  serviceId: z.string().uuid('กรุณาเลือก Service'),
+  taskId: z.string().uuid().nullable().optional(),
+  durationHours: durationHoursSchema,
+});
+
+type PartialFormInput = z.infer<typeof partialFormSchema>;
 
 /**
  * Time Entry Form Component
  * Story 4.2: Cascading Client → Project → Job selectors
+ * Story 4.3: Service, Task, and Duration fields
  *
- * Note: Service, Task, Duration, Date fields will be added in Stories 4.3 and 4.4
+ * Note: Date and Submit will be added in Story 4.4
  */
 export function TimeEntryForm() {
   // Local state for cascading dependency tracking
@@ -18,12 +42,15 @@ export function TimeEntryForm() {
   const [projectId, setProjectId] = useState<string | null>(null);
 
   // Form state with React Hook Form + Zod validation
-  const form = useForm<CascadingSelectorsInput>({
-    resolver: zodResolver(cascadingSelectorsSchema),
+  const form = useForm<PartialFormInput>({
+    resolver: zodResolver(partialFormSchema),
     defaultValues: {
       clientId: '',
       projectId: '',
       jobId: '',
+      serviceId: '',
+      taskId: null,
+      durationHours: 0,
     },
   });
 
@@ -81,10 +108,30 @@ export function TimeEntryForm() {
         />
       </div>
 
-      {/* Placeholder for Service, Task, Duration fields - Story 4.3 */}
-      <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-md">
-        <p>Service, Task, and Duration fields will be added in Story 4.3</p>
+      {/* Divider */}
+      <div className="border-t pt-6" />
+
+      {/* Service & Task - Story 4.3 */}
+      <div className="space-y-4">
+        <ServiceSelector
+          value={form.watch('serviceId')}
+          onChange={(val) => form.setValue('serviceId', val, { shouldValidate: true })}
+          error={form.formState.errors.serviceId?.message}
+        />
+
+        <TaskSelector
+          value={form.watch('taskId') ?? null}
+          onChange={(val) => form.setValue('taskId', val)}
+          error={form.formState.errors.taskId?.message}
+        />
       </div>
+
+      {/* Duration - Story 4.3 */}
+      <DurationInput
+        value={form.watch('durationHours')}
+        onChange={(val) => form.setValue('durationHours', val, { shouldValidate: true })}
+        error={form.formState.errors.durationHours?.message}
+      />
 
       {/* Placeholder for Date and Submit - Story 4.4 */}
       <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-md">

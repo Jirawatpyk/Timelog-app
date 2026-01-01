@@ -9,11 +9,23 @@ vi.mock('@/hooks/use-entry-data', () => ({
   useClients: vi.fn(),
   useProjects: vi.fn(),
   useJobs: vi.fn(),
+  useServices: vi.fn(),
+  useTasks: vi.fn(),
 }));
 
 const mockClients = [
   { id: 'client-1', name: 'Client A', active: true, created_at: '', updated_at: '' },
   { id: 'client-2', name: 'Client B', active: true, created_at: '', updated_at: '' },
+];
+
+const mockServices = [
+  { id: 'service-1', name: 'Development', active: true, created_at: '', updated_at: '' },
+  { id: 'service-2', name: 'Testing', active: true, created_at: '', updated_at: '' },
+];
+
+const mockTasks = [
+  { id: 'task-1', name: 'Coding', active: true, created_at: '', updated_at: '' },
+  { id: 'task-2', name: 'Review', active: true, created_at: '', updated_at: '' },
 ];
 
 function createWrapper() {
@@ -56,6 +68,21 @@ describe('TimeEntryForm', () => {
       isError: false,
       error: null,
     } as ReturnType<typeof useEntryData.useJobs>);
+
+    // Story 4.3: Service and Task hooks
+    vi.mocked(useEntryData.useServices).mockReturnValue({
+      data: mockServices,
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof useEntryData.useServices>);
+
+    vi.mocked(useEntryData.useTasks).mockReturnValue({
+      data: mockTasks,
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof useEntryData.useTasks>);
   });
 
   it('renders the form with all selectors', () => {
@@ -65,6 +92,9 @@ describe('TimeEntryForm', () => {
     expect(screen.getByTestId('client-selector')).toBeInTheDocument();
     expect(screen.getByTestId('project-selector')).toBeInTheDocument();
     expect(screen.getByTestId('job-selector')).toBeInTheDocument();
+    // Story 4.3 components
+    expect(screen.getByTestId('service-selector')).toBeInTheDocument();
+    expect(screen.getByTestId('task-selector')).toBeInTheDocument();
   });
 
   it('initially shows placeholder text for disabled selectors (AC1)', () => {
@@ -109,11 +139,40 @@ describe('TimeEntryForm', () => {
     expect(useEntryData.useJobs).toHaveBeenCalledWith(null);
   });
 
-  it('renders placeholder sections for future stories', () => {
+  it('renders placeholder section for Story 4.4', () => {
     render(<TimeEntryForm />, { wrapper: createWrapper() });
 
-    // Check that placeholder text exists for Story 4.3 and 4.4
-    expect(screen.getByText(/Story 4.3/)).toBeInTheDocument();
+    // Story 4.3 is now implemented, only 4.4 placeholder remains
     expect(screen.getByText(/Story 4.4/)).toBeInTheDocument();
+  });
+
+  // Story 4.3 tests
+  it('renders duration input with preset buttons', () => {
+    render(<TimeEntryForm />, { wrapper: createWrapper() });
+
+    // Check duration preset buttons exist
+    expect(screen.getByRole('button', { name: '0.5h' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1h' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '2h' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '4h' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '8h' })).toBeInTheDocument();
+  });
+
+  it('renders service selector as required field', () => {
+    render(<TimeEntryForm />, { wrapper: createWrapper() });
+
+    expect(screen.getByText('Service *')).toBeInTheDocument();
+  });
+
+  it('renders task selector as optional field', () => {
+    render(<TimeEntryForm />, { wrapper: createWrapper() });
+
+    expect(screen.getByText('(Optional)')).toBeInTheDocument();
+  });
+
+  it('renders duration field as required', () => {
+    render(<TimeEntryForm />, { wrapper: createWrapper() });
+
+    expect(screen.getByText('Duration (hours) *')).toBeInTheDocument();
   });
 });

@@ -5,6 +5,8 @@ import {
   getActiveClients,
   getProjectsByClient,
   getJobsByProject,
+  getActiveServices,
+  getActiveTasks,
 } from '@/actions/entry';
 
 /**
@@ -53,5 +55,35 @@ export function useJobs(projectId: string | null) {
       return result.data;
     },
     enabled: !!projectId,
+  });
+}
+
+/**
+ * Hook to fetch active services
+ * Story 4.3: Used in ServiceSelector
+ */
+export function useServices() {
+  return useQuery({
+    queryKey: ['services', 'active'],
+    queryFn: async () => {
+      const result = await getActiveServices();
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+  });
+}
+
+/**
+ * Hook to fetch active tasks
+ * Story 4.3: Used in TaskSelector (optional field)
+ */
+export function useTasks() {
+  return useQuery({
+    queryKey: ['tasks', 'active'],
+    queryFn: async () => {
+      const result = await getActiveTasks();
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
   });
 }

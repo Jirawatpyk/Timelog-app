@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import type { ActionResult, Client, Project, Job } from '@/types/domain';
+import type { ActionResult, Client, Project, Job, Service, Task } from '@/types/domain';
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -81,6 +81,46 @@ export async function getJobsByProject(
     .eq('project_id', projectId)
     .eq('active', true)
     .order('job_no', { nullsFirst: false })
+    .order('name');
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data: data ?? [] };
+}
+
+/**
+ * Get all active services
+ * Used in Story 4.3 for the Service dropdown
+ */
+export async function getActiveServices(): Promise<ActionResult<Service[]>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const { data, error } = await supabase
+    .from('services')
+    .select('*')
+    .eq('active', true)
+    .order('name');
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data: data ?? [] };
+}
+
+/**
+ * Get all active tasks
+ * Used in Story 4.3 for the Task dropdown (optional field)
+ */
+export async function getActiveTasks(): Promise<ActionResult<Task[]>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('active', true)
     .order('name');
 
   if (error) return { success: false, error: error.message };

@@ -64,7 +64,7 @@ development_status:
   3-3-task-management: done
   3-4-soft-delete-protection: done
   3-5-master-data-admin-ui-layout: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
   # Epic 4: Quick Time Entry (10 stories)
   epic-4: in-progress

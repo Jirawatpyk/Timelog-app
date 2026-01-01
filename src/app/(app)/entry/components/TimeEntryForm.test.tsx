@@ -139,11 +139,18 @@ describe('TimeEntryForm', () => {
     expect(useEntryData.useJobs).toHaveBeenCalledWith(null);
   });
 
-  it('renders placeholder section for Story 4.4', () => {
+  it('renders date picker from Story 4.4', () => {
     render(<TimeEntryForm />, { wrapper: createWrapper() });
 
-    // Story 4.3 is now implemented, only 4.4 placeholder remains
-    expect(screen.getByText(/Story 4.4/)).toBeInTheDocument();
+    // Story 4.4: DatePicker is now implemented
+    expect(screen.getByText('Date *')).toBeInTheDocument();
+  });
+
+  it('renders submit button from Story 4.4', () => {
+    render(<TimeEntryForm />, { wrapper: createWrapper() });
+
+    // Story 4.4: Submit button is now implemented
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 
   // Story 4.3 tests

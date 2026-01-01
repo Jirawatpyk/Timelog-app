@@ -4,3 +4,6 @@ export { JobSelector } from './JobSelector';
 export { ServiceSelector } from './ServiceSelector';
 export { TaskSelector } from './TaskSelector';
 export { DurationInput } from './DurationInput';
+export { DatePicker } from './DatePicker';
+export { SubmitButton } from './SubmitButton';
+export { SuccessAnimation } from './SuccessAnimation';

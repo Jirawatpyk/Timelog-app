@@ -91,16 +91,16 @@ describe('DurationInput', () => {
       expect(input).toHaveAttribute('max', '24');
     });
 
-    it('shows ชม. suffix', () => {
+    it('shows hrs suffix', () => {
       render(<DurationInput value={0} onChange={mockOnChange} />);
 
-      expect(screen.getByText('ชม.')).toBeInTheDocument();
+      expect(screen.getByText('hrs')).toBeInTheDocument();
     });
 
     it('shows helper text', () => {
       render(<DurationInput value={0} onChange={mockOnChange} />);
 
-      expect(screen.getByText(/ใส่เป็นชั่วโมง/)).toBeInTheDocument();
+      expect(screen.getByText(/Enter hours/)).toBeInTheDocument();
     });
 
     it('rounds to nearest 0.25 on blur', async () => {

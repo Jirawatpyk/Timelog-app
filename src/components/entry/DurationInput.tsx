@@ -98,7 +98,7 @@ export function DurationInput({ value, onChange, error }: DurationInputProps) {
           )}
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-          ชม.
+          hrs
         </span>
       </div>
 
@@ -106,7 +106,7 @@ export function DurationInput({ value, onChange, error }: DurationInputProps) {
 
       {/* Helper text */}
       <p className="text-xs text-muted-foreground">
-        ใส่เป็นชั่วโมง (เช่น 1.5 = 1 ชม. 30 นาที)
+        Enter hours (e.g., 1.5 = 1 hr 30 min)
       </p>
     </div>
   );

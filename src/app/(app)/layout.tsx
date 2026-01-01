@@ -19,7 +19,7 @@ import Link from 'next/link';
  *
  * Story 4.12: Desktop Header Enhancement
  * - Desktop: Full UserProfileDropdown (name + role badge) + ThemeSwitcher in header
- * - Mobile: Compact UserProfileDropdown (short name only), ThemeSwitcher in footer
+ * - Mobile: Compact UserProfileDropdown (short name only) + ThemeSwitcher in header (consistent)
  */
 export default function ProtectedLayout({
   children,
@@ -52,8 +52,9 @@ export default function ProtectedLayout({
                       <UserProfileDropdown />
                     </div>
 
-                    {/* Mobile: Compact UserProfileDropdown (AC 5 - consistent with desktop) */}
-                    <div className="md:hidden">
+                    {/* Mobile: ThemeSwitcher + Compact UserProfileDropdown (consistent with desktop) */}
+                    <div className="md:hidden flex items-center gap-2">
+                      <ThemeSwitcher />
                       <UserProfileDropdown compact />
                     </div>
                   </>
@@ -65,11 +66,6 @@ export default function ProtectedLayout({
             <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
               {children}
             </div>
-
-            {/* Footer - Mobile ThemeSwitcher only (AC 7) */}
-            <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs py-4 md:hidden">
-              <ThemeSwitcher />
-            </footer>
           </div>
         </main>
       </div>

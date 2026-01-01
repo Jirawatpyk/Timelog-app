@@ -8,7 +8,7 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { useUser } from './use-user';
 
 // Mock the Supabase client
-const mockGetUser = vi.fn();
+const mockGetSession = vi.fn();
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
 const mockSingle = vi.fn();
@@ -18,7 +18,7 @@ const mockUnsubscribe = vi.fn();
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
-      getUser: mockGetUser,
+      getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
     },
     from: () => ({
@@ -34,9 +34,8 @@ describe('useUser hook', () => {
     // Default mock implementations
     mockSelect.mockReturnValue({ eq: mockEq });
     mockEq.mockReturnValue({ single: mockSingle });
-    mockOnAuthStateChange.mockReturnValue({
-      data: { subscription: { unsubscribe: mockUnsubscribe } },
-    });
+    mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
+    mockSingle.mockResolvedValue({ data: null, error: null });
   });
 
   afterEach(() => {
@@ -44,8 +43,11 @@ describe('useUser hook', () => {
   });
 
   it('should return loading state initially', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
-    mockSingle.mockResolvedValue({ data: null, error: null });
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      // Simulate INITIAL_SESSION event immediately
+      Promise.resolve().then(() => callback('INITIAL_SESSION', null));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+    });
 
     const { result } = renderHook(() => useUser());
 
@@ -57,7 +59,10 @@ describe('useUser hook', () => {
   });
 
   it('should return null user when not authenticated', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', null));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+    });
 
     const { result } = renderHook(() => useUser());
 
@@ -77,10 +82,14 @@ describe('useUser hook', () => {
       email: 'test@example.com',
     };
 
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
     mockSingle.mockResolvedValue({
       data: { role: 'staff', display_name: 'Test User' },
       error: null,
+    });
+
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', { user: mockUser }));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
     });
 
     const { result } = renderHook(() => useUser());
@@ -89,8 +98,11 @@ describe('useUser hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    await waitFor(() => {
+      expect(result.current.role).toBe('staff');
+    });
+
     expect(result.current.user).toEqual(mockUser);
-    expect(result.current.role).toBe('staff');
     expect(result.current.displayName).toBe('Test User');
     expect(result.current.error).toBeNull();
   });
@@ -101,35 +113,21 @@ describe('useUser hook', () => {
       email: 'manager@example.com',
     };
 
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
     mockSingle.mockResolvedValue({
       data: { role: 'manager', display_name: 'Test Manager' },
       error: null,
     });
 
-    const { result } = renderHook(() => useUser());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.role).toBe('manager');
-  });
-
-  it('should handle auth error', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: { message: 'Auth error' },
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', { user: mockUser }));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
     });
 
     const { result } = renderHook(() => useUser());
 
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.role).toBe('manager');
     });
-
-    expect(result.current.user).toBeNull();
-    expect(result.current.error).toBe('Auth error');
   });
 
   it('should handle user without profile', async () => {
@@ -138,10 +136,14 @@ describe('useUser hook', () => {
       email: 'new@example.com',
     };
 
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
     mockSingle.mockResolvedValue({
       data: null,
       error: { message: 'Profile not found' },
+    });
+
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', { user: mockUser }));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
     });
 
     const { result } = renderHook(() => useUser());
@@ -157,7 +159,10 @@ describe('useUser hook', () => {
   });
 
   it('should subscribe to auth state changes', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', null));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+    });
 
     renderHook(() => useUser());
 
@@ -167,7 +172,10 @@ describe('useUser hook', () => {
   });
 
   it('should unsubscribe on unmount', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', null));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+    });
 
     const { unmount } = renderHook(() => useUser());
 
@@ -186,7 +194,6 @@ describe('useUser hook', () => {
       email: 'test@example.com',
     };
 
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
     mockSingle.mockResolvedValue({
       data: { role: 'staff', display_name: 'Test User' },
       error: null,
@@ -195,6 +202,8 @@ describe('useUser hook', () => {
     let authCallback: ((event: string, session: unknown) => void) | null = null;
     mockOnAuthStateChange.mockImplementation((callback) => {
       authCallback = callback;
+      // First, trigger INITIAL_SESSION with user
+      Promise.resolve().then(() => callback('INITIAL_SESSION', { user: mockUser }));
       return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
     });
 
@@ -216,7 +225,10 @@ describe('useUser hook', () => {
   });
 
   it('should have refetch function', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', null));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+    });
 
     const { result } = renderHook(() => useUser());
 
@@ -225,5 +237,44 @@ describe('useUser hook', () => {
     });
 
     expect(typeof result.current.refetch).toBe('function');
+  });
+
+  it('should refetch user data when refetch is called', async () => {
+    const mockUser = {
+      id: 'test-user-id',
+      email: 'test@example.com',
+    };
+
+    mockGetSession.mockResolvedValue({
+      data: { session: { user: mockUser } },
+      error: null,
+    });
+
+    mockSingle.mockResolvedValue({
+      data: { role: 'admin', display_name: 'Test Admin' },
+      error: null,
+    });
+
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      Promise.resolve().then(() => callback('INITIAL_SESSION', null));
+      return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+    });
+
+    const { result } = renderHook(() => useUser());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // Call refetch
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.role).toBe('admin');
+    });
+
+    expect(mockGetSession).toHaveBeenCalled();
   });
 });

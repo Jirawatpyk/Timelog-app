@@ -56,7 +56,7 @@ export default async function MasterDataPage({ searchParams }: MasterDataPagePro
   const activeTab: TabValue = isValidTab(params.tab) ? params.tab : 'services';
 
   return (
-    <div className="container py-6">
+    <div className="py-6">
       <h1 className="text-2xl font-bold mb-6">Master Data Management</h1>
 
       <Tabs value={activeTab} className="w-full">

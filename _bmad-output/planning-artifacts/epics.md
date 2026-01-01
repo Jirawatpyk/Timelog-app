@@ -1082,6 +1082,77 @@ So that **I don't lose my work**.
 
 ---
 
+### Story 4.11: Desktop Sidebar Navigation
+
+As a **user on desktop viewport**,
+I want **a persistent sidebar navigation**,
+So that **I can navigate between sections on larger screens with better visibility and access**.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in on desktop viewport (≥768px)
+**When** I view any protected page
+**Then** I see a persistent sidebar on the left side
+**And** The sidebar shows navigation items with icons and labels
+**And** The sidebar does not appear on mobile viewport (hidden below md:)
+
+**Given** I am authenticated with a specific role
+**When** I view the sidebar
+**Then** I see navigation items appropriate to my role (same as Bottom Navigation)
+
+**Given** I am on a specific page
+**When** I view the sidebar
+**Then** The current page's navigation item is highlighted
+**And** Active state uses primary color styling
+
+**Given** I click a sidebar navigation item
+**When** The navigation completes
+**Then** I am taken to that page without full page reload (client-side navigation)
+**And** The sidebar remains visible
+
+**Given** The sidebar is visible on desktop
+**When** I view the main content area
+**Then** The content is pushed to the right to accommodate the sidebar
+**And** Layout does not overlap or create horizontal scroll
+
+---
+
+### Story 4.12: Desktop Header Enhancement
+
+As a **user on desktop viewport**,
+I want **an enhanced header with user profile and quick actions**,
+So that **I can see my identity, role, and access common actions easily**.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in on desktop viewport (≥768px)
+**When** I view the header
+**Then** I see my display name or email
+**And** I see my role badge (Staff, Manager, Admin, Super Admin)
+**And** The profile section is positioned on the right side of the header
+
+**Given** I am on desktop viewport
+**When** I click on my profile section in the header
+**Then** A dropdown menu appears with:
+- My display name and email
+- My role
+- "ออกจากระบบ" (Sign Out) option
+
+**Given** The profile dropdown is open
+**When** I click "ออกจากระบบ"
+**Then** I am signed out and redirected to login page
+
+**Given** I am on mobile viewport (<768px)
+**When** I view the header
+**Then** The enhanced profile section is hidden
+**And** The existing AuthButton behavior is maintained
+
+**Given** I am on desktop viewport
+**When** I view the header
+**Then** ThemeSwitcher is visible in the header (moved from footer on desktop)
+
+---
+
 ## Epic 5: Personal Dashboard
 
 **Epic Goal:** Employees เห็น entries ของตัวเอง พร้อม stats และสามารถ filter/search ได้

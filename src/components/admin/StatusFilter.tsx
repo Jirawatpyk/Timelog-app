@@ -21,12 +21,13 @@ export type StatusFilterValue = 'all' | 'active' | 'inactive';
 interface StatusFilterProps {
   value: StatusFilterValue;
   onChange: (value: StatusFilterValue) => void;
+  className?: string;
 }
 
-export function StatusFilter({ value, onChange }: StatusFilterProps) {
+export function StatusFilter({ value, onChange, className }: StatusFilterProps) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[140px]">
+      <SelectTrigger className={className ?? 'w-[140px]'}>
         <SelectValue placeholder="Status" />
       </SelectTrigger>
       <SelectContent>

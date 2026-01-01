@@ -183,20 +183,26 @@ export function TasksListClient({ initialTasks }: TasksListClientProps) {
 
   return (
     <div className="space-y-4" data-testid="tasks-list">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex flex-col sm:flex-row gap-2 flex-1 max-w-md">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search tasks..."
-          />
-          <StatusFilter value={statusFilter} onChange={setStatusFilter} />
-        </div>
-        <AddTaskDialog
-          open={addDialogOpen}
-          onOpenChange={setAddDialogOpen}
-          onTaskCreated={handleTaskCreated}
+      {/* Toolbar - Mobile: Search on top, Filter+Add below | Desktop: all in one row */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search tasks..."
+          className="w-full sm:flex-1 sm:max-w-xs"
         />
+        <div className="flex gap-2 justify-between sm:justify-end">
+          <StatusFilter
+            value={statusFilter}
+            onChange={setStatusFilter}
+            className="flex-1 sm:flex-none sm:w-[140px]"
+          />
+          <AddTaskDialog
+            open={addDialogOpen}
+            onOpenChange={setAddDialogOpen}
+            onTaskCreated={handleTaskCreated}
+          />
+        </div>
       </div>
 
       {filteredTasks.length === 0 ? (

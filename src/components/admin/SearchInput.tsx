@@ -13,12 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
 import { useDebouncedCallback } from 'use-debounce';
+import { cn } from '@/lib/utils';
 
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   debounceMs?: number;
+  className?: string;
 }
 
 export function SearchInput({
@@ -26,6 +28,7 @@ export function SearchInput({
   onChange,
   placeholder = 'Search...',
   debounceMs = 300,
+  className,
 }: SearchInputProps) {
   const [localValue, setLocalValue] = useState(value);
 
@@ -47,7 +50,7 @@ export function SearchInput({
   };
 
   return (
-    <div className="relative">
+    <div className={cn('relative', className)}>
       <Search
         data-testid="search-icon"
         className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"

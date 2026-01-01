@@ -4,6 +4,7 @@ import { AuthStateListener } from '@/components/shared/auth-state-listener';
 import { UserProfileDropdown } from '@/components/shared/user-profile-dropdown';
 import { BottomNav, Sidebar } from '@/components/navigation';
 import { hasEnvVars } from '@/lib/utils';
+import { CalendarClock } from 'lucide-react';
 import Link from 'next/link';
 
 /**
@@ -34,14 +35,15 @@ export default function ProtectedLayout({
         <Sidebar />
 
         {/* Main content area with bottom padding for mobile nav */}
-        <main className="flex-1 flex flex-col items-center pb-20 md:pb-0">
-          <div className="flex-1 w-full flex flex-col gap-20 items-center">
+        <main className="flex-1 flex flex-col pb-20 md:pb-0">
+          <div className="flex-1 w-full flex flex-col gap-6">
             {/* Top navigation bar */}
             <nav className="w-full flex border-b border-b-foreground/10 h-16">
               <div className="w-full flex justify-between items-center p-3 px-5 text-sm">
-                <div className="flex items-center font-semibold">
-                  <Link href={'/'}>Timelog</Link>
-                </div>
+                <Link href={'/'} className="flex items-center gap-2 font-semibold">
+                  <CalendarClock className="h-5 w-5 text-primary" />
+                  <span>Timelog</span>
+                </Link>
                 {!hasEnvVars ? (
                   <EnvVarWarning />
                 ) : (
@@ -63,7 +65,7 @@ export default function ProtectedLayout({
             </nav>
 
             {/* Page content */}
-            <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
+            <div className="flex-1 w-full flex flex-col gap-6 px-5 md:px-8">
               {children}
             </div>
           </div>

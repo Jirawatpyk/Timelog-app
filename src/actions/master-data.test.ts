@@ -15,6 +15,9 @@ import {
   createTask,
   updateTask,
   toggleTaskActive,
+  checkServiceUsage,
+  checkTaskUsage,
+  checkClientUsage,
 } from './master-data';
 
 // Mock Supabase client
@@ -815,6 +818,340 @@ describe('Master Data Server Actions', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toBe('Update failed');
+      }
+    });
+  });
+
+  /**
+   * Usage Check Actions Tests
+   * Story 3.4: Soft Delete Protection (AC: 1)
+   */
+  describe('checkServiceUsage', () => {
+    it('returns usage count when service is used in time entries', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'time_entries') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                count: 5,
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await checkServiceUsage(VALID_UUID);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.used).toBe(true);
+        expect(result.data.count).toBe(5);
+      }
+    });
+
+    it('returns zero count when service is not used', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'time_entries') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                count: 0,
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await checkServiceUsage(VALID_UUID);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.used).toBe(false);
+        expect(result.data.count).toBe(0);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await checkServiceUsage('not-a-uuid');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await checkServiceUsage(VALID_UUID);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+  });
+
+  describe('checkTaskUsage', () => {
+    it('returns usage count when task is used in time entries', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'time_entries') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                count: 3,
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await checkTaskUsage(VALID_UUID);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.used).toBe(true);
+        expect(result.data.count).toBe(3);
+      }
+    });
+
+    it('returns zero count when task is not used', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'time_entries') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                count: 0,
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await checkTaskUsage(VALID_UUID);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.used).toBe(false);
+        expect(result.data.count).toBe(0);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await checkTaskUsage('not-a-uuid');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+  });
+
+  describe('checkClientUsage', () => {
+    it('returns usage count when client has time entries via jobs', async () => {
+      const mockIn = vi.fn();
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'projects') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [{ id: 'proj-1' }, { id: 'proj-2' }],
+                error: null,
+              }),
+            }),
+          };
+        }
+        if (table === 'jobs') {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: [{ id: 'job-1' }, { id: 'job-2' }],
+                error: null,
+              }),
+            }),
+          };
+        }
+        if (table === 'time_entries') {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: mockIn.mockResolvedValue({
+                count: 10,
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await checkClientUsage(VALID_UUID);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.used).toBe(true);
+        expect(result.data.count).toBe(10);
+      }
+    });
+
+    it('returns zero when client has no projects', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'projects') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await checkClientUsage(VALID_UUID);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.used).toBe(false);
+        expect(result.data.count).toBe(0);
+      }
+    });
+
+    it('returns zero when client has no jobs', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'projects') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [{ id: 'proj-1' }],
+                error: null,
+              }),
+            }),
+          };
+        }
+        if (table === 'jobs') {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await checkClientUsage(VALID_UUID);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.used).toBe(false);
+        expect(result.data.count).toBe(0);
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await checkClientUsage('not-a-uuid');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
       }
     });
   });

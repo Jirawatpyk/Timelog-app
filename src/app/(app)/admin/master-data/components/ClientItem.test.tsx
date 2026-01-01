@@ -1,6 +1,7 @@
 /**
  * Tests for ClientItem Component
  * Story 3.2: Client Management (AC: 4, 5, 6)
+ * Story 3.4: Soft Delete Protection (AC: 1)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -11,9 +12,11 @@ import type { Client } from '@/types/domain';
 
 // Mock server actions
 const mockToggleClientActive = vi.fn();
+const mockCheckClientUsage = vi.fn();
 
 vi.mock('@/actions/master-data', () => ({
   toggleClientActive: (id: string, active: boolean) => mockToggleClientActive(id, active),
+  checkClientUsage: (id: string) => mockCheckClientUsage(id),
   updateClientAction: vi.fn(),
 }));
 
@@ -30,6 +33,37 @@ vi.mock('@/components/admin/EditClientDialog', () => ({
   EditClientDialog: ({ client }: { client: Client }) => (
     <button data-testid={`edit-dialog-${client.id}`}>Edit</button>
   ),
+}));
+
+// Mock DeactivateConfirmDialog to simplify testing
+vi.mock('@/components/admin/DeactivateConfirmDialog', () => ({
+  DeactivateConfirmDialog: ({
+    open,
+    onConfirm,
+    onOpenChange,
+    itemName,
+    usageCount,
+    isPending,
+  }: {
+    open: boolean;
+    onConfirm: () => void;
+    onOpenChange: (open: boolean) => void;
+    itemName: string;
+    usageCount: number;
+    isPending: boolean;
+  }) =>
+    open ? (
+      <div data-testid="deactivate-dialog">
+        <span data-testid="usage-count">{usageCount}</span>
+        <span data-testid="item-name">{itemName}</span>
+        <button data-testid="confirm-deactivate" onClick={onConfirm} disabled={isPending}>
+          Confirm
+        </button>
+        <button data-testid="cancel-deactivate" onClick={() => onOpenChange(false)}>
+          Cancel
+        </button>
+      </div>
+    ) : null,
 }));
 
 const mockActiveClient: Client = {
@@ -116,69 +150,137 @@ describe('ClientItem', () => {
   });
 
   describe('toggle active status (AC: 5)', () => {
-    it('calls toggleClientActive when switch is clicked', async () => {
-      mockToggleClientActive.mockResolvedValue({ success: true, data: { ...mockActiveClient, active: false } });
+    describe('deactivation with confirmation dialog (Story 3.4 AC: 1)', () => {
+      it('shows confirmation dialog when deactivating', async () => {
+        mockCheckClientUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
 
-      render(<ClientItem client={mockActiveClient} />);
+        render(<ClientItem client={mockActiveClient} />);
 
-      await user.click(screen.getByRole('switch'));
+        await user.click(screen.getByRole('switch'));
 
-      await waitFor(() => {
-        expect(mockToggleClientActive).toHaveBeenCalledWith('1', false);
+        await waitFor(() => {
+          expect(screen.getByTestId('deactivate-dialog')).toBeInTheDocument();
+        });
+      });
+
+      it('shows usage count in confirmation dialog', async () => {
+        mockCheckClientUsage.mockResolvedValue({ success: true, data: { used: true, count: 10 } });
+
+        render(<ClientItem client={mockActiveClient} />);
+
+        await user.click(screen.getByRole('switch'));
+
+        await waitFor(() => {
+          expect(screen.getByTestId('usage-count')).toHaveTextContent('10');
+        });
+      });
+
+      it('calls toggleClientActive after confirming deactivation', async () => {
+        mockCheckClientUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
+        mockToggleClientActive.mockResolvedValue({ success: true, data: { ...mockActiveClient, active: false } });
+
+        render(<ClientItem client={mockActiveClient} />);
+
+        await user.click(screen.getByRole('switch'));
+
+        await waitFor(() => {
+          expect(screen.getByTestId('confirm-deactivate')).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByTestId('confirm-deactivate'));
+
+        await waitFor(() => {
+          expect(mockToggleClientActive).toHaveBeenCalledWith('1', false);
+        });
+      });
+
+      it('does not call toggleClientActive when cancelling', async () => {
+        mockCheckClientUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
+
+        render(<ClientItem client={mockActiveClient} />);
+
+        await user.click(screen.getByRole('switch'));
+
+        await waitFor(() => {
+          expect(screen.getByTestId('cancel-deactivate')).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByTestId('cancel-deactivate'));
+
+        expect(mockToggleClientActive).not.toHaveBeenCalled();
       });
     });
 
-    it('applies optimistic update when toggling', async () => {
-      mockToggleClientActive.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: { ...mockActiveClient, active: false } }), 100))
-      );
+    describe('activation without confirmation', () => {
+      it('calls toggleClientActive directly when activating', async () => {
+        mockToggleClientActive.mockResolvedValue({ success: true, data: { ...mockInactiveClient, active: true } });
 
-      render(<ClientItem client={mockActiveClient} />);
+        render(<ClientItem client={mockInactiveClient} />);
 
-      // Click toggle
-      await user.click(screen.getByRole('switch'));
+        await user.click(screen.getByRole('switch'));
 
-      // Should immediately show unchecked (optimistic update)
-      await waitFor(() => {
-        expect(screen.getByRole('switch')).not.toBeChecked();
+        await waitFor(() => {
+          expect(mockToggleClientActive).toHaveBeenCalledWith('2', true);
+        });
+      });
+
+      it('applies optimistic update when activating', async () => {
+        mockToggleClientActive.mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: { ...mockInactiveClient, active: true } }), 100))
+        );
+
+        render(<ClientItem client={mockInactiveClient} />);
+
+        await user.click(screen.getByRole('switch'));
+
+        // Should immediately show checked (optimistic update)
+        await waitFor(() => {
+          expect(screen.getByRole('switch')).toBeChecked();
+        });
+      });
+
+      it('reverts optimistic update on error', async () => {
+        mockToggleClientActive.mockResolvedValue({ success: false, error: 'Failed to update' });
+
+        render(<ClientItem client={mockInactiveClient} />);
+
+        await user.click(screen.getByRole('switch'));
+
+        await waitFor(() => {
+          // Should revert back to unchecked
+          expect(screen.getByRole('switch')).not.toBeChecked();
+        });
       });
     });
 
-    it('reverts optimistic update on error', async () => {
-      mockToggleClientActive.mockResolvedValue({ success: false, error: 'Failed to update' });
+    describe('pending state', () => {
+      it('disables switch during usage check', async () => {
+        mockCheckClientUsage.mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: { used: false, count: 0 } }), 100))
+        );
 
-      render(<ClientItem client={mockActiveClient} />);
+        render(<ClientItem client={mockActiveClient} />);
 
-      await user.click(screen.getByRole('switch'));
+        await user.click(screen.getByRole('switch'));
 
-      await waitFor(() => {
-        // Should revert back to checked
-        expect(screen.getByRole('switch')).toBeChecked();
+        // Switch should be disabled while checking usage
+        expect(screen.getByRole('switch')).toBeDisabled();
       });
-    });
 
-    it('disables switch during toggle operation', async () => {
-      mockToggleClientActive.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: { ...mockActiveClient, active: false } }), 100))
-      );
+      it('re-enables switch after dialog is shown', async () => {
+        mockCheckClientUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
 
-      render(<ClientItem client={mockActiveClient} />);
+        render(<ClientItem client={mockActiveClient} />);
 
-      await user.click(screen.getByRole('switch'));
+        await user.click(screen.getByRole('switch'));
 
-      // Switch should be disabled while pending
-      expect(screen.getByRole('switch')).toBeDisabled();
-    });
+        await waitFor(() => {
+          expect(screen.getByTestId('deactivate-dialog')).toBeInTheDocument();
+        });
 
-    it('re-enables switch after toggle completes', async () => {
-      mockToggleClientActive.mockResolvedValue({ success: true, data: { ...mockActiveClient, active: false } });
-
-      render(<ClientItem client={mockActiveClient} />);
-
-      await user.click(screen.getByRole('switch'));
-
-      await waitFor(() => {
-        expect(screen.getByRole('switch')).not.toBeDisabled();
+        await waitFor(() => {
+          expect(screen.getByRole('switch')).not.toBeDisabled();
+        });
       });
     });
   });

@@ -1,23 +1,23 @@
 /**
- * Tests for ServiceItem Component
- * Story 3.1: Service Type Management (AC: 4, 5, 6)
+ * Tests for TaskItem Component
+ * Story 3.3: Task Management (AC: 4, 5, 6)
  * Story 3.4: Soft Delete Protection (AC: 1)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ServiceItem } from './ServiceItem';
-import type { Service } from '@/types/domain';
+import { TaskItem } from './TaskItem';
+import type { Task } from '@/types/domain';
 
 // Mock server actions
-const mockToggleServiceActive = vi.fn();
-const mockCheckServiceUsage = vi.fn();
+const mockToggleTaskActive = vi.fn();
+const mockCheckTaskUsage = vi.fn();
 
 vi.mock('@/actions/master-data', () => ({
-  toggleServiceActive: (id: string, active: boolean) => mockToggleServiceActive(id, active),
-  checkServiceUsage: (id: string) => mockCheckServiceUsage(id),
-  updateService: vi.fn(),
+  toggleTaskActive: (id: string, active: boolean) => mockToggleTaskActive(id, active),
+  checkTaskUsage: (id: string) => mockCheckTaskUsage(id),
+  updateTask: vi.fn(),
 }));
 
 // Mock sonner toast
@@ -28,10 +28,10 @@ vi.mock('sonner', () => ({
   },
 }));
 
-// Mock EditServiceDialog
-vi.mock('@/components/admin/EditServiceDialog', () => ({
-  EditServiceDialog: ({ service }: { service: Service }) => (
-    <button data-testid={`edit-dialog-${service.id}`}>Edit</button>
+// Mock EditTaskDialog
+vi.mock('@/components/admin/EditTaskDialog', () => ({
+  EditTaskDialog: ({ task }: { task: Task }) => (
+    <button data-testid={`edit-dialog-${task.id}`}>Edit</button>
   ),
 }));
 
@@ -66,21 +66,21 @@ vi.mock('@/components/admin/DeactivateConfirmDialog', () => ({
     ) : null,
 }));
 
-const mockActiveService: Service = {
+const mockActiveTask: Task = {
   id: '1',
-  name: 'Dubbing',
+  name: 'Translation',
   active: true,
   created_at: '2024-01-01',
 };
 
-const mockInactiveService: Service = {
+const mockInactiveTask: Task = {
   id: '2',
-  name: 'Old Service',
+  name: 'Old Task',
   active: false,
   created_at: '2024-01-01',
 };
 
-describe('ServiceItem', () => {
+describe('TaskItem', () => {
   const user = userEvent.setup();
 
   beforeEach(() => {
@@ -88,63 +88,63 @@ describe('ServiceItem', () => {
   });
 
   describe('rendering', () => {
-    it('renders service name', () => {
-      render(<ServiceItem service={mockActiveService} />);
+    it('renders task name', () => {
+      render(<TaskItem task={mockActiveTask} />);
 
-      expect(screen.getByText('Dubbing')).toBeInTheDocument();
+      expect(screen.getByText('Translation')).toBeInTheDocument();
     });
 
     it('renders edit button', () => {
-      render(<ServiceItem service={mockActiveService} />);
+      render(<TaskItem task={mockActiveTask} />);
 
       expect(screen.getByTestId('edit-dialog-1')).toBeInTheDocument();
     });
 
     it('renders toggle switch', () => {
-      render(<ServiceItem service={mockActiveService} />);
+      render(<TaskItem task={mockActiveTask} />);
 
       expect(screen.getByRole('switch')).toBeInTheDocument();
     });
 
-    it('shows switch as checked for active service', () => {
-      render(<ServiceItem service={mockActiveService} />);
+    it('shows switch as checked for active task', () => {
+      render(<TaskItem task={mockActiveTask} />);
 
       expect(screen.getByRole('switch')).toBeChecked();
     });
 
-    it('shows switch as unchecked for inactive service', () => {
-      render(<ServiceItem service={mockInactiveService} />);
+    it('shows switch as unchecked for inactive task', () => {
+      render(<TaskItem task={mockInactiveTask} />);
 
       expect(screen.getByRole('switch')).not.toBeChecked();
     });
   });
 
-  describe('visual distinction for inactive services (AC: 6)', () => {
-    it('applies opacity to inactive service container', () => {
-      render(<ServiceItem service={mockInactiveService} />);
+  describe('visual distinction for inactive tasks (AC: 6)', () => {
+    it('applies opacity to inactive task container', () => {
+      render(<TaskItem task={mockInactiveTask} />);
 
-      const container = screen.getByTestId('service-item');
+      const container = screen.getByTestId('task-item');
       expect(container).toHaveClass('opacity-50');
     });
 
-    it('does not apply opacity to active service container', () => {
-      render(<ServiceItem service={mockActiveService} />);
+    it('does not apply opacity to active task container', () => {
+      render(<TaskItem task={mockActiveTask} />);
 
-      const container = screen.getByTestId('service-item');
+      const container = screen.getByTestId('task-item');
       expect(container).not.toHaveClass('opacity-50');
     });
 
-    it('applies line-through to inactive service name', () => {
-      render(<ServiceItem service={mockInactiveService} />);
+    it('applies line-through to inactive task name', () => {
+      render(<TaskItem task={mockInactiveTask} />);
 
-      const name = screen.getByTestId('service-name-2');
+      const name = screen.getByTestId('task-name-2');
       expect(name).toHaveClass('line-through');
     });
 
-    it('does not apply line-through to active service name', () => {
-      render(<ServiceItem service={mockActiveService} />);
+    it('does not apply line-through to active task name', () => {
+      render(<TaskItem task={mockActiveTask} />);
 
-      const name = screen.getByTestId('service-name-1');
+      const name = screen.getByTestId('task-name-1');
       expect(name).not.toHaveClass('line-through');
     });
   });
@@ -152,9 +152,9 @@ describe('ServiceItem', () => {
   describe('toggle active status (AC: 5)', () => {
     describe('deactivation with confirmation dialog (Story 3.4 AC: 1)', () => {
       it('shows confirmation dialog when deactivating', async () => {
-        mockCheckServiceUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
+        mockCheckTaskUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
 
-        render(<ServiceItem service={mockActiveService} />);
+        render(<TaskItem task={mockActiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
@@ -164,22 +164,22 @@ describe('ServiceItem', () => {
       });
 
       it('shows usage count in confirmation dialog', async () => {
-        mockCheckServiceUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
+        mockCheckTaskUsage.mockResolvedValue({ success: true, data: { used: true, count: 8 } });
 
-        render(<ServiceItem service={mockActiveService} />);
+        render(<TaskItem task={mockActiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
         await waitFor(() => {
-          expect(screen.getByTestId('usage-count')).toHaveTextContent('5');
+          expect(screen.getByTestId('usage-count')).toHaveTextContent('8');
         });
       });
 
-      it('calls toggleServiceActive after confirming deactivation', async () => {
-        mockCheckServiceUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
-        mockToggleServiceActive.mockResolvedValue({ success: true, data: { ...mockActiveService, active: false } });
+      it('calls toggleTaskActive after confirming deactivation', async () => {
+        mockCheckTaskUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
+        mockToggleTaskActive.mockResolvedValue({ success: true, data: { ...mockActiveTask, active: false } });
 
-        render(<ServiceItem service={mockActiveService} />);
+        render(<TaskItem task={mockActiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
@@ -190,14 +190,14 @@ describe('ServiceItem', () => {
         await user.click(screen.getByTestId('confirm-deactivate'));
 
         await waitFor(() => {
-          expect(mockToggleServiceActive).toHaveBeenCalledWith('1', false);
+          expect(mockToggleTaskActive).toHaveBeenCalledWith('1', false);
         });
       });
 
-      it('does not call toggleServiceActive when cancelling', async () => {
-        mockCheckServiceUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
+      it('does not call toggleTaskActive when cancelling', async () => {
+        mockCheckTaskUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
 
-        render(<ServiceItem service={mockActiveService} />);
+        render(<TaskItem task={mockActiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
@@ -207,29 +207,29 @@ describe('ServiceItem', () => {
 
         await user.click(screen.getByTestId('cancel-deactivate'));
 
-        expect(mockToggleServiceActive).not.toHaveBeenCalled();
+        expect(mockToggleTaskActive).not.toHaveBeenCalled();
       });
     });
 
     describe('activation without confirmation', () => {
-      it('calls toggleServiceActive directly when activating', async () => {
-        mockToggleServiceActive.mockResolvedValue({ success: true, data: { ...mockInactiveService, active: true } });
+      it('calls toggleTaskActive directly when activating', async () => {
+        mockToggleTaskActive.mockResolvedValue({ success: true, data: { ...mockInactiveTask, active: true } });
 
-        render(<ServiceItem service={mockInactiveService} />);
+        render(<TaskItem task={mockInactiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
         await waitFor(() => {
-          expect(mockToggleServiceActive).toHaveBeenCalledWith('2', true);
+          expect(mockToggleTaskActive).toHaveBeenCalledWith('2', true);
         });
       });
 
       it('applies optimistic update when activating', async () => {
-        mockToggleServiceActive.mockImplementation(
-          () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: { ...mockInactiveService, active: true } }), 100))
+        mockToggleTaskActive.mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: { ...mockInactiveTask, active: true } }), 100))
         );
 
-        render(<ServiceItem service={mockInactiveService} />);
+        render(<TaskItem task={mockInactiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
@@ -240,9 +240,9 @@ describe('ServiceItem', () => {
       });
 
       it('reverts optimistic update on error', async () => {
-        mockToggleServiceActive.mockResolvedValue({ success: false, error: 'Failed to update' });
+        mockToggleTaskActive.mockResolvedValue({ success: false, error: 'Failed to update' });
 
-        render(<ServiceItem service={mockInactiveService} />);
+        render(<TaskItem task={mockInactiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
@@ -255,11 +255,11 @@ describe('ServiceItem', () => {
 
     describe('pending state', () => {
       it('disables switch during usage check', async () => {
-        mockCheckServiceUsage.mockImplementation(
+        mockCheckTaskUsage.mockImplementation(
           () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: { used: false, count: 0 } }), 100))
         );
 
-        render(<ServiceItem service={mockActiveService} />);
+        render(<TaskItem task={mockActiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 
@@ -268,9 +268,9 @@ describe('ServiceItem', () => {
       });
 
       it('re-enables switch after dialog is shown', async () => {
-        mockCheckServiceUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
+        mockCheckTaskUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
 
-        render(<ServiceItem service={mockActiveService} />);
+        render(<TaskItem task={mockActiveTask} />);
 
         await user.click(screen.getByRole('switch'));
 

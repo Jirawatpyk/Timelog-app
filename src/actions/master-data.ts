@@ -440,3 +440,167 @@ export async function toggleTaskActive(
   revalidatePath('/admin/master-data');
   return { success: true, data };
 }
+
+// ============================================================================
+// Usage Check Actions
+// Story 3.4: Soft Delete Protection (AC: 1)
+// ============================================================================
+
+/**
+ * Result type for item usage check
+ */
+export interface ItemUsage {
+  used: boolean;
+  count: number;
+}
+
+/**
+ * Check if a service is used in any time entries
+ *
+ * @param id - Service ID to check
+ * @returns ActionResult with usage info
+ */
+export async function checkServiceUsage(id: string): Promise<ActionResult<ItemUsage>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Count time entries using this service
+  const { count, error } = await supabase
+    .from('time_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('service_id', id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    data: {
+      used: (count ?? 0) > 0,
+      count: count ?? 0,
+    },
+  };
+}
+
+/**
+ * Check if a task is used in any time entries
+ *
+ * @param id - Task ID to check
+ * @returns ActionResult with usage info
+ */
+export async function checkTaskUsage(id: string): Promise<ActionResult<ItemUsage>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Count time entries using this task
+  const { count, error } = await supabase
+    .from('time_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('task_id', id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    data: {
+      used: (count ?? 0) > 0,
+      count: count ?? 0,
+    },
+  };
+}
+
+/**
+ * Check if a client is used in any time entries (via jobs)
+ *
+ * @param id - Client ID to check
+ * @returns ActionResult with usage info
+ */
+export async function checkClientUsage(id: string): Promise<ActionResult<ItemUsage>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Get all jobs under this client (via projects)
+  const { data: projects, error: projectsError } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('client_id', id);
+
+  if (projectsError) {
+    return { success: false, error: projectsError.message };
+  }
+
+  if (!projects || projects.length === 0) {
+    return { success: true, data: { used: false, count: 0 } };
+  }
+
+  const projectIds = projects.map((p) => p.id);
+
+  const { data: jobs, error: jobsError } = await supabase
+    .from('jobs')
+    .select('id')
+    .in('project_id', projectIds);
+
+  if (jobsError) {
+    return { success: false, error: jobsError.message };
+  }
+
+  if (!jobs || jobs.length === 0) {
+    return { success: true, data: { used: false, count: 0 } };
+  }
+
+  const jobIds = jobs.map((j) => j.id);
+
+  // Count time entries using these jobs
+  const { count, error } = await supabase
+    .from('time_entries')
+    .select('*', { count: 'exact', head: true })
+    .in('job_id', jobIds);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    data: {
+      used: (count ?? 0) > 0,
+      count: count ?? 0,
+    },
+  };
+}

@@ -1,6 +1,6 @@
 # Story 3.4: Soft Delete Protection
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -48,47 +48,47 @@ So that **historical data integrity is preserved**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Verify RLS Policies Filter Inactive Items** (AC: 2)
-  - [ ] 1.1 Test services dropdown excludes inactive services for staff
-  - [ ] 1.2 Test clients dropdown excludes inactive clients for staff
-  - [ ] 1.3 Test tasks dropdown excludes inactive tasks for staff
-  - [ ] 1.4 Verify admin can still see inactive items in admin panel
+- [x] **Task 1: Verify RLS Policies Filter Inactive Items** (AC: 2)
+  - [x] 1.1 Test services dropdown excludes inactive services for staff
+  - [x] 1.2 Test clients dropdown excludes inactive clients for staff
+  - [x] 1.3 Test tasks dropdown excludes inactive tasks for staff
+  - [x] 1.4 Verify admin can still see inactive items in admin panel
 
-- [ ] **Task 2: Create Data Fetching Helpers** (AC: 2, 4)
-  - [ ] 2.1 Create `lib/queries/master-data.ts` with query functions
-  - [ ] 2.2 Implement `getActiveServices()` for time entry form
-  - [ ] 2.3 Implement `getActiveClients()` for time entry form
-  - [ ] 2.4 Implement `getActiveTasks()` for time entry form
-  - [ ] 2.5 Implement `getAllServices()` for admin panel (includes inactive)
+- [x] **Task 2: Create Data Fetching Helpers** (AC: 2, 4)
+  - [x] 2.1 Create `lib/queries/master-data.ts` with query functions
+  - [x] 2.2 Implement `getActiveServices()` for time entry form
+  - [x] 2.3 Implement `getActiveClients()` for time entry form
+  - [x] 2.4 Implement `getActiveTasks()` for time entry form
+  - [x] 2.5 Implement `getAllServices()` for admin panel (includes inactive)
 
-- [ ] **Task 3: Verify Foreign Key Constraints** (AC: 5)
-  - [ ] 3.1 Test FK RESTRICT on services (via time_entries.service_id)
-  - [ ] 3.2 Test FK RESTRICT on jobs (via time_entries.job_id)
-  - [ ] 3.3 Test FK SET NULL on tasks (via time_entries.task_id)
-  - [ ] 3.4 Document expected error handling
+- [x] **Task 3: Verify Foreign Key Constraints** (AC: 5)
+  - [x] 3.1 Test FK RESTRICT on services (via time_entries.service_id)
+  - [x] 3.2 Test FK RESTRICT on jobs (via time_entries.job_id)
+  - [x] 3.3 Test FK SET NULL on tasks (via time_entries.task_id)
+  - [x] 3.4 Document expected error handling
 
-- [ ] **Task 4: Implement Cascade Behavior for Clients** (AC: 6)
-  - [ ] 4.1 When fetching clients for dropdown, filter by active = true
-  - [ ] 4.2 When fetching projects, filter by parent client active AND project active
-  - [ ] 4.3 When fetching jobs, filter by parent project active AND job active
-  - [ ] 4.4 Verify cascading selector respects all active flags
+- [x] **Task 4: Implement Cascade Behavior for Clients** (AC: 6)
+  - [x] 4.1 When fetching clients for dropdown, filter by active = true
+  - [x] 4.2 When fetching projects, filter by parent client active AND project active
+  - [x] 4.3 When fetching jobs, filter by parent project active AND job active
+  - [x] 4.4 Verify cascading selector respects all active flags
 
-- [ ] **Task 5: Historical Entry Display** (AC: 3)
-  - [ ] 5.1 Ensure time entry queries JOIN to get names (not just IDs)
-  - [ ] 5.2 Create type for TimeEntryWithDetails including related names
-  - [ ] 5.3 Verify historical entries display correctly even with inactive references
+- [x] **Task 5: Historical Entry Display** (AC: 3)
+  - [x] 5.1 Ensure time entry queries JOIN to get names (not just IDs)
+  - [x] 5.2 Create type for TimeEntryWithDetails including related names
+  - [x] 5.3 Verify historical entries display correctly even with inactive references
 
-- [ ] **Task 6: Add Deactivation Confirmation** (AC: 1)
-  - [ ] 6.1 Add confirmation dialog before deactivating items with usage
-  - [ ] 6.2 Check if item is used in time_entries before deactivation
-  - [ ] 6.3 Show warning: "This item is used in X time entries. It will be hidden from new entries but historical data will be preserved."
+- [x] **Task 6: Add Deactivation Confirmation** (AC: 1)
+  - [x] 6.1 Add confirmation dialog before deactivating items with usage
+  - [x] 6.2 Check if item is used in time_entries before deactivation
+  - [x] 6.3 Show warning: "This item is used in X time entries. It will be hidden from new entries but historical data will be preserved."
 
-- [ ] **Task 7: Write E2E Tests** (AC: all)
-  - [ ] 7.1 Test deactivating unused item
-  - [ ] 7.2 Test deactivating item with time entries
-  - [ ] 7.3 Test reactivating an item
-  - [ ] 7.4 Test dropdown filtering for inactive items
-  - [ ] 7.5 Test historical entry display with inactive references
+- [x] **Task 7: Write E2E Tests** (AC: all)
+  - [x] 7.1 Test deactivating unused item
+  - [x] 7.2 Test deactivating item with time entries
+  - [x] 7.3 Test reactivating an item
+  - [x] 7.4 Test dropdown filtering for inactive items
+  - [x] 7.5 Test historical entry display with inactive references
 
 ## Dev Notes
 
@@ -571,27 +571,77 @@ This is implemented in Story 4.2 (Time Entry Form - Cascading Selectors).
 
 ## Definition of Done
 
-- [ ] Deactivating items with time entries works (soft delete)
-- [ ] Inactive items hidden from time entry dropdowns
-- [ ] Historical entries display correct names for inactive items
-- [ ] Items can be reactivated and appear in dropdowns again
-- [ ] FK RESTRICT prevents hard delete of used services/jobs
-- [ ] Client hierarchy properly filtered by active status
-- [ ] Confirmation dialog shows usage count before deactivation
-- [ ] Query helper functions created for active items
-- [ ] TimeEntryWithDetails type created for joined queries
-- [ ] E2E tests verify soft delete behavior
+- [x] Deactivating items with time entries works (soft delete)
+- [x] Inactive items hidden from time entry dropdowns
+- [x] Historical entries display correct names for inactive items
+- [x] Items can be reactivated and appear in dropdowns again
+- [x] FK RESTRICT prevents hard delete of used services/jobs
+- [x] Client hierarchy properly filtered by active status
+- [x] Confirmation dialog shows usage count before deactivation
+- [x] Query helper functions created for active items
+- [x] TimeEntryWithDetails type created for joined queries
+- [x] E2E tests verify soft delete behavior
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **RLS Policies Verified**: Existing RLS policies correctly filter inactive items for staff while allowing admin/super_admin to see all items.
+
+2. **Data Fetching Helpers Created**: `src/lib/queries/master-data.ts` implements:
+   - `getActiveServices()`, `getAllServices()` for services
+   - `getActiveClients()`, `getAllClients()` for clients
+   - `getActiveTasks()`, `getAllTasks()` for tasks
+   - `getActiveProjectsWithCascade()` - filters by parent client active status
+   - `getActiveJobsWithCascade()` - filters by full hierarchy active status
+
+3. **FK Constraints Verified**:
+   - Services/Jobs: FK RESTRICT prevents deletion when used in time_entries
+   - Tasks: FK SET NULL allows deletion, sets time_entry.task_id to null
+   - Tests confirm proper constraint behavior
+
+4. **Cascade Behavior**: RLS does NOT cascade (intentional for historical access). Application-level cascade filtering implemented in query functions.
+
+5. **Historical Entry Display**: `TimeEntryWithDetails` type and query functions created in `src/lib/queries/time-entries.ts` to support JOINed queries that preserve names.
+
+6. **Deactivation Confirmation**:
+   - Added `checkServiceUsage`, `checkTaskUsage`, `checkClientUsage` functions
+   - Created `DeactivateConfirmDialog` component
+   - Integrated into ServiceItem, ClientItem, TaskItem components
+
+7. **E2E Tests**: 33 tests covering all ACs:
+   - `soft-delete.test.ts` - 9 tests (RLS filtering)
+   - `fk-constraints.test.ts` - 7 tests (FK behavior)
+   - `cascade-filtering.test.ts` - 11 tests (cascade behavior)
+   - `historical-entries.test.ts` - 6 tests (historical access)
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created Files:**
+- `src/lib/queries/master-data.ts` - Query helper functions for master data
+- `src/lib/queries/master-data.test.ts` - Unit tests for query functions
+- `src/lib/queries/time-entries.ts` - Query functions with JOINs for time entries
+- `src/lib/queries/time-entries.test.ts` - Unit tests for time entry queries
+- `src/components/admin/DeactivateConfirmDialog.tsx` - Confirmation dialog component
+- `src/components/ui/alert-dialog.tsx` - shadcn AlertDialog component (via npx shadcn)
+- `src/app/(app)/admin/master-data/components/TaskItem.test.tsx` - Tests for TaskItem with confirmation dialog
+- `test/e2e/rls/soft-delete.test.ts` - E2E tests for soft delete RLS behavior
+- `test/e2e/rls/fk-constraints.test.ts` - E2E tests for FK constraints
+- `test/e2e/rls/cascade-filtering.test.ts` - E2E tests for cascade filtering
+- `test/e2e/rls/historical-entries.test.ts` - E2E tests for historical entry display
+
+**Modified Files:**
+- `src/types/domain.ts` - Added `TimeEntryWithDetails` interface
+- `src/actions/master-data.ts` - Added `checkServiceUsage`, `checkTaskUsage`, `checkClientUsage` actions
+- `src/actions/master-data.test.ts` - Added tests for usage check actions
+- `src/app/(app)/admin/master-data/components/ServiceItem.tsx` - Integrated confirmation dialog
+- `src/app/(app)/admin/master-data/components/ServiceItem.test.tsx` - Updated tests for new behavior
+- `src/app/(app)/admin/master-data/components/ClientItem.tsx` - Integrated confirmation dialog
+- `src/app/(app)/admin/master-data/components/ClientItem.test.tsx` - Updated tests for new behavior
+- `src/app/(app)/admin/master-data/components/TaskItem.tsx` - Integrated confirmation dialog
+- `package.json` - Added @radix-ui/react-alert-dialog dependency
+- `package-lock.json` - Updated lockfile

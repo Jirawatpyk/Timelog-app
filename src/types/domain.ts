@@ -55,3 +55,35 @@ export type AuditAction = 'INSERT' | 'UPDATE' | 'DELETE';
 export type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
+
+// ============================================
+// EXTENDED TYPES FOR JOINED QUERIES (Story 3.4)
+// ============================================
+
+/**
+ * Time entry with all related names for display
+ * Used for historical entries where we need to show names even if items are inactive
+ */
+export interface TimeEntryWithDetails extends TimeEntry {
+  job: {
+    id: string;
+    name: string;
+    job_no: string | null;
+    project: {
+      id: string;
+      name: string;
+      client: {
+        id: string;
+        name: string;
+      };
+    };
+  };
+  service: {
+    id: string;
+    name: string;
+  };
+  task: {
+    id: string;
+    name: string;
+  } | null;
+}

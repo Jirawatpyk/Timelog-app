@@ -1,12 +1,12 @@
 /**
  * Tests for ClientsList Component
  * Story 3.2: Client Management (AC: 1, 6)
+ * Story 3.5: Master Data Admin UI Layout (AC: 2, 3, 4, 5, 7)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ClientsList } from './ClientsList';
-import type { Client } from '@/types/domain';
 
 // Mock Supabase client
 const mockSelect = vi.fn();
@@ -19,25 +19,27 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }));
 
-// Mock ClientItem to simplify testing
-vi.mock('./ClientItem', () => ({
-  ClientItem: ({ client }: { client: Client }) => (
-    <div
-      data-testid="client-item"
-      data-active={client.active}
-      className={!client.active ? 'opacity-50' : ''}
-    >
-      <span data-testid={`client-name-${client.id}`} className={!client.active ? 'line-through' : ''}>
-        {client.name}
-      </span>
-      <span>{client.active ? 'Active' : 'Inactive'}</span>
+// Mock the client component to simplify testing
+vi.mock('./ClientsListClient', () => ({
+  ClientsListClient: ({ initialClients }: { initialClients: Array<{ id: string; name: string; active: boolean }> }) => (
+    <div data-testid="clients-list">
+      {initialClients.length === 0 ? (
+        <p>No clients yet</p>
+      ) : (
+        <table>
+          <tbody>
+            {initialClients.map((client) => (
+              <tr key={client.id} data-testid="client-row">
+                <td className={!client.active ? 'line-through' : ''}>{client.name}</td>
+                <td>{client.active ? 'Active' : 'Inactive'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <button>Add Client</button>
     </div>
   ),
-}));
-
-// Mock AddClientDialog
-vi.mock('@/components/admin/AddClientDialog', () => ({
-  AddClientDialog: () => <button>Add Client</button>,
 }));
 
 describe('ClientsList', () => {
@@ -51,20 +53,12 @@ describe('ClientsList', () => {
     });
   });
 
-  it('renders the Clients heading', async () => {
-    mockOrder.mockResolvedValue({ data: [], error: null });
-
-    render(await ClientsList());
-
-    expect(screen.getByRole('heading', { name: /clients/i })).toBeInTheDocument();
-  });
-
   it('displays empty state when no clients exist', async () => {
     mockOrder.mockResolvedValue({ data: [], error: null });
 
     render(await ClientsList());
 
-    expect(screen.getByText(/no clients found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no clients yet/i)).toBeInTheDocument();
   });
 
   it('displays list of clients with names', async () => {
@@ -89,40 +83,8 @@ describe('ClientsList', () => {
 
     render(await ClientsList());
 
-    // Check for active/inactive status indicators (via mocked ClientItem)
     expect(screen.getByText('Active')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
-  });
-
-  it('applies visual distinction to inactive clients', async () => {
-    const mockClients = [
-      { id: '1', name: 'Netflix', active: true, created_at: '2024-01-01' },
-      { id: '2', name: 'Inactive Client', active: false, created_at: '2024-01-01' },
-    ];
-    mockOrder.mockResolvedValue({ data: mockClients, error: null });
-
-    render(await ClientsList());
-
-    // Find the client items by their container
-    const clientItems = screen.getAllByTestId('client-item');
-
-    // First client (active) should not have opacity class
-    expect(clientItems[0]).not.toHaveClass('opacity-50');
-
-    // Second client (inactive) should have opacity class
-    expect(clientItems[1]).toHaveClass('opacity-50');
-  });
-
-  it('shows inactive client name with line-through styling', async () => {
-    const mockClients = [
-      { id: '1', name: 'Inactive Client', active: false, created_at: '2024-01-01' },
-    ];
-    mockOrder.mockResolvedValue({ data: mockClients, error: null });
-
-    render(await ClientsList());
-
-    const clientName = screen.getByTestId('client-name-1');
-    expect(clientName).toHaveClass('line-through');
   });
 
   it('orders clients by name', async () => {
@@ -149,5 +111,18 @@ describe('ClientsList', () => {
     render(await ClientsList());
 
     expect(screen.getByRole('button', { name: /add client/i })).toBeInTheDocument();
+  });
+
+  it('passes clients to client component', async () => {
+    const mockClients = [
+      { id: '1', name: 'Client 1', active: true, created_at: '2024-01-01' },
+      { id: '2', name: 'Client 2', active: false, created_at: '2024-01-01' },
+    ];
+    mockOrder.mockResolvedValue({ data: mockClients, error: null });
+
+    render(await ClientsList());
+
+    const rows = screen.getAllByTestId('client-row');
+    expect(rows).toHaveLength(2);
   });
 });

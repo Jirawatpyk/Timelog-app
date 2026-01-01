@@ -27,7 +27,7 @@ import { toast } from 'sonner';
 import type { ActionResult } from '@/types/domain';
 
 const mockUpdateClientAction = vi.mocked(updateClientAction);
-type ClientActionResult = ActionResult<Client>;
+type _ClientActionResult = ActionResult<Client>;
 
 const mockClient: Client = {
   id: 'client-123',

@@ -28,9 +28,10 @@ import { Pencil } from 'lucide-react';
 
 interface EditClientDialogProps {
   client: Client;
+  onClientUpdated?: (client: Client) => void;
 }
 
-export function EditClientDialog({ client }: EditClientDialogProps) {
+export function EditClientDialog({ client, onClientUpdated }: EditClientDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<ClientInput>({
@@ -50,6 +51,7 @@ export function EditClientDialog({ client }: EditClientDialogProps) {
 
     if (result.success) {
       toast.success('Client updated');
+      onClientUpdated?.(result.data);
       setOpen(false);
     } else {
       form.setError('name', { message: result.error });

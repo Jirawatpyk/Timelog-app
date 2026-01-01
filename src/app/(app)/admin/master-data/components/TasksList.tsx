@@ -1,16 +1,14 @@
 /**
  * Tasks List Component (Server Component)
  * Story 3.3: Task Management (AC: 1, 6)
+ * Story 3.5: Master Data Admin UI Layout (AC: 2, 3, 4, 5, 7)
  *
- * Displays list of all tasks with active/inactive visual distinction.
- * - Inactive tasks appear with reduced opacity and strikethrough text
- * - Admin can see both active and inactive tasks
- * - Each task has edit and toggle active functionality
+ * Server component that fetches tasks and passes to client component
+ * for interactive features like sorting, searching, and filtering.
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { AddTaskDialog } from '@/components/admin/AddTaskDialog';
-import { TaskItem } from './TaskItem';
+import { TasksListClient } from './TasksListClient';
 
 export async function TasksList() {
   const supabase = await createClient();
@@ -23,29 +21,10 @@ export async function TasksList() {
   if (error) {
     return (
       <div className="space-y-4" data-testid="tasks-list">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Tasks</h2>
-        </div>
         <p className="text-destructive">Failed to load tasks. Please try again.</p>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4" data-testid="tasks-list">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Tasks</h2>
-        <AddTaskDialog />
-      </div>
-
-      <div className="space-y-2">
-        {tasks?.length === 0 && (
-          <p className="text-muted-foreground">No tasks found.</p>
-        )}
-        {tasks?.map((task) => (
-          <TaskItem key={task.id} task={task} />
-        ))}
-      </div>
-    </div>
-  );
+  return <TasksListClient initialTasks={tasks ?? []} />;
 }

@@ -28,9 +28,10 @@ import { Pencil } from 'lucide-react';
 
 interface EditTaskDialogProps {
   task: Task;
+  onTaskUpdated?: (task: Task) => void;
 }
 
-export function EditTaskDialog({ task }: EditTaskDialogProps) {
+export function EditTaskDialog({ task, onTaskUpdated }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<TaskInput>({
@@ -50,6 +51,7 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
 
     if (result.success) {
       toast.success('Task updated');
+      onTaskUpdated?.(result.data);
       setOpen(false);
     } else {
       form.setError('name', { message: result.error });

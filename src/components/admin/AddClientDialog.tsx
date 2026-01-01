@@ -23,9 +23,22 @@ import { Label } from '@/components/ui/label';
 import { createClientAction } from '@/actions/master-data';
 import { clientSchema, type ClientInput } from '@/schemas/master-data.schema';
 import { toast } from 'sonner';
+import type { Client } from '@/types/domain';
 
-export function AddClientDialog() {
-  const [open, setOpen] = useState(false);
+interface AddClientDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onClientCreated?: (client: Client) => void;
+}
+
+export function AddClientDialog({
+  open: controlledOpen,
+  onOpenChange,
+  onClientCreated,
+}: AddClientDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
 
   const form = useForm<ClientInput>({
     resolver: zodResolver(clientSchema),
@@ -38,14 +51,19 @@ export function AddClientDialog() {
     if (result.success) {
       toast.success('Client created');
       form.reset();
-      setOpen(false);
+      onClientCreated?.(result.data);
+      handleOpenChange(false);
     } else {
       form.setError('name', { message: result.error });
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
     if (!newOpen) {
       form.reset();
     }

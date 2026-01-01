@@ -58,12 +58,12 @@ development_status:
   epic-2-retrospective: done
 
   # Epic 3: Master Data Administration (5 stories)
-  epic-3: in-progress
+  epic-3: done
   3-1-service-type-management: done
   3-2-client-management: done
   3-3-task-management: done
   3-4-soft-delete-protection: done
-  3-5-master-data-admin-ui-layout: ready-for-dev
+  3-5-master-data-admin-ui-layout: done
   epic-3-retrospective: optional
 
   # Epic 4: Quick Time Entry (10 stories)

@@ -27,7 +27,7 @@ import type { ActionResult } from '@/types/domain';
 import type { Client } from '@/types/domain';
 
 const mockCreateClientAction = vi.mocked(createClientAction);
-type ClientActionResult = ActionResult<Client>;
+type _ClientActionResult = ActionResult<Client>;
 
 describe('AddClientDialog', () => {
   beforeEach(() => {

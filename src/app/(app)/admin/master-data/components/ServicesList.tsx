@@ -1,16 +1,14 @@
 /**
  * Services List Component (Server Component)
  * Story 3.1: Service Type Management (AC: 1, 6)
+ * Story 3.5: Master Data Admin UI Layout (AC: 2, 3, 4, 5, 7)
  *
- * Displays list of all services with active/inactive visual distinction.
- * - Inactive services appear with reduced opacity and strikethrough text
- * - Admin can see both active and inactive services
- * - Each service has edit and toggle active functionality
+ * Server component that fetches services and passes to client component
+ * for interactive features like sorting, searching, and filtering.
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { AddServiceDialog } from '@/components/admin/AddServiceDialog';
-import { ServiceItem } from './ServiceItem';
+import { ServicesListClient } from './ServicesListClient';
 
 export async function ServicesList() {
   const supabase = await createClient();
@@ -20,21 +18,5 @@ export async function ServicesList() {
     .select('*')
     .order('name');
 
-  return (
-    <div className="space-y-4" data-testid="services-list">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Services</h2>
-        <AddServiceDialog />
-      </div>
-
-      <div className="space-y-2">
-        {services?.length === 0 && (
-          <p className="text-muted-foreground">No services found.</p>
-        )}
-        {services?.map((service) => (
-          <ServiceItem key={service.id} service={service} />
-        ))}
-      </div>
-    </div>
-  );
+  return <ServicesListClient initialServices={services ?? []} />;
 }

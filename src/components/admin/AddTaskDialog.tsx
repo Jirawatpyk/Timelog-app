@@ -23,9 +23,22 @@ import { Label } from '@/components/ui/label';
 import { createTask } from '@/actions/master-data';
 import { taskSchema, type TaskInput } from '@/schemas/master-data.schema';
 import { toast } from 'sonner';
+import type { Task } from '@/types/domain';
 
-export function AddTaskDialog() {
-  const [open, setOpen] = useState(false);
+interface AddTaskDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onTaskCreated?: (task: Task) => void;
+}
+
+export function AddTaskDialog({
+  open: controlledOpen,
+  onOpenChange,
+  onTaskCreated,
+}: AddTaskDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
 
   const form = useForm<TaskInput>({
     resolver: zodResolver(taskSchema),
@@ -38,14 +51,19 @@ export function AddTaskDialog() {
     if (result.success) {
       toast.success('Task created');
       form.reset();
-      setOpen(false);
+      onTaskCreated?.(result.data);
+      handleOpenChange(false);
     } else {
       form.setError('name', { message: result.error });
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
     if (!newOpen) {
       form.reset();
     }
@@ -78,7 +96,7 @@ export function AddTaskDialog() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
             >
               Cancel
             </Button>

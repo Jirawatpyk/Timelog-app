@@ -1,6 +1,6 @@
 # Story 3.5: Master Data Admin UI Layout
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -54,44 +54,44 @@ So that **I can efficiently manage all configuration data**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create Reusable DataTable Component** (AC: 2, 3)
-  - [ ] 1.1 Create `components/admin/DataTable.tsx`
-  - [ ] 1.2 Implement column header click for sorting
-  - [ ] 1.3 Add sort direction indicators (arrows)
-  - [ ] 1.4 Support generic row type via TypeScript generics
+- [x] **Task 1: Create Reusable DataTable Component** (AC: 2, 3)
+  - [x] 1.1 Create `components/admin/DataTable.tsx`
+  - [x] 1.2 Implement column header click for sorting
+  - [x] 1.3 Add sort direction indicators (arrows)
+  - [x] 1.4 Support generic row type via TypeScript generics
 
-- [ ] **Task 2: Add Search Input** (AC: 4)
-  - [ ] 2.1 Create `components/admin/SearchInput.tsx`
-  - [ ] 2.2 Implement debounced search (300ms)
-  - [ ] 2.3 Add clear button when search has value
-  - [ ] 2.4 Integrate with list components
+- [x] **Task 2: Add Search Input** (AC: 4)
+  - [x] 2.1 Create `components/admin/SearchInput.tsx`
+  - [x] 2.2 Implement debounced search (300ms)
+  - [x] 2.3 Add clear button when search has value
+  - [x] 2.4 Integrate with list components
 
-- [ ] **Task 3: Add Status Filter** (AC: 5)
-  - [ ] 3.1 Create status filter dropdown/toggle
-  - [ ] 3.2 Options: All, Active Only, Inactive Only
-  - [ ] 3.3 Persist filter state in URL params (optional)
+- [x] **Task 3: Add Status Filter** (AC: 5)
+  - [x] 3.1 Create status filter dropdown/toggle
+  - [x] 3.2 Options: All, Active Only, Inactive Only
+  - [ ] 3.3 Persist filter state in URL params (optional - not implemented)
 
-- [ ] **Task 4: Refactor List Components** (AC: 2, 3, 4, 5)
-  - [ ] 4.1 Update ServicesList to use DataTable
-  - [ ] 4.2 Update ClientsList to use DataTable
-  - [ ] 4.3 Update TasksList to use DataTable
-  - [ ] 4.4 Add local state for sorting and filtering
+- [x] **Task 4: Refactor List Components** (AC: 2, 3, 4, 5)
+  - [x] 4.1 Update ServicesList to use DataTable
+  - [x] 4.2 Update ClientsList to use DataTable
+  - [x] 4.3 Update TasksList to use DataTable
+  - [x] 4.4 Add local state for sorting and filtering
 
-- [ ] **Task 5: Mobile Responsive Design** (AC: 6)
-  - [ ] 5.1 Add responsive breakpoints to DataTable
-  - [ ] 5.2 Stack actions vertically on mobile
-  - [ ] 5.3 Ensure touch targets meet 44x44px minimum
-  - [ ] 5.4 Test on mobile viewport sizes
+- [x] **Task 5: Mobile Responsive Design** (AC: 6)
+  - [x] 5.1 Add responsive breakpoints to DataTable
+  - [x] 5.2 Stack actions vertically on mobile
+  - [x] 5.3 Ensure touch targets meet 44x44px minimum
+  - [x] 5.4 Test on mobile viewport sizes
 
-- [ ] **Task 6: Empty State Component** (AC: 7)
-  - [ ] 6.1 Create `components/admin/EmptyState.tsx`
-  - [ ] 6.2 Add icon, message, and action button
-  - [ ] 6.3 Integrate with all list components
+- [x] **Task 6: Empty State Component** (AC: 7)
+  - [x] 6.1 Create `components/admin/EmptyState.tsx`
+  - [x] 6.2 Add icon, message, and action button
+  - [x] 6.3 Integrate with all list components
 
-- [ ] **Task 7: Enhance Tab Navigation** (AC: 1)
-  - [ ] 7.1 Add URL sync for active tab
-  - [ ] 7.2 Preserve tab state on navigation
-  - [ ] 7.3 Add keyboard navigation support
+- [x] **Task 7: Enhance Tab Navigation** (AC: 1)
+  - [x] 7.1 Add URL sync for active tab
+  - [x] 7.2 Preserve tab state on navigation
+  - [x] 7.3 Add keyboard navigation support
 
 ## Dev Notes
 
@@ -718,28 +718,79 @@ npx shadcn@latest add table badge skeleton
 
 ## Definition of Done
 
-- [ ] Tab navigation works with URL sync
-- [ ] DataTable component created and reusable
-- [ ] Sorting works on Name and Status columns
-- [ ] Search filters items case-insensitively
-- [ ] Status filter shows All/Active/Inactive
-- [ ] Empty state displays when no items
-- [ ] Mobile layout is responsive and usable
-- [ ] All touch targets are at least 44x44px
-- [ ] Keyboard navigation works for all controls
-- [ ] Loading skeleton displays during data fetch
-- [ ] All three lists (Services, Clients, Tasks) use DataTable
+- [x] Tab navigation works with URL sync
+- [x] DataTable component created and reusable
+- [x] Sorting works on Name and Status columns
+- [x] Search filters items case-insensitively
+- [x] Status filter shows All/Active/Inactive
+- [x] Empty state displays when no items
+- [x] Mobile layout is responsive and usable
+- [x] All touch targets are at least 44x44px
+- [x] Keyboard navigation works for all controls
+- [x] Loading skeleton displays during data fetch
+- [x] All three lists (Services, Clients, Tasks) use DataTable
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **DataTable Component**: Created reusable generic DataTable with TypeScript generics supporting any data type. Features column sorting (asc/desc/reset), custom renderers, hideOnMobile support, and clickable rows.
+
+2. **SearchInput Component**: Implemented debounced search (300ms default) using `use-debounce` library. Includes clear button and search icon.
+
+3. **StatusFilter Component**: Created dropdown filter with All/Active/Inactive options using shadcn Select component.
+
+4. **EmptyState Component**: Created flexible empty state with customizable icon, title, description, and action button.
+
+5. **List Components Refactored**:
+   - Split into Server Components (ServicesList, ClientsList, TasksList) for data fetching
+   - Client Components (ServicesListClient, ClientsListClient, TasksListClient) for interactivity
+   - Added optimistic updates for toggle operations
+   - Integrated all admin components (DataTable, SearchInput, StatusFilter, EmptyState)
+
+6. **Mobile Responsive**: Added `hideOnMobile` column property, responsive toolbar layout (stacks on mobile), min-h-11 for touch targets.
+
+7. **Tab Navigation**: URL-synced tabs using Next.js searchParams, Link-based navigation with scroll={false}, Suspense with skeleton fallback.
+
+8. **Test Setup**: Added Radix UI mocks for jsdom compatibility (hasPointerCapture, scrollIntoView, ResizeObserver).
+
+9. **Test Results**: All 526 tests passing across 44 test files.
 
 ### File List
 
-_To be filled with all created/modified files_
+**New Files:**
+- `src/components/admin/DataTable.tsx` - Reusable sortable data table
+- `src/components/admin/DataTable.test.tsx` - 16 tests
+- `src/components/admin/SearchInput.tsx` - Debounced search input
+- `src/components/admin/SearchInput.test.tsx` - 14 tests
+- `src/components/admin/StatusFilter.tsx` - Status dropdown filter
+- `src/components/admin/StatusFilter.test.tsx` - 11 tests
+- `src/components/admin/EmptyState.tsx` - Empty state display
+- `src/components/admin/EmptyState.test.tsx` - 14 tests
+- `src/app/(app)/admin/master-data/components/ServicesListClient.tsx` - Client component
+- `src/app/(app)/admin/master-data/components/ClientsListClient.tsx` - Client component
+- `src/app/(app)/admin/master-data/components/TasksListClient.tsx` - Client component
+- `src/app/(app)/admin/master-data/components/TasksList.test.tsx` - 7 tests
+- `src/components/ui/skeleton.tsx` - shadcn skeleton component
+- `src/components/ui/table.tsx` - shadcn table component
+
+**Modified Files:**
+- `src/app/(app)/admin/master-data/page.tsx` - URL-synced tabs, Suspense
+- `src/app/(app)/admin/master-data/page.test.tsx` - Updated for searchParams
+- `src/app/(app)/admin/master-data/components/ServicesList.tsx` - Server wrapper
+- `src/app/(app)/admin/master-data/components/ServicesList.test.tsx` - Updated mocks
+- `src/app/(app)/admin/master-data/components/ClientsList.tsx` - Server wrapper
+- `src/app/(app)/admin/master-data/components/ClientsList.test.tsx` - Updated mocks
+- `src/app/(app)/admin/master-data/components/TasksList.tsx` - Server wrapper
+- `src/components/admin/AddServiceDialog.tsx` - Added onServiceCreated callback
+- `src/components/admin/EditServiceDialog.tsx` - Added onServiceUpdated callback
+- `src/components/admin/AddClientDialog.tsx` - Added onClientCreated callback
+- `src/components/admin/EditClientDialog.tsx` - Added onClientUpdated callback
+- `src/components/admin/AddTaskDialog.tsx` - Added onTaskCreated callback
+- `src/components/admin/EditTaskDialog.tsx` - Added onTaskUpdated callback
+- `test/setup.ts` - Added Radix UI mocks for jsdom
+- `package.json` - Added use-debounce dependency

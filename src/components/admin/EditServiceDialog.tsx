@@ -28,9 +28,10 @@ import { Pencil } from 'lucide-react';
 
 interface EditServiceDialogProps {
   service: Service;
+  onServiceUpdated?: (service: Service) => void;
 }
 
-export function EditServiceDialog({ service }: EditServiceDialogProps) {
+export function EditServiceDialog({ service, onServiceUpdated }: EditServiceDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<ServiceInput>({
@@ -50,6 +51,7 @@ export function EditServiceDialog({ service }: EditServiceDialogProps) {
 
     if (result.success) {
       toast.success('Service updated');
+      onServiceUpdated?.(result.data);
       setOpen(false);
     } else {
       form.setError('name', { message: result.error });

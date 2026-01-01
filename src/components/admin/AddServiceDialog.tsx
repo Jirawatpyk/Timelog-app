@@ -23,9 +23,22 @@ import { Label } from '@/components/ui/label';
 import { createService } from '@/actions/master-data';
 import { serviceSchema, type ServiceInput } from '@/schemas/master-data.schema';
 import { toast } from 'sonner';
+import type { Service } from '@/types/domain';
 
-export function AddServiceDialog() {
-  const [open, setOpen] = useState(false);
+interface AddServiceDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onServiceCreated?: (service: Service) => void;
+}
+
+export function AddServiceDialog({
+  open: controlledOpen,
+  onOpenChange,
+  onServiceCreated,
+}: AddServiceDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
 
   const form = useForm<ServiceInput>({
     resolver: zodResolver(serviceSchema),
@@ -38,14 +51,19 @@ export function AddServiceDialog() {
     if (result.success) {
       toast.success('Service created');
       form.reset();
-      setOpen(false);
+      onServiceCreated?.(result.data);
+      handleOpenChange(false);
     } else {
       form.setError('name', { message: result.error });
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
     if (!newOpen) {
       form.reset();
     }

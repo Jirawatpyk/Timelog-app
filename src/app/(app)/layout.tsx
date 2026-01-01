@@ -1,12 +1,10 @@
-import { DeployButton } from '@/components/deploy-button';
 import { EnvVarWarning } from '@/components/env-var-warning';
-import { AuthButton } from '@/components/auth-button';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { AuthStateListener } from '@/components/shared/auth-state-listener';
+import { UserProfileDropdown } from '@/components/shared/user-profile-dropdown';
 import { BottomNav, Sidebar } from '@/components/navigation';
 import { hasEnvVars } from '@/lib/utils';
 import Link from 'next/link';
-import { Suspense } from 'react';
 
 /**
  * Protected App Layout
@@ -18,6 +16,10 @@ import { Suspense } from 'react';
  * Story 4.11: Desktop Sidebar Navigation
  * - Adds Sidebar for desktop navigation (hidden on mobile)
  * - Uses flex layout to position sidebar + content side by side on desktop
+ *
+ * Story 4.12: Desktop Header Enhancement
+ * - Desktop: Full UserProfileDropdown (name + role badge) + ThemeSwitcher in header
+ * - Mobile: Compact UserProfileDropdown (short name only), ThemeSwitcher in footer
  */
 export default function ProtectedLayout({
   children,
@@ -35,21 +37,26 @@ export default function ProtectedLayout({
         <main className="flex-1 flex flex-col items-center pb-20 md:pb-0">
           <div className="flex-1 w-full flex flex-col gap-20 items-center">
             {/* Top navigation bar */}
-            <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-              <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-                <div className="flex gap-5 items-center font-semibold">
+            <nav className="w-full flex border-b border-b-foreground/10 h-16">
+              <div className="w-full flex justify-between items-center p-3 px-5 text-sm">
+                <div className="flex items-center font-semibold">
                   <Link href={'/'}>Timelog</Link>
-                  {/* Hide DeployButton on mobile to save space */}
-                  <div className="hidden md:flex items-center gap-2">
-                    <DeployButton />
-                  </div>
                 </div>
                 {!hasEnvVars ? (
                   <EnvVarWarning />
                 ) : (
-                  <Suspense>
-                    <AuthButton />
-                  </Suspense>
+                  <>
+                    {/* Desktop: ThemeSwitcher + Full UserProfileDropdown (AC 1, 7) */}
+                    <div className="hidden md:flex items-center gap-4">
+                      <ThemeSwitcher />
+                      <UserProfileDropdown />
+                    </div>
+
+                    {/* Mobile: Compact UserProfileDropdown (AC 5 - consistent with desktop) */}
+                    <div className="md:hidden">
+                      <UserProfileDropdown compact />
+                    </div>
+                  </>
                 )}
               </div>
             </nav>
@@ -72,7 +79,10 @@ export default function ProtectedLayout({
                   Supabase
                 </a>
               </p>
-              <ThemeSwitcher />
+              {/* ThemeSwitcher: Mobile only in footer, desktop shows in header (AC 7) */}
+              <div className="md:hidden">
+                <ThemeSwitcher />
+              </div>
             </footer>
           </div>
         </main>

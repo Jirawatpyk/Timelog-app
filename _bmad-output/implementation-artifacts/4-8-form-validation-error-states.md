@@ -888,7 +888,18 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 6. SubmitButton now uses framer-motion for shake animation
 7. TimeEntryForm updated with onInvalid handler for validation errors
 8. Added retry option to server error toasts
-9. All 940 tests passing
+9. All 963 tests passing (including 23 new E2E tests)
+
+### Code Review Fixes
+
+**HIGH Priority:**
+- Added TimeEntryForm.test.tsx to File List
+- Updated all Dev Notes code examples from Thai to English messages
+
+**MEDIUM Priority:**
+- Added implementation note to ACs about English messages per user request
+- Created E2E tests for form validation (test/e2e/entry/form-validation.test.ts)
+- Removed unused createFieldRefs from Dev Notes, replaced with haptic utilities
 
 ### File List
 

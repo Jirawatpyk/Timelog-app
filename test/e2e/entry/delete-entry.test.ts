@@ -160,15 +160,14 @@ describe('Delete Time Entry (Story 4.6)', () => {
     it('sets deleted_at timestamp on delete', async () => {
       const staffClient = await createUserClient(testUsers.staff.email);
 
-      // Delete the entry (soft delete)
-      // Note: We can't use .select() here because after setting deleted_at,
-      // RLS SELECT policy (deleted_at IS NULL) will filter out the row
-      const { error } = await staffClient
-        .from('time_entries')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', testData.entries.toDelete.id);
+      // Delete the entry using the SECURITY DEFINER function
+      // This bypasses RLS "new row visible" check
+      const { data: result, error } = await staffClient
+        .rpc('soft_delete_time_entry', { entry_id: testData.entries.toDelete.id });
 
       expect(error).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result.success).toBe(true);
 
       // Verify using service client (bypasses RLS) that deleted_at was set
       const { data: verifyEntry } = await serviceClient
@@ -223,16 +222,14 @@ describe('Delete Time Entry (Story 4.6)', () => {
     it('user cannot delete other users entries', async () => {
       const staffClient = await createUserClient(testUsers.staff.email);
 
-      // Try to soft delete manager's entry
-      const { data, error } = await staffClient
-        .from('time_entries')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', testData.entries.otherUser.id)
-        .select();
+      // Try to soft delete manager's entry using the RPC function
+      const { data: result, error } = await staffClient
+        .rpc('soft_delete_time_entry', { entry_id: testData.entries.otherUser.id });
 
-      // Should succeed but affect 0 rows (RLS filters it out)
-      expect(error).toBeNull();
-      expect(data).toHaveLength(0);
+      // Function should return error (not owned by user)
+      expect(error).toBeNull(); // RPC call itself succeeds
+      expect(result).not.toBeNull();
+      expect(result.success).toBe(false);
 
       // Verify manager's entry is still there (not deleted)
       const { data: managerEntry } = await serviceClient
@@ -241,6 +238,7 @@ describe('Delete Time Entry (Story 4.6)', () => {
         .eq('id', testData.entries.otherUser.id)
         .single();
 
+      expect(managerEntry).not.toBeNull();
       expect(managerEntry!.deleted_at).toBeNull();
     });
   });
@@ -265,16 +263,14 @@ describe('Delete Time Entry (Story 4.6)', () => {
     it('cannot delete already deleted entry', async () => {
       const staffClient = await createUserClient(testUsers.staff.email);
 
-      // Try to delete the already deleted entry
-      const { data } = await staffClient
-        .from('time_entries')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', testData.entries.toDelete.id)
-        .eq('deleted_at', null) // Only update if not already deleted
-        .select();
+      // Try to delete the already deleted entry using the RPC function
+      const { data: result, error } = await staffClient
+        .rpc('soft_delete_time_entry', { entry_id: testData.entries.toDelete.id });
 
-      // Should affect 0 rows since it's already deleted
-      expect(data).toHaveLength(0);
+      // Function should return error (already deleted)
+      expect(error).toBeNull(); // RPC call itself succeeds
+      expect(result).not.toBeNull();
+      expect(result.success).toBe(false);
     });
   });
 });

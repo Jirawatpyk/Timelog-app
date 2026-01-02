@@ -13,25 +13,25 @@ So that **I can remove incorrect entries**.
 1. **AC1: Delete Button Visibility**
    - Given I am viewing entry details in the bottom sheet
    - When I see the action buttons
-   - Then I see "ลบ" (Delete) button in destructive style
+   - Then I see "Delete" button in destructive style
    - And it's visible for all my own entries
 
 2. **AC2: Delete Confirmation Dialog**
-   - Given I tap "ลบ" (Delete)
+   - Given I tap "Delete"
    - When the dialog appears
-   - Then I see confirmation: "ต้องการลบ entry นี้?"
+   - Then I see confirmation: "Delete this entry?"
    - And I see entry summary (date, client, duration)
-   - And I see options "ยกเลิก" and "ลบ"
+   - And I see options "Cancel" and "Delete"
 
 3. **AC3: Delete Success**
    - Given I confirm deletion
    - When the delete succeeds
-   - Then I see toast: "ลบเรียบร้อย"
+   - Then I see toast: "Entry deleted"
    - And the entry is removed from the list
    - And the bottom sheet closes automatically
 
 4. **AC4: Delete Cancellation**
-   - Given I tap "ยกเลิก"
+   - Given I tap "Cancel"
    - When the dialog closes
    - Then the entry remains unchanged
    - And the details sheet stays open
@@ -187,30 +187,36 @@ export function DeleteConfirmDialog({
 export async function deleteTimeEntry(
   entryId: string
 ): Promise<ActionResult<void>> {
+  if (!isValidUUID(entryId)) {
+    return { success: false, error: 'Invalid entry ID format' };
+  }
+
   const supabase = await createClient();
 
-  // Get current user
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return { success: false, error: 'ไม่ได้เข้าสู่ระบบ' };
+    return { success: false, error: 'Not authenticated' };
   }
 
-  // Soft delete: set deleted_at timestamp
-  // RLS policy ensures user can only delete their own entries
-  const { error } = await supabase
-    .from('time_entries')
-    .update({
-      deleted_at: new Date().toISOString(),
-    })
-    .eq('id', entryId)
-    .eq('user_id', user.id); // Extra safety check
+  // Use SECURITY DEFINER function to perform soft delete
+  // This bypasses RLS "new row visible" check which would otherwise fail
+  // when deleted_at is set (because SELECT policy filters deleted entries)
+  // The function validates ownership and prevents double-delete internally
+  const { data: result, error: rpcError } = await supabase
+    .rpc('soft_delete_time_entry', { entry_id: entryId });
 
-  if (error) {
-    console.error('Failed to delete time entry:', error);
-    return { success: false, error: 'ไม่สามารถลบได้ กรุณาลองอีกครั้ง' };
+  if (rpcError) {
+    console.error('Failed to delete time entry:', rpcError);
+    return { success: false, error: 'Failed to delete entry' };
   }
 
-  // Note: audit_log trigger captures DELETE with old_data automatically
+  // Check the result from the function
+  if (!result || !result.success) {
+    return {
+      success: false,
+      error: result?.error || 'Entry not found or already deleted',
+    };
+  }
 
   revalidatePath('/dashboard');
   revalidatePath('/entry');
@@ -697,19 +703,27 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 **New Files:**
 - `src/components/entry/DeleteConfirmDialog.tsx` - Delete confirmation dialog component
 - `src/components/entry/DeleteConfirmDialog.test.tsx` - Unit tests (7 tests)
-- `supabase/migrations/20260102021926_009_add_soft_delete.sql` - Soft delete migration
-- `src/lib/haptic.ts` - Haptic feedback utility (added in code review)
-- `test/e2e/entry/delete-entry.test.ts` - E2E tests for delete functionality (added in code review)
+- `supabase/migrations/20260102021926_009_add_soft_delete.sql` - Soft delete migration (deleted_at column, RLS policies, audit trigger)
+- `supabase/migrations/20260102061500_010_fix_soft_delete_rls.sql` - RLS fix: Split super_admin FOR ALL policy
+- `supabase/migrations/20260102062200_011_fix_soft_delete_select_policy.sql` - RLS fix: Temporary SELECT policy (dropped in 012)
+- `supabase/migrations/20260102062500_012_soft_delete_function.sql` - SECURITY DEFINER function for soft delete
+- `supabase/migrations/20260102063100_013_audit_logs_insert_policy.sql` - INSERT policy for audit_logs trigger
+- `src/lib/haptic.ts` - Haptic feedback utility
+- `src/lib/haptic.test.ts` - Haptic utility unit tests
+- `test/e2e/entry/delete-entry.test.ts` - E2E tests for delete functionality (7 tests)
 
 **Modified Files:**
 - `src/components/entry/index.ts` - Added DeleteConfirmDialog export
-- `src/actions/entry.ts` - Changed deleteTimeEntry to soft delete, added row verification
+- `src/actions/entry.ts` - Changed deleteTimeEntry to use soft_delete_time_entry RPC function
 - `src/app/(app)/entry/components/RecentEntries.tsx` - AnimatePresence, haptic, optimistic update
-- `src/types/database.types.ts` - Added deleted_at field to time_entries
+- `src/app/(app)/entry/components/RecentEntries.test.tsx` - Added DeleteConfirmDialog mock
 - `src/components/entry/EntryDetailsSheet.tsx` - Removed 7-day restriction for delete button
+- `src/components/entry/EntryDetailsSheet.test.tsx` - Fixed test expectation for delete button
+- `src/types/database.types.ts` - Added deleted_at field to time_entries
 
 ## Code Review Fixes Applied
 
+### Round 1 (Initial Code Review)
 1. **[HIGH] Removed 7-day delete restriction** - Delete now allowed for entries of any age (per AC1)
 2. **[HIGH] Added row count verification** - Server action now verifies update affected a row
 3. **[HIGH] Race condition fix** - Added `eq('deleted_at', null)` to prevent double-delete
@@ -717,7 +731,20 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 5. **[MEDIUM] Extracted haptic utility** - Created reusable `src/lib/haptic.ts`
 6. **[MEDIUM] Implemented optimistic delete** - Proper exit animation via cache update
 
+### Round 2 (RLS Migration Fixes)
+7. **[HIGH] RLS "new row visible" fix** - Created SECURITY DEFINER function `soft_delete_time_entry` to bypass RLS check after UPDATE
+8. **[HIGH] Audit logs INSERT policy** - Added INSERT policy for audit_logs table for trigger access
+9. **[MEDIUM] Server action updated** - Changed from direct `.update()` to `.rpc('soft_delete_time_entry')`
+
+### Round 3 (Documentation Sync)
+10. **[HIGH] Updated File List** - Added migrations 010-013 and all modified test files
+11. **[MEDIUM] Updated Dev Notes** - Synced code examples with actual RPC implementation
+12. **[MEDIUM] Updated ACs** - Changed UI text references from Thai to English
+13. **[LOW] Added haptic.test.ts** - Unit tests for haptic utility (12 tests)
+
 ## Change Log
 
 - 2026-01-02: Implemented Story 4.6 - Delete Own Time Entry (soft delete with animation)
-- 2026-01-02: Code review fixes applied - removed 7-day restriction, added E2E tests, haptic utility
+- 2026-01-02: Code review round 1 - removed 7-day restriction, added E2E tests, haptic utility
+- 2026-01-02: Code review round 2 - RLS fixes (migrations 010-013), SECURITY DEFINER function
+- 2026-01-02: Code review round 3 - Documentation sync (File List, Dev Notes, ACs, haptic tests)

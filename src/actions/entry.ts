@@ -631,33 +631,24 @@ export async function deleteTimeEntry(
     return { success: false, error: 'Not authenticated' };
   }
 
-  // Soft delete: set deleted_at timestamp instead of actual delete
-  // RLS policy ensures user can only delete their own entries
-  // Database trigger will record this as a DELETE action in audit_logs
-  // Note: Unlike edit, delete is allowed for entries of any age (AC1: visible for all entries)
-  const { data: updatedEntry, error: updateError } = await supabase
-    .from('time_entries')
-    .update({
-      deleted_at: new Date().toISOString(),
-    })
-    .eq('id', entryId)
-    .eq('user_id', user.id) // Extra safety check
-    .eq('deleted_at', null) // Prevent double-delete (Fix #3: race condition)
-    .select('id')
-    .single();
+  // Use SECURITY DEFINER function to perform soft delete
+  // This bypasses RLS "new row visible" check which would otherwise fail
+  // when deleted_at is set (because SELECT policy filters deleted entries)
+  // The function validates ownership and prevents double-delete internally
+  const { data: result, error: rpcError } = await supabase
+    .rpc('soft_delete_time_entry', { entry_id: entryId });
 
-  if (updateError) {
-    // PGRST116 = no rows returned (entry not found or already deleted)
-    if (updateError.code === 'PGRST116') {
-      return { success: false, error: 'Entry not found or already deleted' };
-    }
-    console.error('Failed to delete time entry:', updateError);
+  if (rpcError) {
+    console.error('Failed to delete time entry:', rpcError);
     return { success: false, error: 'Failed to delete entry' };
   }
 
-  // Fix #2: Verify a row was actually updated
-  if (!updatedEntry) {
-    return { success: false, error: 'Entry not found or already deleted' };
+  // Check the result from the function
+  if (!result || !result.success) {
+    return {
+      success: false,
+      error: result?.error || 'Entry not found or already deleted',
+    };
   }
 
   revalidatePath('/dashboard');

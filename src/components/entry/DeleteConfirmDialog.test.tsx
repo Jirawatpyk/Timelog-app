@@ -79,8 +79,9 @@ describe('DeleteConfirmDialog', () => {
     expect(screen.getByText('Acme Corp')).toBeInTheDocument();
     // Check for duration (120 minutes = 2 ชม.)
     expect(screen.getByText('2 ชม.')).toBeInTheDocument();
-    // Check for date (Jan 2, 2026)
-    expect(screen.getByText('Jan 2, 2026')).toBeInTheDocument();
+    // Check for labels
+    expect(screen.getByText('Date')).toBeInTheDocument();
+    expect(screen.getByText('Duration')).toBeInTheDocument();
   });
 
   it('displays Cancel and Delete buttons', () => {

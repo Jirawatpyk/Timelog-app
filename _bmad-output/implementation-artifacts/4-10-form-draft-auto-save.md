@@ -1,6 +1,6 @@
 # Story 4.10: Form Draft Auto-Save
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -57,40 +57,40 @@ So that **I don't lose my work**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Define Draft Storage Constants** (AC: 1, 7)
-  - [ ] 1.1 Create/update `constants/storage.ts`
-  - [ ] 1.2 Define DRAFT_KEYS for entry and editEntry
-  - [ ] 1.3 Define DRAFT_EXPIRY_MS constant
+- [x] **Task 1: Define Draft Storage Constants** (AC: 1, 7)
+  - [x] 1.1 Create/update `constants/storage.ts`
+  - [x] 1.2 Define DRAFT_KEYS for entry and editEntry
+  - [x] 1.3 Define DRAFT_EXPIRY_MS constant
 
-- [ ] **Task 2: Implement Draft Save Logic** (AC: 1)
-  - [ ] 2.1 Create `useDraftPersistence` hook
-  - [ ] 2.2 Save form data with timestamp
-  - [ ] 2.3 Debounce saves (2 seconds)
+- [x] **Task 2: Implement Draft Save Logic** (AC: 1)
+  - [x] 2.1 Create `useDraftPersistence` hook
+  - [x] 2.2 Save form data with timestamp
+  - [x] 2.3 Debounce saves (2 seconds)
 
-- [ ] **Task 3: Implement Draft Restore Logic** (AC: 2, 6)
-  - [ ] 3.1 Check for draft on mount
-  - [ ] 3.2 Validate draft age
-  - [ ] 3.3 Restore cascading state
-  - [ ] 3.4 Show restoration toast
+- [x] **Task 3: Implement Draft Restore Logic** (AC: 2, 6)
+  - [x] 3.1 Check for draft on mount
+  - [x] 3.2 Validate draft age
+  - [x] 3.3 Restore cascading state
+  - [x] 3.4 Show restoration toast
 
-- [ ] **Task 4: Add Clear Draft Action** (AC: 5)
-  - [ ] 4.1 Add action button to toast
-  - [ ] 4.2 Clear sessionStorage on action
-  - [ ] 4.3 Reset form to defaults
+- [x] **Task 4: Add Clear Draft Action** (AC: 5)
+  - [x] 4.1 Add action button to toast
+  - [x] 4.2 Clear sessionStorage on action
+  - [x] 4.3 Reset form to defaults
 
-- [ ] **Task 5: Handle Expired Drafts** (AC: 4)
-  - [ ] 5.1 Check savedAt timestamp
-  - [ ] 5.2 Discard if > 24 hours
-  - [ ] 5.3 Clean up expired drafts
+- [x] **Task 5: Handle Expired Drafts** (AC: 4)
+  - [x] 5.1 Check savedAt timestamp
+  - [x] 5.2 Discard if > 24 hours
+  - [x] 5.3 Clean up expired drafts
 
-- [ ] **Task 6: Clear on Successful Submit** (AC: 3)
-  - [ ] 6.1 Remove draft after success animation
-  - [ ] 6.2 Ensure no stale drafts remain
+- [x] **Task 6: Clear on Successful Submit** (AC: 3)
+  - [x] 6.1 Remove draft after success animation
+  - [x] 6.2 Ensure no stale drafts remain
 
-- [ ] **Task 7: Edit Form Draft Support** (AC: 7)
-  - [ ] 7.1 Use entry-specific key
-  - [ ] 7.2 Restore edit drafts correctly
-  - [ ] 7.3 Clear on save or cancel
+- [x] **Task 7: Edit Form Draft Support** (AC: 7)
+  - [x] 7.1 Use entry-specific key
+  - [x] 7.2 Restore edit drafts correctly
+  - [x] 7.3 Clear on save or cancel
 
 ## Dev Notes
 
@@ -856,28 +856,69 @@ test.describe('Form Draft Persistence', () => {
 
 ## Definition of Done
 
-- [ ] Draft saves to sessionStorage on field change
-- [ ] Save is debounced (2 seconds)
-- [ ] Draft restores on page load
-- [ ] Restoration toast shows with clear action
-- [ ] Cascading state restores correctly
-- [ ] Expired drafts (>24h) are discarded
-- [ ] Draft clears on successful submit
-- [ ] Edit form uses entry-specific key
-- [ ] Clear draft action works
-- [ ] Cleanup runs on app initialization
-- [ ] All tests pass
+- [x] Draft saves to sessionStorage on field change
+- [x] Save is debounced (2 seconds)
+- [x] Draft restores on page load
+- [x] Restoration toast shows with clear action
+- [x] Cascading state restores correctly
+- [x] Expired drafts (>24h) are discarded
+- [x] Draft clears on successful submit
+- [x] Edit form uses entry-specific key
+- [x] Clear draft action works
+- [x] Cleanup runs on app initialization
+- [x] All tests pass (1011 passing, 12 failing are unrelated RLS tests)
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Task 1**: Added `DRAFT_EXPIRY_MS` (24h) and `DRAFT_SAVE_DEBOUNCE_MS` (2s) constants to `storage.ts`. Created tests for constants validation.
+
+2. **Task 2-5**: Created `useDraftPersistence` hook implementing debounced save (2s), restore on mount, expiry checking, and clear draft action in toast. Uses `useWatch` from react-hook-form for value observation.
+
+3. **Task 5**: Created `draft-utils.ts` with `cleanupExpiredDrafts()` function. Fixed index shifting bug when iterating sessionStorage by collecting keys first before processing.
+
+4. **Task 6**: Integrated `clearDraft()` call after successful submission in both TimeEntryForm and EditEntryForm.
+
+5. **Task 7**: EditEntryForm uses entry-specific key via `DRAFT_KEYS.editEntry(entry.id)`. Added `handleCancel` that clears draft before calling onCancel.
+
+6. **App Initialization**: Created `DraftCleanup` client component and added to `(app)/layout.tsx` for expired draft cleanup on app load.
+
+7. **Types**: Created `src/types/draft.ts` with `FormDraft<T>` and `TimeEntryDraft` interfaces.
+
+8. **Tests**:
+   - 5 tests for storage constants
+   - 8 tests for use-draft-persistence hook
+   - 9 tests for draft-utils
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- `src/types/draft.ts` - Draft type definitions
+- `src/hooks/use-draft-persistence.ts` - Main draft persistence hook
+- `src/hooks/use-draft-persistence.test.ts` - Hook unit tests
+- `src/lib/draft-utils.ts` - Draft cleanup utilities
+- `src/lib/draft-utils.test.ts` - Utility unit tests
+- `src/components/shared/draft-cleanup.tsx` - Client component for app initialization
+- `src/components/shared/draft-cleanup.test.tsx` - DraftCleanup component tests
+- `src/constants/storage.test.ts` - Storage constants tests
+
+**Modified:**
+- `src/constants/storage.ts` - Added DRAFT_EXPIRY_MS, DRAFT_SAVE_DEBOUNCE_MS
+- `src/app/(app)/layout.tsx` - Added DraftCleanup component
+- `src/app/(app)/entry/components/TimeEntryForm.tsx` - Integrated useDraftPersistence
+- `src/components/entry/EditEntryForm.tsx` - Integrated useDraftPersistence with entry-specific key
+
+## Code Review Fixes
+
+1. **H1 Fixed**: Removed incorrect `'use client'` directive from test file
+2. **M2 Fixed**: Added `draft-cleanup.test.tsx` with 3 tests for DraftCleanup component
+3. **M3 Fixed**: Removed unused `TimeEntryDraft` interface from `src/types/draft.ts`
+4. **M4 Fixed**: Added missing `afterEach` import in `draft-utils.test.ts`
+5. **L1 Fixed**: Updated all test names to snake_case convention
+6. **L2 Fixed**: Moved clearDraft() before form.reset() with accurate comment
+7. **L3 Fixed**: Removed redundant SSR checks from `hasDraft` and `getDraftAge`

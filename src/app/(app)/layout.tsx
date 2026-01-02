@@ -2,6 +2,7 @@ import { EnvVarWarning } from '@/components/env-var-warning';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { AuthStateListener } from '@/components/shared/auth-state-listener';
 import { UserProfileDropdown } from '@/components/shared/user-profile-dropdown';
+import { DraftCleanup } from '@/components/shared/draft-cleanup';
 import { BottomNav, Sidebar } from '@/components/navigation';
 import { hasEnvVars } from '@/lib/utils';
 import { CalendarClock } from 'lucide-react';
@@ -29,6 +30,8 @@ export default function ProtectedLayout({
 }) {
   return (
     <AuthStateListener>
+      {/* Cleanup expired drafts on app load - Story 4.10 */}
+      <DraftCleanup />
       {/* Flex container for Sidebar + Main content */}
       <div className="flex min-h-screen">
         {/* Desktop Sidebar Navigation - Story 4.11 */}

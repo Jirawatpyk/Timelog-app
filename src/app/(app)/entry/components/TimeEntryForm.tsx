@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,6 +26,7 @@ import { createTimeEntry, upsertRecentCombination } from '@/actions/entry';
 import { getTodayISO } from '@/lib/thai-date';
 import { DRAFT_KEYS } from '@/constants/storage';
 import { scrollToFirstError, triggerErrorHaptic, triggerSuccessHaptic } from '@/lib/form-utils';
+import { useDraftPersistence } from '@/hooks/use-draft-persistence';
 import type { RecentCombination } from '@/types/domain';
 
 /**
@@ -69,37 +70,24 @@ export function TimeEntryForm() {
 
   const { formState: { errors } } = form;
 
-  // Draft persistence - restore on mount
-  useEffect(() => {
-    const savedDraft = sessionStorage.getItem(DRAFT_KEYS.entry);
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        // Check if draft is less than 24 hours old
-        if (parsed.savedAt && Date.now() - parsed.savedAt < 24 * 60 * 60 * 1000) {
-          form.reset(parsed.data);
-          setClientId(parsed.data.clientId || null);
-          setProjectId(parsed.data.projectId || null);
-          toast.info('Draft restored');
-        } else {
-          sessionStorage.removeItem(DRAFT_KEYS.entry);
-        }
-      } catch {
-        sessionStorage.removeItem(DRAFT_KEYS.entry);
-      }
-    }
-  }, [form]);
+  // Draft persistence - Story 4.10
+  // AC1: Auto-save on field change (debounced 2 seconds)
+  // AC2: Restore draft on page load with toast
+  // AC3: Clear on successful submit
+  // AC4: Discard expired drafts (>24h)
+  // AC5: Clear draft action in toast
+  // AC6: Restore cascading state
+  const handleDraftRestore = (data: TimeEntryFormInput) => {
+    if (data.clientId) setClientId(data.clientId);
+    if (data.projectId) setProjectId(data.projectId);
+  };
 
-  // Draft persistence - save on change
-  useEffect(() => {
-    const subscription = form.watch((data) => {
-      sessionStorage.setItem(
-        DRAFT_KEYS.entry,
-        JSON.stringify({ data, savedAt: Date.now() })
-      );
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+  const { clearDraft } = useDraftPersistence({
+    form,
+    storageKey: DRAFT_KEYS.entry,
+    onRestore: handleDraftRestore,
+    enabled: !isSubmitting, // Don't save during submit
+  });
 
   /**
    * Handle client change - clears project and job (AC4)
@@ -237,7 +225,8 @@ export function TimeEntryForm() {
     setShowSuccess(false);
     setIsSubmitting(false);
 
-    // Reset form (Task 7)
+    // Story 4.10 AC3: Clear draft and reset form
+    clearDraft();
     form.reset({
       clientId: '',
       projectId: '',
@@ -250,9 +239,6 @@ export function TimeEntryForm() {
     });
     setClientId(null);
     setProjectId(null);
-
-    // Clear draft from sessionStorage
-    sessionStorage.removeItem(DRAFT_KEYS.entry);
 
     // Invalidate queries to refresh recent combinations
     queryClient.invalidateQueries({ queryKey: ['recentCombinations'] });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ import {
 import { updateTimeEntry } from '@/actions/entry';
 import { minutesToHours } from '@/lib/duration';
 import { DRAFT_KEYS } from '@/constants/storage';
+import { useDraftPersistence } from '@/hooks/use-draft-persistence';
 import type { TimeEntryWithDetails } from '@/types/domain';
 
 interface EditEntryFormProps {
@@ -62,42 +63,19 @@ export function EditEntryForm({ entry, onSuccess, onCancel }: EditEntryFormProps
     },
   });
 
-  // Draft key for this specific entry
-  const draftKey = DRAFT_KEYS.editEntry(entry.id);
+  // Draft persistence - Story 4.10 AC7
+  // Uses entry-specific key so edit drafts don't affect create form
+  const handleDraftRestore = (data: TimeEntryFormInput) => {
+    if (data.clientId) setClientId(data.clientId);
+    if (data.projectId) setProjectId(data.projectId);
+  };
 
-  // Restore draft on mount (Story 4.5 - AC7)
-  useEffect(() => {
-    const savedDraft = sessionStorage.getItem(draftKey);
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        // Check if draft is less than 1 hour old
-        const DRAFT_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
-        if (parsed.savedAt && Date.now() - parsed.savedAt < DRAFT_EXPIRY_MS) {
-          form.reset(parsed.data);
-          setClientId(parsed.data.clientId || null);
-          setProjectId(parsed.data.projectId || null);
-          toast.info('Draft restored (auto-saves for 1 hour)');
-        } else {
-          sessionStorage.removeItem(draftKey);
-        }
-      } catch {
-        sessionStorage.removeItem(draftKey);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftKey]);
-
-  // Save draft on change (Story 4.5 - AC7)
-  useEffect(() => {
-    const subscription = form.watch((data) => {
-      sessionStorage.setItem(
-        draftKey,
-        JSON.stringify({ data, savedAt: Date.now() })
-      );
-    });
-    return () => subscription.unsubscribe();
-  }, [form, draftKey]);
+  const { clearDraft } = useDraftPersistence({
+    form,
+    storageKey: DRAFT_KEYS.editEntry(entry.id),
+    onRestore: handleDraftRestore,
+    enabled: !isSubmitting,
+  });
 
   // Cascading handlers
   const handleClientChange = (newClientId: string) => {
@@ -138,8 +116,8 @@ export function EditEntryForm({ entry, onSuccess, onCancel }: EditEntryFormProps
         return;
       }
 
-      // Clear draft on success (Story 4.5 - AC7)
-      sessionStorage.removeItem(draftKey);
+      // Clear draft on success - Story 4.10 AC7
+      clearDraft();
 
       // Show success toast (Story 4.5 - AC3)
       toast.success('Entry updated successfully');
@@ -154,6 +132,12 @@ export function EditEntryForm({ entry, onSuccess, onCancel }: EditEntryFormProps
       toast.error('Failed to update. Please try again.');
       setIsSubmitting(false);
     }
+  };
+
+  // Handle cancel - clear draft
+  const handleCancel = () => {
+    clearDraft();
+    onCancel();
   };
 
   return (
@@ -233,7 +217,7 @@ export function EditEntryForm({ entry, onSuccess, onCancel }: EditEntryFormProps
           type="button"
           variant="outline"
           className="flex-1 min-h-[48px]"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={isSubmitting}
         >
           Cancel

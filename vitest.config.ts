@@ -15,6 +15,7 @@ export default defineConfig({
     // Run E2E tests sequentially to avoid database conflicts
     fileParallelism: false,
     testTimeout: 30000,
+    hookTimeout: 30000,
     // Include test files in src/ and test/
     include: ['src/**/*.test.{ts,tsx}', 'test/**/*.test.{ts,tsx}'],
   },

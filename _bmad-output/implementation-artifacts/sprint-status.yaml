@@ -66,8 +66,8 @@ development_status:
   3-5-master-data-admin-ui-layout: done
   epic-3-retrospective: done
 
-  # Epic 4: Quick Time Entry (10 stories)
-  epic-4: in-progress
+  # Epic 4: Quick Time Entry (12 stories)
+  epic-4: done
   4-1-bottom-navigation-component: done
   4-2-time-entry-form-cascading-selectors: done
   4-3-time-entry-form-service-task-duration: done

@@ -83,10 +83,10 @@ export function JobSelector({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="job">Job *</Label>
+      <Label htmlFor="jobId">Job *</Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger
-          id="job"
+          id="jobId"
           className={`w-full ${error ? 'border-destructive' : ''}`}
           data-testid="job-selector"
         >
@@ -108,7 +108,7 @@ export function JobSelector({
           )}
         </SelectContent>
       </Select>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>
   );
 }

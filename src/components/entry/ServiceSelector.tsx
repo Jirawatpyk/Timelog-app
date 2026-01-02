@@ -56,10 +56,10 @@ export function ServiceSelector({ value, onChange, error }: ServiceSelectorProps
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="service">Service *</Label>
+      <Label htmlFor="serviceId">Service *</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
-          id="service"
+          id="serviceId"
           className={`w-full ${error ? 'border-destructive' : ''}`}
           data-testid="service-selector"
         >
@@ -79,7 +79,7 @@ export function ServiceSelector({ value, onChange, error }: ServiceSelectorProps
           )}
         </SelectContent>
       </Select>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>
   );
 }

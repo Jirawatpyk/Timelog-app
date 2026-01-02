@@ -70,10 +70,10 @@ export function ProjectSelector({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="project">Project *</Label>
+      <Label htmlFor="projectId">Project *</Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger
-          id="project"
+          id="projectId"
           className={`w-full ${error ? 'border-destructive' : ''}`}
           data-testid="project-selector"
         >
@@ -95,7 +95,7 @@ export function ProjectSelector({
           )}
         </SelectContent>
       </Select>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>
   );
 }

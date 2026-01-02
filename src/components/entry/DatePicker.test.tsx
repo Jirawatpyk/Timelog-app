@@ -154,7 +154,7 @@ describe('DatePicker', () => {
     it('has accessible label', () => {
       render(<DatePicker value="2024-12-31" onChange={mockOnChange} />);
       const button = screen.getByRole('button');
-      expect(button).toHaveAttribute('id', 'entry-date');
+      expect(button).toHaveAttribute('id', 'entryDate');
     });
 
     it('button is accessible with proper attributes', () => {

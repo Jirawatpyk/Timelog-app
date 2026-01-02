@@ -16,6 +16,7 @@ import {
   SubmitButton,
   SuccessAnimation,
   RecentCombinations,
+  FormErrorSummary,
 } from '@/components/entry';
 import {
   timeEntryFormSchema,
@@ -24,6 +25,7 @@ import {
 import { createTimeEntry, upsertRecentCombination } from '@/actions/entry';
 import { getTodayISO } from '@/lib/thai-date';
 import { DRAFT_KEYS } from '@/constants/storage';
+import { scrollToFirstError, triggerErrorHaptic, triggerSuccessHaptic } from '@/lib/form-utils';
 import type { RecentCombination } from '@/types/domain';
 
 /**
@@ -32,6 +34,7 @@ import type { RecentCombination } from '@/types/domain';
  * Story 4.3: Service, Task, and Duration fields
  * Story 4.4: Date selection, submission, and success animation
  * Story 4.7: Recent combinations quick entry
+ * Story 4.8: Form validation & error states
  */
 export function TimeEntryForm() {
   const queryClient = useQueryClient();
@@ -44,10 +47,14 @@ export function TimeEntryForm() {
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [hasSubmitError, setHasSubmitError] = useState(false);
 
   // Form state with React Hook Form + Zod validation
+  // Story 4.8 - AC6: Real-time validation configuration
   const form = useForm<TimeEntryFormInput>({
     resolver: zodResolver(timeEntryFormSchema),
+    mode: 'onBlur', // Validate on blur (AC6)
+    reValidateMode: 'onChange', // Re-validate on change after first error (AC6)
     defaultValues: {
       clientId: '',
       projectId: '',
@@ -59,6 +66,8 @@ export function TimeEntryForm() {
       notes: '',
     },
   });
+
+  const { formState: { errors } } = form;
 
   // Draft persistence - restore on mount
   useEffect(() => {
@@ -149,11 +158,26 @@ export function TimeEntryForm() {
   };
 
   /**
+   * Handle form validation errors
+   * Story 4.8 - AC4, AC5: Scroll to first error and shake animation
+   */
+  const onInvalid = () => {
+    setHasSubmitError(true);
+    scrollToFirstError(errors);
+    triggerErrorHaptic();
+
+    // Reset error state after animation
+    setTimeout(() => setHasSubmitError(false), 500);
+  };
+
+  /**
    * Form submission handler
    * Story 4.4 - AC5, AC6, AC7
+   * Story 4.8 - AC8: Server error handling
    */
   const onSubmit = async (data: TimeEntryFormInput) => {
     setIsSubmitting(true);
+    setHasSubmitError(false);
 
     try {
       // Create time entry
@@ -167,7 +191,13 @@ export function TimeEntryForm() {
       });
 
       if (!result.success) {
-        toast.error(result.error);
+        // Story 4.8 - AC8: Show server error with retry option
+        toast.error(result.error, {
+          action: {
+            label: 'Retry',
+            onClick: () => form.handleSubmit(onSubmit, onInvalid)(),
+          },
+        });
         setIsSubmitting(false);
         return;
       }
@@ -185,13 +215,16 @@ export function TimeEntryForm() {
       setShowSuccess(true);
 
       // Trigger haptic feedback on mobile
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-      }
+      triggerSuccessHaptic();
 
     } catch {
-      // AC7: Error handling
-      toast.error('Failed to save. Please try again.');
+      // AC7/AC8: Error handling with retry option
+      toast.error('Failed to save. Please try again.', {
+        action: {
+          label: 'Retry',
+          onClick: () => form.handleSubmit(onSubmit, onInvalid)(),
+        },
+      });
       setIsSubmitting(false);
     }
   };
@@ -235,8 +268,14 @@ export function TimeEntryForm() {
       {/* Divider */}
       <div className="border-t mb-6" />
 
+      {/* Form Error Summary - Story 4.8 */}
+      <FormErrorSummary
+        errors={errors}
+        show={Object.keys(errors).length > 0 && hasSubmitError}
+      />
+
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
         className="space-y-6"
         data-testid="time-entry-form"
       >
@@ -308,11 +347,12 @@ export function TimeEntryForm() {
           />
         </fieldset>
 
-        {/* Submit Button - Story 4.4 AC6 */}
+        {/* Submit Button - Story 4.4 AC6, Story 4.8 AC5 */}
         <div className="pt-4">
           <SubmitButton
             isLoading={isSubmitting}
             disabled={!form.formState.isValid}
+            hasErrors={hasSubmitError}
           />
         </div>
       </form>

@@ -11,6 +11,7 @@ vi.mock('@/hooks/use-entry-data', () => ({
   useJobs: vi.fn(),
   useServices: vi.fn(),
   useTasks: vi.fn(),
+  useRecentCombinations: vi.fn(),
 }));
 
 const mockClients = [
@@ -83,6 +84,13 @@ describe('TimeEntryForm', () => {
       isError: false,
       error: null,
     } as ReturnType<typeof useEntryData.useTasks>);
+
+    // Story 4.7: Recent combinations hook
+    vi.mocked(useEntryData.useRecentCombinations).mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    } as ReturnType<typeof useEntryData.useRecentCombinations>);
   });
 
   it('renders the form with all selectors', () => {

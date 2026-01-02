@@ -12,3 +12,4 @@ export { EditEntryForm } from './EditEntryForm';
 export { EditEntrySheet } from './EditEntrySheet';
 export { DeleteConfirmDialog } from './DeleteConfirmDialog';
 export { RecentCombinations } from './RecentCombinations';
+export { FormErrorSummary } from './FormErrorSummary';

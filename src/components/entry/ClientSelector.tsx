@@ -56,10 +56,10 @@ export function ClientSelector({ value, onChange, error }: ClientSelectorProps) 
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="client">Client *</Label>
+      <Label htmlFor="clientId">Client *</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
-          id="client"
+          id="clientId"
           className={`w-full ${error ? 'border-destructive' : ''}`}
           data-testid="client-selector"
         >
@@ -79,7 +79,7 @@ export function ClientSelector({ value, onChange, error }: ClientSelectorProps) 
           )}
         </SelectContent>
       </Select>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>
   );
 }

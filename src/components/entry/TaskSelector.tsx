@@ -61,7 +61,7 @@ export function TaskSelector({ value, onChange, error }: TaskSelectorProps) {
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="task">
+      <Label htmlFor="taskId">
         Task <span className="text-muted-foreground">(Optional)</span>
       </Label>
       <div className="flex gap-2">
@@ -70,7 +70,7 @@ export function TaskSelector({ value, onChange, error }: TaskSelectorProps) {
           onValueChange={(val) => onChange(val || null)}
         >
           <SelectTrigger
-            id="task"
+            id="taskId"
             className={`flex-1 ${error ? 'border-destructive' : ''}`}
             data-testid="task-selector"
           >
@@ -103,7 +103,7 @@ export function TaskSelector({ value, onChange, error }: TaskSelectorProps) {
           </Button>
         )}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>
   );
 }

@@ -75,7 +75,7 @@ development_status:
   4-5-edit-own-time-entry: done
   4-6-delete-own-time-entry: done
   4-7-recent-combinations-quick-entry: done
-  4-8-form-validation-error-states: in-progress
+  4-8-form-validation-error-states: done
   4-9-skeleton-loading-states: ready-for-dev
   4-10-form-draft-auto-save: ready-for-dev
   4-11-desktop-sidebar-navigation: done

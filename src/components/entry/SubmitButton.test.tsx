@@ -122,4 +122,25 @@ describe('SubmitButton', () => {
       expect(button.className).toContain('w-full');
     });
   });
+
+  describe('Shake Animation (Story 4.8 - AC5)', () => {
+    it('has wrapper element for animation', () => {
+      render(<SubmitButton isLoading={false} />);
+      expect(screen.getByTestId('submit-button-wrapper')).toBeInTheDocument();
+    });
+
+    it('accepts hasErrors prop', () => {
+      // Should not throw when hasErrors is provided
+      expect(() => {
+        render(<SubmitButton isLoading={false} hasErrors={true} />);
+      }).not.toThrow();
+    });
+
+    it('renders button inside motion wrapper', () => {
+      render(<SubmitButton isLoading={false} />);
+      const wrapper = screen.getByTestId('submit-button-wrapper');
+      const button = screen.getByTestId('submit-button');
+      expect(wrapper).toContainElement(button);
+    });
+  });
 });

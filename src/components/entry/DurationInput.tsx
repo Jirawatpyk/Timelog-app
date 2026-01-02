@@ -63,7 +63,7 @@ export const DurationInput = forwardRef<HTMLInputElement, DurationInputProps>(
 
   return (
     <div className="space-y-3">
-      <Label htmlFor="duration">Duration (hours) *</Label>
+      <Label htmlFor="durationHours">Duration (hours) *</Label>
 
       {/* Preset buttons */}
       <div className="flex flex-wrap gap-2">
@@ -86,7 +86,7 @@ export const DurationInput = forwardRef<HTMLInputElement, DurationInputProps>(
       <div className="relative">
         <Input
           ref={ref}
-          id="duration"
+          id="durationHours"
           type="number"
           step="0.25"
           min="0.25"
@@ -105,7 +105,7 @@ export const DurationInput = forwardRef<HTMLInputElement, DurationInputProps>(
         </span>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
       {/* Helper text */}
       <p className="text-xs text-muted-foreground">

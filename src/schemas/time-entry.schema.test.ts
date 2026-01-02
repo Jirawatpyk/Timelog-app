@@ -4,6 +4,7 @@ import {
   timeEntrySchema,
   durationHoursSchema,
   timeEntryFormSchema,
+  validateTimeEntry,
 } from './time-entry.schema';
 
 describe('cascadingSelectorsSchema', () => {
@@ -18,7 +19,7 @@ describe('cascadingSelectorsSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects empty clientId with Thai message', () => {
+  it('rejects empty clientId with English message', () => {
     const invalidData = {
       clientId: '',
       projectId: '550e8400-e29b-41d4-a716-446655440001',
@@ -28,11 +29,11 @@ describe('cascadingSelectorsSchema', () => {
     const result = cascadingSelectorsSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาเลือก Client');
+      expect(result.error.issues[0].message).toBe('Please select a Client');
     }
   });
 
-  it('rejects empty projectId with Thai message', () => {
+  it('rejects empty projectId with English message', () => {
     const invalidData = {
       clientId: '550e8400-e29b-41d4-a716-446655440000',
       projectId: '',
@@ -42,11 +43,11 @@ describe('cascadingSelectorsSchema', () => {
     const result = cascadingSelectorsSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาเลือก Project');
+      expect(result.error.issues[0].message).toBe('Please select a Project');
     }
   });
 
-  it('rejects empty jobId with Thai message', () => {
+  it('rejects empty jobId with English message', () => {
     const invalidData = {
       clientId: '550e8400-e29b-41d4-a716-446655440000',
       projectId: '550e8400-e29b-41d4-a716-446655440001',
@@ -56,7 +57,7 @@ describe('cascadingSelectorsSchema', () => {
     const result = cascadingSelectorsSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาเลือก Job');
+      expect(result.error.issues[0].message).toBe('Please select a Job');
     }
   });
 
@@ -106,7 +107,7 @@ describe('timeEntrySchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects duration less than 1 minute with Thai message', () => {
+  it('rejects duration less than 1 minute with English message', () => {
     const invalidData = {
       ...validCascadingData,
       serviceId: '550e8400-e29b-41d4-a716-446655440003',
@@ -117,11 +118,11 @@ describe('timeEntrySchema', () => {
     const result = timeEntrySchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาใส่เวลาอย่างน้อย 1 นาที');
+      expect(result.error.issues[0].message).toBe('Duration must be at least 1 minute');
     }
   });
 
-  it('rejects duration over 1440 minutes (24 hours) with Thai message', () => {
+  it('rejects duration over 1440 minutes (24 hours) with English message', () => {
     const invalidData = {
       ...validCascadingData,
       serviceId: '550e8400-e29b-41d4-a716-446655440003',
@@ -132,11 +133,11 @@ describe('timeEntrySchema', () => {
     const result = timeEntrySchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาใส่เวลาไม่เกิน 24 ชั่วโมง');
+      expect(result.error.issues[0].message).toBe('Duration cannot exceed 24 hours');
     }
   });
 
-  it('rejects notes over 500 characters with Thai message', () => {
+  it('rejects notes over 500 characters with English message', () => {
     const invalidData = {
       ...validCascadingData,
       serviceId: '550e8400-e29b-41d4-a716-446655440003',
@@ -148,11 +149,11 @@ describe('timeEntrySchema', () => {
     const result = timeEntrySchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('หมายเหตุต้องไม่เกิน 500 ตัวอักษร');
+      expect(result.error.issues[0].message).toBe('Notes cannot exceed 500 characters');
     }
   });
 
-  it('rejects empty entryDate with Thai message', () => {
+  it('rejects empty entryDate with English message', () => {
     const invalidData = {
       ...validCascadingData,
       serviceId: '550e8400-e29b-41d4-a716-446655440003',
@@ -163,12 +164,12 @@ describe('timeEntrySchema', () => {
     const result = timeEntrySchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาเลือกวันที่');
+      expect(result.error.issues[0].message).toBe('Please select a date');
     }
   });
 });
 
-describe('durationHoursSchema (Story 4.3 - AC6)', () => {
+describe('durationHoursSchema (Story 4.3 - AC6, Story 4.8)', () => {
   it('accepts valid 0.25 hour increments', () => {
     expect(durationHoursSchema.safeParse(0.25).success).toBe(true);
     expect(durationHoursSchema.safeParse(0.5).success).toBe(true);
@@ -180,27 +181,27 @@ describe('durationHoursSchema (Story 4.3 - AC6)', () => {
     expect(durationHoursSchema.safeParse(24).success).toBe(true);
   });
 
-  it('rejects values less than 0.25', () => {
+  it('rejects values less than 0.25 with English message', () => {
     const result = durationHoursSchema.safeParse(0);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาใส่เวลาอย่างน้อย 0.25 ชั่วโมง');
+      expect(result.error.issues[0].message).toBe('Duration must be at least 15 minutes (0.25 hours)');
     }
   });
 
-  it('rejects values greater than 24', () => {
+  it('rejects values greater than 24 with English message', () => {
     const result = durationHoursSchema.safeParse(25);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาใส่เวลาไม่เกิน 24 ชั่วโมง');
+      expect(result.error.issues[0].message).toBe('Duration cannot exceed 24 hours');
     }
   });
 
-  it('rejects invalid increments with Thai error message', () => {
+  it('rejects invalid increments with English error message', () => {
     const result = durationHoursSchema.safeParse(1.3);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาใส่เวลาเป็นช่วง 15 นาที (0.25 ชั่วโมง)');
+      expect(result.error.issues[0].message).toBe('Duration must be in 15-minute increments (0.25, 0.5, 0.75...)');
     }
   });
 
@@ -210,7 +211,7 @@ describe('durationHoursSchema (Story 4.3 - AC6)', () => {
   });
 });
 
-describe('timeEntryFormSchema (Story 4.3)', () => {
+describe('timeEntryFormSchema (Story 4.3, Story 4.8)', () => {
   const validCascadingData = {
     clientId: '550e8400-e29b-41d4-a716-446655440000',
     projectId: '550e8400-e29b-41d4-a716-446655440001',
@@ -244,7 +245,7 @@ describe('timeEntryFormSchema (Story 4.3)', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects missing serviceId with Thai message', () => {
+  it('rejects missing serviceId with English message', () => {
     const invalidData = {
       ...validCascadingData,
       serviceId: '',
@@ -255,7 +256,7 @@ describe('timeEntryFormSchema (Story 4.3)', () => {
     const result = timeEntryFormSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาเลือก Service');
+      expect(result.error.issues[0].message).toBe('Please select a Service');
     }
   });
 
@@ -271,7 +272,7 @@ describe('timeEntryFormSchema (Story 4.3)', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects empty entryDate with Thai message', () => {
+  it('rejects empty entryDate with English message', () => {
     const invalidData = {
       ...validCascadingData,
       serviceId: '550e8400-e29b-41d4-a716-446655440003',
@@ -282,11 +283,11 @@ describe('timeEntryFormSchema (Story 4.3)', () => {
     const result = timeEntryFormSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('กรุณาเลือกวันที่');
+      expect(result.error.issues[0].message).toBe('Please select a date');
     }
   });
 
-  it('rejects notes over 500 characters with Thai message', () => {
+  it('rejects notes over 500 characters with English message', () => {
     const invalidData = {
       ...validCascadingData,
       serviceId: '550e8400-e29b-41d4-a716-446655440003',
@@ -298,7 +299,38 @@ describe('timeEntryFormSchema (Story 4.3)', () => {
     const result = timeEntryFormSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe('หมายเหตุต้องไม่เกิน 500 ตัวอักษร');
+      expect(result.error.issues[0].message).toBe('Notes cannot exceed 500 characters');
     }
+  });
+});
+
+describe('validateTimeEntry helper (Story 4.8)', () => {
+  it('returns success for valid data', () => {
+    const validData = {
+      clientId: '550e8400-e29b-41d4-a716-446655440000',
+      projectId: '550e8400-e29b-41d4-a716-446655440001',
+      jobId: '550e8400-e29b-41d4-a716-446655440002',
+      serviceId: '550e8400-e29b-41d4-a716-446655440003',
+      taskId: null,
+      durationHours: 1.5,
+      entryDate: '2025-01-01',
+    };
+
+    const result = validateTimeEntry(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it('returns error for invalid data', () => {
+    const invalidData = {
+      clientId: '',
+      projectId: '',
+      jobId: '',
+      serviceId: '',
+      durationHours: 0,
+      entryDate: '',
+    };
+
+    const result = validateTimeEntry(invalidData);
+    expect(result.success).toBe(false);
   });
 });

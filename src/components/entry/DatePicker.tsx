@@ -43,12 +43,12 @@ export function DatePicker({ value, onChange, error }: DatePickerProps) {
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="entry-date">Date *</Label>
+      <Label htmlFor="entryDate">Date *</Label>
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            id="entry-date"
+            id="entryDate"
             type="button"
             variant="outline"
             className={cn(
@@ -78,7 +78,7 @@ export function DatePicker({ value, onChange, error }: DatePickerProps) {
         </p>
       )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>
   );
 }

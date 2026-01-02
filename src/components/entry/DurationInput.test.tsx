@@ -155,7 +155,7 @@ describe('DurationInput', () => {
       render(<DurationInput value={1.5} onChange={mockOnChange} />);
 
       const input = screen.getByRole('spinbutton');
-      expect(input).toHaveAttribute('id', 'duration');
+      expect(input).toHaveAttribute('id', 'durationHours');
     });
 
     it('preset buttons have type button to prevent form submission', () => {

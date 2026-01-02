@@ -124,8 +124,15 @@ export function ClientsListClient({ initialClients }: ClientsListClientProps) {
       key: 'name',
       header: 'Name',
       sortable: true,
+      className: 'max-w-[200px] sm:max-w-none',
       render: (client) => (
-        <span className={cn(!client.active && 'line-through text-muted-foreground')}>
+        <span
+          className={cn(
+            'block truncate',
+            !client.active && 'line-through text-muted-foreground'
+          )}
+          title={client.name}
+        >
           {client.name}
         </span>
       ),
@@ -134,6 +141,7 @@ export function ClientsListClient({ initialClients }: ClientsListClientProps) {
       key: 'active',
       header: 'Status',
       sortable: true,
+      hideOnMobile: true,
       render: (client) => (
         <Badge variant={client.active ? 'default' : 'secondary'}>
           {client.active ? 'Active' : 'Inactive'}

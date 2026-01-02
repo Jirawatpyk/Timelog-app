@@ -38,9 +38,10 @@ describe('LoginForm', () => {
     it('should render login form with all fields', () => {
       render(<LoginForm />);
 
-      expect(screen.getByText('Login to Timelog')).toBeInTheDocument();
+      expect(screen.getByText('Welcome back')).toBeInTheDocument();
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+      // Use exact match 'Password' to avoid matching "Show password" button
+      expect(screen.getByLabelText('Password')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
     });
 
@@ -71,7 +72,7 @@ describe('LoginForm', () => {
       render(<LoginForm />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
+      const passwordInput = screen.getByLabelText('Password');
       const form = emailInput.closest('form')!;
 
       // Directly set invalid email value (bypass HTML5 validation)
@@ -124,7 +125,7 @@ describe('LoginForm', () => {
       render(<LoginForm />);
 
       await user.type(screen.getByLabelText(/email/i), 'user@company.com');
-      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.type(screen.getByLabelText('Password'), 'password123');
 
       // Start submission
       const submitPromise = user.click(screen.getByRole('button', { name: /login/i }));
@@ -150,7 +151,7 @@ describe('LoginForm', () => {
       render(<LoginForm />);
 
       await user.type(screen.getByLabelText(/email/i), 'user@company.com');
-      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.type(screen.getByLabelText('Password'), 'password123');
       await user.click(screen.getByRole('button', { name: /login/i }));
 
       await waitFor(() => {
@@ -169,7 +170,7 @@ describe('LoginForm', () => {
       render(<LoginForm />);
 
       await user.type(screen.getByLabelText(/email/i), 'user@company.com');
-      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.type(screen.getByLabelText('Password'), 'password123');
       await user.click(screen.getByRole('button', { name: /login/i }));
 
       await waitFor(() => {
@@ -186,7 +187,7 @@ describe('LoginForm', () => {
       render(<LoginForm />);
 
       await user.type(screen.getByLabelText(/email/i), 'user@company.com');
-      await user.type(screen.getByLabelText(/password/i), 'wrongpassword');
+      await user.type(screen.getByLabelText('Password'), 'wrongpassword');
       await user.click(screen.getByRole('button', { name: /login/i }));
 
       await waitFor(() => {

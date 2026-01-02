@@ -124,8 +124,15 @@ export function TasksListClient({ initialTasks }: TasksListClientProps) {
       key: 'name',
       header: 'Name',
       sortable: true,
+      className: 'max-w-[200px] sm:max-w-none',
       render: (task) => (
-        <span className={cn(!task.active && 'line-through text-muted-foreground')}>
+        <span
+          className={cn(
+            'block truncate',
+            !task.active && 'line-through text-muted-foreground'
+          )}
+          title={task.name}
+        >
           {task.name}
         </span>
       ),
@@ -134,6 +141,7 @@ export function TasksListClient({ initialTasks }: TasksListClientProps) {
       key: 'active',
       header: 'Status',
       sortable: true,
+      hideOnMobile: true,
       render: (task) => (
         <Badge variant={task.active ? 'default' : 'secondary'}>
           {task.active ? 'Active' : 'Inactive'}

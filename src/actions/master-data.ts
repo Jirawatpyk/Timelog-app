@@ -10,8 +10,33 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { serviceSchema, clientSchema, taskSchema, uuidSchema, type ServiceInput, type ClientInput, type TaskInput } from '@/schemas/master-data.schema';
-import type { Service, Client, Task, ActionResult } from '@/types/domain';
+import {
+  serviceSchema,
+  clientSchema,
+  taskSchema,
+  uuidSchema,
+  createProjectSchema,
+  updateProjectSchema,
+  createJobSchema,
+  updateJobSchema,
+  type ServiceInput,
+  type ClientInput,
+  type TaskInput,
+  type CreateProjectInput,
+  type UpdateProjectInput,
+  type CreateJobInput,
+  type UpdateJobInput,
+} from '@/schemas/master-data.schema';
+import type {
+  Service,
+  Client,
+  Task,
+  Project,
+  Job,
+  ActionResult,
+  ProjectWithClient,
+  JobWithProject,
+} from '@/types/domain';
 
 /**
  * Check if user is authenticated and has admin role
@@ -591,6 +616,501 @@ export async function checkClientUsage(id: string): Promise<ActionResult<ItemUsa
     .from('time_entries')
     .select('*', { count: 'exact', head: true })
     .in('job_id', jobIds);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    data: {
+      used: (count ?? 0) > 0,
+      count: count ?? 0,
+    },
+  };
+}
+
+// ============================================================================
+// Project Actions
+// Story 3.6: Projects & Jobs Admin UI (AC: 1, 2, 3, 4)
+// ============================================================================
+
+/**
+ * Get all projects, optionally filtered by client
+ *
+ * @param clientId - Optional client ID to filter by
+ * @returns ActionResult with projects array including client names
+ */
+export async function getProjects(clientId?: string): Promise<ActionResult<ProjectWithClient[]>> {
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  let query = supabase
+    .from('projects')
+    .select(`
+      id,
+      client_id,
+      name,
+      active,
+      created_at,
+      clients!inner(name)
+    `)
+    .order('name');
+
+  if (clientId) {
+    query = query.eq('client_id', clientId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  // Transform to include clientName
+  const projects: ProjectWithClient[] = (data || []).map((row) => {
+    // Handle the joined clients data (can be object or array depending on query)
+    const clientData = row.clients as unknown as { name: string } | null;
+    return {
+      id: row.id,
+      client_id: row.client_id,
+      name: row.name,
+      active: row.active,
+      created_at: row.created_at,
+      clientName: clientData?.name || '',
+    };
+  });
+
+  return { success: true, data: projects };
+}
+
+/**
+ * Create a new project
+ *
+ * @param input - Project input data (clientId, name)
+ * @returns ActionResult with created project
+ */
+export async function createProject(input: CreateProjectInput): Promise<ActionResult<Project>> {
+  // Validate input
+  const parsed = createProjectSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Insert project
+  const { data, error } = await supabase
+    .from('projects')
+    .insert({
+      client_id: parsed.data.clientId,
+      name: parsed.data.name,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Project name already exists for this client' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Update an existing project
+ *
+ * @param id - Project ID to update
+ * @param input - Updated project data (name only)
+ * @returns ActionResult with updated project
+ */
+export async function updateProject(
+  id: string,
+  input: UpdateProjectInput
+): Promise<ActionResult<Project>> {
+  // Validate ID
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Validate input
+  const parsed = updateProjectSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update project
+  const { data, error } = await supabase
+    .from('projects')
+    .update({ name: parsed.data.name })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Project name already exists for this client' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Toggle project active status
+ *
+ * @param id - Project ID to toggle
+ * @param active - New active status
+ * @returns ActionResult with updated project
+ */
+export async function toggleProjectActive(
+  id: string,
+  active: boolean
+): Promise<ActionResult<Project>> {
+  // Validate ID
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update active status
+  const { data, error } = await supabase
+    .from('projects')
+    .update({ active })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Check if a project is used (has jobs)
+ *
+ * @param id - Project ID to check
+ * @returns ActionResult with usage info (count of jobs)
+ */
+export async function checkProjectUsage(id: string): Promise<ActionResult<ItemUsage>> {
+  // Validate ID
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Count jobs under this project
+  const { count, error } = await supabase
+    .from('jobs')
+    .select('*', { count: 'exact', head: true })
+    .eq('project_id', id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    data: {
+      used: (count ?? 0) > 0,
+      count: count ?? 0,
+    },
+  };
+}
+
+// ============================================================================
+// Job Actions
+// Story 3.6: Projects & Jobs Admin UI (AC: 5, 6, 7, 8)
+// ============================================================================
+
+/**
+ * Get all jobs, optionally filtered by project or client
+ *
+ * @param projectId - Optional project ID to filter by
+ * @param clientId - Optional client ID to filter by (filters via projects)
+ * @returns ActionResult with jobs array including project and client names
+ */
+export async function getJobs(
+  projectId?: string,
+  clientId?: string
+): Promise<ActionResult<JobWithProject[]>> {
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  let query = supabase
+    .from('jobs')
+    .select(`
+      id,
+      project_id,
+      name,
+      job_no,
+      so_no,
+      active,
+      created_at,
+      projects!inner(
+        id,
+        name,
+        client_id,
+        clients!inner(name)
+      )
+    `)
+    .order('name');
+
+  if (projectId) {
+    query = query.eq('project_id', projectId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  // Transform and optionally filter by clientId
+  let jobs: JobWithProject[] = (data || []).map((row) => {
+    // Handle the joined projects data (can be object or array depending on query)
+    const project = row.projects as unknown as {
+      id: string;
+      name: string;
+      client_id: string;
+      clients: { name: string };
+    } | null;
+    return {
+      id: row.id,
+      project_id: row.project_id,
+      name: row.name,
+      job_no: row.job_no,
+      so_no: row.so_no,
+      active: row.active,
+      created_at: row.created_at,
+      projectName: project?.name || '',
+      clientName: project?.clients?.name || '',
+      clientId: project?.client_id || '',
+    };
+  });
+
+  // Filter by clientId if provided
+  if (clientId) {
+    jobs = jobs.filter((job) => job.clientId === clientId);
+  }
+
+  return { success: true, data: jobs };
+}
+
+/**
+ * Create a new job
+ *
+ * @param input - Job input data (projectId, name, jobNo, soNo)
+ * @returns ActionResult with created job
+ */
+export async function createJob(input: CreateJobInput): Promise<ActionResult<Job>> {
+  // Validate input
+  const parsed = createJobSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Insert job
+  const { data, error } = await supabase
+    .from('jobs')
+    .insert({
+      project_id: parsed.data.projectId,
+      name: parsed.data.name,
+      job_no: parsed.data.jobNo,
+      so_no: parsed.data.soNo,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Job name already exists for this project' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Update an existing job
+ *
+ * @param id - Job ID to update
+ * @param input - Updated job data (name, jobNo, soNo)
+ * @returns ActionResult with updated job
+ */
+export async function updateJob(
+  id: string,
+  input: UpdateJobInput
+): Promise<ActionResult<Job>> {
+  // Validate ID
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Validate input
+  const parsed = updateJobSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update job
+  const { data, error } = await supabase
+    .from('jobs')
+    .update({
+      name: parsed.data.name,
+      job_no: parsed.data.jobNo,
+      so_no: parsed.data.soNo,
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Job name already exists for this project' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Toggle job active status
+ *
+ * @param id - Job ID to toggle
+ * @param active - New active status
+ * @returns ActionResult with updated job
+ */
+export async function toggleJobActive(
+  id: string,
+  active: boolean
+): Promise<ActionResult<Job>> {
+  // Validate ID
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update active status
+  const { data, error } = await supabase
+    .from('jobs')
+    .update({ active })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Check if a job is used in time entries
+ *
+ * @param id - Job ID to check
+ * @returns ActionResult with usage info (count of time_entries)
+ */
+export async function checkJobUsage(id: string): Promise<ActionResult<ItemUsage>> {
+  // Validate ID
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth
+  const authResult = await requireAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Count time entries using this job
+  const { count, error } = await supabase
+    .from('time_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('job_id', id);
 
   if (error) {
     return { success: false, error: error.message };

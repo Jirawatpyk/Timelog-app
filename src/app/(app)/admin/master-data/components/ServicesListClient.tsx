@@ -128,8 +128,15 @@ export function ServicesListClient({ initialServices }: ServicesListClientProps)
       key: 'name',
       header: 'Name',
       sortable: true,
+      className: 'max-w-[200px] sm:max-w-none',
       render: (service) => (
-        <span className={cn(!service.active && 'line-through text-muted-foreground')}>
+        <span
+          className={cn(
+            'block truncate',
+            !service.active && 'line-through text-muted-foreground'
+          )}
+          title={service.name}
+        >
           {service.name}
         </span>
       ),
@@ -138,6 +145,7 @@ export function ServicesListClient({ initialServices }: ServicesListClientProps)
       key: 'active',
       header: 'Status',
       sortable: true,
+      hideOnMobile: true,
       render: (service) => (
         <Badge variant={service.active ? 'default' : 'secondary'}>
           {service.active ? 'Active' : 'Inactive'}

@@ -120,6 +120,33 @@ const user_id = entry.userId; // WRONG!
 
 ---
 
+## UI Standards
+
+### Language
+- **UI Language:** English only (no Thai mixed)
+- **Font:** Inter (Google Fonts, Latin subset)
+- All labels, buttons, messages, placeholders must be in English
+
+### Color Theme (Blue Brand)
+```css
+/* Primary - Blue Brand */
+--primary: 221 83% 53%;        /* Light mode */
+--primary: 217 91% 60%;        /* Dark mode */
+
+/* Semantic Colors */
+--success: 142 76% 36%;        /* Green */
+--warning: 38 92% 50%;         /* Amber */
+--info: 199 89% 48%;           /* Cyan */
+--destructive: 0 84% 60%;      /* Red */
+```
+
+### Design System
+- Use shadcn/ui components (New York style)
+- Support Light/Dark mode via CSS variables
+- Mobile-first responsive design
+
+---
+
 ## File & Component Naming
 
 | Element | Convention | Example |

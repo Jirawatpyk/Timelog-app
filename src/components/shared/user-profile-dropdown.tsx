@@ -128,12 +128,12 @@ export function UserProfileDropdown({ compact = false }: UserProfileDropdownProp
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              <span>กำลังออกจากระบบ...</span>
+              <span>Signing out...</span>
             </>
           ) : (
             <>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>ออกจากระบบ</span>
+              <span>Sign out</span>
             </>
           )}
         </DropdownMenuItem>

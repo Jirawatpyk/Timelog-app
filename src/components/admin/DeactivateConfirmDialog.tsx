@@ -23,8 +23,9 @@ interface DeactivateConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemName: string;
-  itemType: 'service' | 'task' | 'client';
+  itemType: 'service' | 'task' | 'client' | 'project' | 'job';
   usageCount: number;
+  usageLabel?: string; // e.g., "jobs" for projects, "time entries" for jobs
   onConfirm: () => void;
   isPending: boolean;
 }
@@ -35,6 +36,7 @@ export function DeactivateConfirmDialog({
   itemName,
   itemType,
   usageCount,
+  usageLabel = 'time entries',
   onConfirm,
   isPending,
 }: DeactivateConfirmDialogProps) {
@@ -51,12 +53,11 @@ export function DeactivateConfirmDialog({
             <div className="space-y-2">
               {usageCount > 0 ? (
                 <p>
-                  This {itemType} is used in <strong>{usageCount}</strong> time{' '}
-                  {usageCount === 1 ? 'entry' : 'entries'}.
+                  This {itemType} has <strong>{usageCount}</strong> {usageLabel}.
                 </p>
               ) : (
                 <p>
-                  This {itemType} is not currently used in any time entries.
+                  This {itemType} is not currently in use.
                 </p>
               )}
               <p className="text-muted-foreground">

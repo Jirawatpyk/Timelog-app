@@ -40,7 +40,7 @@ export interface DataTableProps<T> {
 
 type SortDirection = 'asc' | 'desc' | null;
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends object>({
   data,
   columns,
   keyField,
@@ -69,8 +69,8 @@ export function DataTable<T extends Record<string, unknown>>({
     if (!sortKey || !sortDirection) return data;
 
     return [...data].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+      const aVal = (a as Record<string, unknown>)[sortKey];
+      const bVal = (b as Record<string, unknown>)[sortKey];
 
       if (aVal === bVal) return 0;
       if (aVal === null || aVal === undefined) return 1;
@@ -143,7 +143,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 >
                   {column.render
                     ? column.render(item)
-                    : String(item[column.key as keyof T] ?? '')}
+                    : String((item as Record<string, unknown>)[column.key as string] ?? '')}
                 </TableCell>
               ))}
             </TableRow>

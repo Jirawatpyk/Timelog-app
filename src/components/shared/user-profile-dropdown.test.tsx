@@ -107,7 +107,7 @@ describe('UserProfileDropdown', () => {
       const trigger = screen.getByRole('button');
       await user.click(trigger);
 
-      expect(screen.getByText('ออกจากระบบ')).toBeInTheDocument();
+      expect(screen.getByText('Sign out')).toBeInTheDocument();
     });
   });
 
@@ -129,7 +129,7 @@ describe('UserProfileDropdown', () => {
       await user.click(trigger);
 
       // Click sign out
-      const signOutButton = screen.getByText('ออกจากระบบ');
+      const signOutButton = screen.getByText('Sign out');
       await user.click(signOutButton);
 
       // Verify logout was called
@@ -282,6 +282,6 @@ describe('UserProfileDropdown Compact Mode (AC 5)', () => {
     // Dropdown should show full name and email
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('john@company.com')).toBeInTheDocument();
-    expect(screen.getByText('ออกจากระบบ')).toBeInTheDocument();
+    expect(screen.getByText('Sign out')).toBeInTheDocument();
   });
 });

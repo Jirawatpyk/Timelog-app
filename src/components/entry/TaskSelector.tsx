@@ -34,7 +34,7 @@ export function TaskSelector({ value, onChange, error }: TaskSelectorProps) {
     return (
       <div className="space-y-2">
         <Label>Task <span className="text-muted-foreground">(Optional)</span></Label>
-        <Skeleton className="h-10 w-full" data-testid="task-selector-loading" />
+        <Skeleton className="h-9 w-full rounded-md" data-testid="task-selector-loading" />
       </div>
     );
   }

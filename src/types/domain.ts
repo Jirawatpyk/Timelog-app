@@ -87,3 +87,23 @@ export interface TimeEntryWithDetails extends TimeEntry {
     name: string;
   } | null;
 }
+
+// ============================================
+// EXTENDED TYPES FOR MASTER DATA (Story 3.6)
+// ============================================
+
+/**
+ * Project with client name for display in admin list
+ */
+export interface ProjectWithClient extends Project {
+  clientName: string;
+}
+
+/**
+ * Job with project and client names for display in admin list
+ */
+export interface JobWithProject extends Job {
+  projectName: string;
+  clientName: string;
+  clientId: string;
+}

@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { hoursToMinutes } from '@/lib/duration';
-import type { ActionResult, Client, Project, Job, Service, Task, TimeEntry } from '@/types/domain';
+import { canEditEntry, EDIT_WINDOW_DAYS_CONST } from '@/lib/entry-rules';
+import type { ActionResult, Client, Project, Job, Service, Task, TimeEntry, TimeEntryWithDetails } from '@/types/domain';
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -308,6 +309,281 @@ export async function upsertRecentCombination(
         .in('id', toDelete);
     }
   }
+
+  return { success: true, data: undefined };
+}
+
+// ============================================
+// UPDATE TIME ENTRY (Story 4.5)
+// ============================================
+
+interface UpdateTimeEntryInput {
+  jobId: string;
+  serviceId: string;
+  taskId: string | null;
+  durationHours: number;
+  entryDate: string;
+  notes?: string;
+}
+
+/**
+ * Update an existing time entry
+ * Story 4.5 - AC3: Edit form submission
+ * Story 4.5 - AC4: 7-day edit restriction (server-side enforcement)
+ * Story 4.5 - AC5: Audit log (handled by database trigger in Story 8.6)
+ */
+export async function updateTimeEntry(
+  entryId: string,
+  input: UpdateTimeEntryInput
+): Promise<ActionResult<TimeEntry>> {
+  // Validate UUID formats
+  if (!isValidUUID(entryId)) {
+    return { success: false, error: 'Invalid entry ID format' };
+  }
+  if (!isValidUUID(input.jobId)) {
+    return { success: false, error: 'Invalid job ID format' };
+  }
+  if (!isValidUUID(input.serviceId)) {
+    return { success: false, error: 'Invalid service ID format' };
+  }
+  if (input.taskId && !isValidUUID(input.taskId)) {
+    return { success: false, error: 'Invalid task ID format' };
+  }
+
+  const supabase = await createClient();
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Get existing entry (RLS will ensure ownership)
+  const { data: existingEntry, error: fetchError } = await supabase
+    .from('time_entries')
+    .select('*')
+    .eq('id', entryId)
+    .single();
+
+  if (fetchError || !existingEntry) {
+    return { success: false, error: 'Entry not found' };
+  }
+
+  // Check 7-day edit restriction (AC4 - server-side enforcement)
+  if (!canEditEntry(existingEntry.entry_date)) {
+    return {
+      success: false,
+      error: `Cannot edit entries older than ${EDIT_WINDOW_DAYS_CONST} days`,
+    };
+  }
+
+  // Convert hours to minutes for storage
+  const durationMinutes = hoursToMinutes(input.durationHours);
+
+  // Update entry
+  const { data: updatedEntry, error: updateError } = await supabase
+    .from('time_entries')
+    .update({
+      job_id: input.jobId,
+      service_id: input.serviceId,
+      task_id: input.taskId,
+      duration_minutes: durationMinutes,
+      entry_date: input.entryDate,
+      notes: input.notes ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .select()
+    .single();
+
+  if (updateError) {
+    console.error('Failed to update time entry:', updateError);
+    return { success: false, error: 'Failed to update. Please try again.' };
+  }
+
+  // Revalidate paths to refresh UI
+  revalidatePath('/dashboard');
+  revalidatePath('/entry');
+
+  return { success: true, data: updatedEntry };
+}
+
+// ============================================
+// GET ENTRY WITH DETAILS (Story 4.5)
+// ============================================
+
+/**
+ * Get a single time entry with all related details
+ * Used for viewing and editing entry details
+ */
+export async function getEntryWithDetails(
+  entryId: string
+): Promise<ActionResult<TimeEntryWithDetails>> {
+  if (!isValidUUID(entryId)) {
+    return { success: false, error: 'Invalid entry ID format' };
+  }
+
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { data, error } = await supabase
+    .from('time_entries')
+    .select(`
+      *,
+      job:jobs (
+        id,
+        name,
+        job_no,
+        project:projects (
+          id,
+          name,
+          client:clients (
+            id,
+            name
+          )
+        )
+      ),
+      service:services (
+        id,
+        name
+      ),
+      task:tasks (
+        id,
+        name
+      )
+    `)
+    .eq('id', entryId)
+    .single();
+
+  if (error) {
+    console.error('Failed to get entry details:', error);
+    return { success: false, error: 'Entry not found' };
+  }
+
+  // Type assertion - Supabase returns nested objects
+  const transformed = data as unknown as TimeEntryWithDetails;
+
+  return { success: true, data: transformed };
+}
+
+// ============================================
+// GET USER ENTRIES (Story 4.5 - for entry list)
+// ============================================
+
+/**
+ * Get user's time entries for a date range
+ * Returns entries with full details for display
+ */
+export async function getUserEntries(
+  options: { limit?: number; offset?: number } = {}
+): Promise<ActionResult<TimeEntryWithDetails[]>> {
+  const { limit = 10, offset = 0 } = options;
+
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { data, error } = await supabase
+    .from('time_entries')
+    .select(`
+      *,
+      job:jobs (
+        id,
+        name,
+        job_no,
+        project:projects (
+          id,
+          name,
+          client:clients (
+            id,
+            name
+          )
+        )
+      ),
+      service:services (
+        id,
+        name
+      ),
+      task:tasks (
+        id,
+        name
+      )
+    `)
+    .eq('user_id', user.id)
+    .order('entry_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error('Failed to get user entries:', error);
+    return { success: false, error: 'Failed to load entries' };
+  }
+
+  const entries = (data ?? []) as unknown as TimeEntryWithDetails[];
+  return { success: true, data: entries };
+}
+
+// ============================================
+// DELETE TIME ENTRY (Story 4.6 - placeholder)
+// ============================================
+
+/**
+ * Delete a time entry
+ * Story 4.6 - Full implementation in next story
+ */
+export async function deleteTimeEntry(
+  entryId: string
+): Promise<ActionResult<void>> {
+  if (!isValidUUID(entryId)) {
+    return { success: false, error: 'Invalid entry ID format' };
+  }
+
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Get existing entry to check edit restriction
+  const { data: existingEntry, error: fetchError } = await supabase
+    .from('time_entries')
+    .select('entry_date')
+    .eq('id', entryId)
+    .single();
+
+  if (fetchError || !existingEntry) {
+    return { success: false, error: 'Entry not found' };
+  }
+
+  // Check 7-day edit restriction
+  if (!canEditEntry(existingEntry.entry_date)) {
+    return {
+      success: false,
+      error: `Cannot delete entries older than ${EDIT_WINDOW_DAYS_CONST} days`,
+    };
+  }
+
+  // Delete entry
+  const { error: deleteError } = await supabase
+    .from('time_entries')
+    .delete()
+    .eq('id', entryId);
+
+  if (deleteError) {
+    console.error('Failed to delete time entry:', deleteError);
+    return { success: false, error: 'Failed to delete. Please try again.' };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/entry');
 
   return { success: true, data: undefined };
 }

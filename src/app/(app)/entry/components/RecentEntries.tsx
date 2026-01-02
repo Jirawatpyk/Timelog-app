@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -9,20 +10,12 @@ import { getUserEntries, deleteTimeEntry } from '@/actions/entry';
 import { formatThaiDate } from '@/lib/thai-date';
 import { formatDuration } from '@/lib/duration';
 import { canEditEntry } from '@/lib/entry-rules';
+import { hapticFeedback } from '@/lib/haptic';
 import {
   EntryDetailsSheet,
   EditEntrySheet,
+  DeleteConfirmDialog,
 } from '@/components/entry';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import type { TimeEntryWithDetails } from '@/types/domain';
 
 /**
@@ -78,26 +71,44 @@ export function RecentEntries() {
     setDeleteOpen(true);
   };
 
-  // Confirm delete
+  // Confirm delete (AC3: Delete success, AC7: Animation via optimistic update)
   const handleDeleteConfirm = async () => {
     if (!deleteEntry) return;
 
+    const entryToDelete = deleteEntry;
+
+    // Close dialog immediately for better UX
+    setDeleteOpen(false);
+    setDeleteEntry(null);
+
+    // Optimistic update: remove from cache immediately to trigger exit animation
+    queryClient.setQueryData<TimeEntryWithDetails[]>(['userEntries'], (old) =>
+      old?.filter((e) => e.id !== entryToDelete.id) ?? []
+    );
+
     setIsDeleting(true);
     try {
-      const result = await deleteTimeEntry(deleteEntry.id);
+      const result = await deleteTimeEntry(entryToDelete.id);
       if (!result.success) {
+        // Rollback: restore the entry to the list
+        queryClient.invalidateQueries({ queryKey: ['userEntries'] });
         toast.error(result.error);
         return;
       }
 
+      // Haptic feedback for delete (Task 6 - AC3)
+      hapticFeedback('error'); // Different pattern for delete
+
       toast.success('Entry deleted');
+
+      // Ensure cache is in sync with server
       queryClient.invalidateQueries({ queryKey: ['userEntries'] });
     } catch {
+      // Rollback on network error
+      queryClient.invalidateQueries({ queryKey: ['userEntries'] });
       toast.error('Failed to delete entry');
     } finally {
       setIsDeleting(false);
-      setDeleteOpen(false);
-      setDeleteEntry(null);
     }
   };
 
@@ -141,14 +152,32 @@ export function RecentEntries() {
 
   return (
     <>
+      {/* Entry List with Delete Animation (AC7) */}
       <div className="space-y-2">
-        {entries.map((entry) => (
-          <EntryRow
-            key={entry.id}
-            entry={entry}
-            onTap={handleEntryTap}
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {entries.map((entry) => (
+            <motion.div
+              key={entry.id}
+              layout
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{
+                opacity: 0,
+                x: -100,
+                transition: { duration: 0.2 },
+              }}
+              transition={{
+                opacity: { duration: 0.2 },
+                layout: { duration: 0.3 },
+              }}
+            >
+              <EntryRow
+                entry={entry}
+                onTap={handleEntryTap}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Entry Details Sheet */}
@@ -168,27 +197,14 @@ export function RecentEntries() {
         onSuccess={handleEditSuccess}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Entry?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. The time entry will be permanently deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Confirmation Dialog with Entry Summary (AC2, AC4) */}
+      <DeleteConfirmDialog
+        entry={deleteEntry}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+      />
     </>
   );
 }

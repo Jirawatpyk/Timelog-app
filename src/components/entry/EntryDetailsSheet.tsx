@@ -114,7 +114,6 @@ export function EntryDetailsSheet({
               variant="destructive"
               className="flex-1 min-h-[48px]"
               onClick={() => onDelete(entry)}
-              disabled={!isEditable}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete

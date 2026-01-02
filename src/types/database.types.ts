@@ -240,6 +240,7 @@ export type Database = {
       time_entries: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           department_id: string
           duration_minutes: number
           entry_date: string
@@ -253,6 +254,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           department_id: string
           duration_minutes: number
           entry_date: string
@@ -266,6 +268,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           department_id?: string
           duration_minutes?: number
           entry_date?: string

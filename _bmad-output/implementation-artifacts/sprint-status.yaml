@@ -73,7 +73,7 @@ development_status:
   4-3-time-entry-form-service-task-duration: done
   4-4-time-entry-form-date-selection-submission: done
   4-5-edit-own-time-entry: done
-  4-6-delete-own-time-entry: ready-for-dev
+  4-6-delete-own-time-entry: done
   4-7-recent-combinations-quick-entry: ready-for-dev
   4-8-form-validation-error-states: ready-for-dev
   4-9-skeleton-loading-states: ready-for-dev

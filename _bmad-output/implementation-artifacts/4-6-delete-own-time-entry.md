@@ -1,6 +1,6 @@
 # Story 4.6: Delete Own Time Entry
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -56,37 +56,37 @@ So that **I can remove incorrect entries**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create Delete Confirmation Dialog** (AC: 2, 4)
-  - [ ] 1.1 Create `components/entry/DeleteConfirmDialog.tsx`
-  - [ ] 1.2 Use shadcn/ui AlertDialog
-  - [ ] 1.3 Show entry summary in dialog
-  - [ ] 1.4 Handle confirm and cancel actions
+- [x] **Task 1: Create Delete Confirmation Dialog** (AC: 2, 4)
+  - [x] 1.1 Create `components/entry/DeleteConfirmDialog.tsx`
+  - [x] 1.2 Use shadcn/ui AlertDialog
+  - [x] 1.3 Show entry summary in dialog
+  - [x] 1.4 Handle confirm and cancel actions
 
-- [ ] **Task 2: Create Delete Entry Server Action** (AC: 3, 5, 6)
-  - [ ] 2.1 Create `deleteTimeEntry` Server Action
-  - [ ] 2.2 Implement soft delete (set deleted_at)
-  - [ ] 2.3 Validate ownership via RLS
-  - [ ] 2.4 Return ActionResult<void>
+- [x] **Task 2: Create Delete Entry Server Action** (AC: 3, 5, 6)
+  - [x] 2.1 Create `deleteTimeEntry` Server Action
+  - [x] 2.2 Implement soft delete (set deleted_at)
+  - [x] 2.3 Validate ownership via RLS
+  - [x] 2.4 Return ActionResult<void>
 
-- [ ] **Task 3: Add deleted_at Column** (AC: 6)
-  - [ ] 3.1 Create migration for deleted_at column
-  - [ ] 3.2 Update RLS policies to filter deleted entries
-  - [ ] 3.3 Add index for query performance
+- [x] **Task 3: Add deleted_at Column** (AC: 6)
+  - [x] 3.1 Create migration for deleted_at column
+  - [x] 3.2 Update RLS policies to filter deleted entries
+  - [x] 3.3 Add index for query performance
 
-- [ ] **Task 4: Implement Delete Animation** (AC: 7)
-  - [ ] 4.1 Use framer-motion AnimatePresence
-  - [ ] 4.2 Create slide-out animation
-  - [ ] 4.3 Handle list reflow smoothly
+- [x] **Task 4: Implement Delete Animation** (AC: 7)
+  - [x] 4.1 Use framer-motion AnimatePresence
+  - [x] 4.2 Create slide-out animation
+  - [x] 4.3 Handle list reflow smoothly
 
-- [ ] **Task 5: Integrate with Entry Details Sheet** (AC: 1, 3)
-  - [ ] 5.1 Wire up delete button handler
-  - [ ] 5.2 Show confirmation dialog on click
-  - [ ] 5.3 Close sheet on successful delete
-  - [ ] 5.4 Invalidate queries to refresh list
+- [x] **Task 5: Integrate with Entry Details Sheet** (AC: 1, 3)
+  - [x] 5.1 Wire up delete button handler
+  - [x] 5.2 Show confirmation dialog on click
+  - [x] 5.3 Close sheet on successful delete
+  - [x] 5.4 Invalidate queries to refresh list
 
-- [ ] **Task 6: Add Haptic Feedback** (AC: 3)
-  - [ ] 6.1 Add haptic on delete confirmation
-  - [ ] 6.2 Use different haptic pattern for delete vs save
+- [x] **Task 6: Add Haptic Feedback** (AC: 3)
+  - [x] 6.1 Add haptic on delete confirmation
+  - [x] 6.2 Use different haptic pattern for delete vs save
 
 ## Dev Notes
 
@@ -654,29 +654,70 @@ test.describe('Delete Time Entry', () => {
 
 ## Definition of Done
 
-- [ ] Delete button visible in entry details sheet
-- [ ] Confirmation dialog shows entry summary
-- [ ] Cancel closes dialog without deleting
-- [ ] Confirm deletes entry with loading state
-- [ ] Success toast displays on delete
-- [ ] Entry animates out of list
-- [ ] List reflows smoothly
-- [ ] Soft delete sets deleted_at timestamp
-- [ ] RLS policies filter deleted entries
-- [ ] Audit log records DELETE action
-- [ ] Haptic feedback on delete
-- [ ] All buttons have 48px touch targets
+- [x] Delete button visible in entry details sheet
+- [x] Confirmation dialog shows entry summary
+- [x] Cancel closes dialog without deleting
+- [x] Confirm deletes entry with loading state
+- [x] Success toast displays on delete
+- [x] Entry animates out of list
+- [x] List reflows smoothly
+- [x] Soft delete sets deleted_at timestamp
+- [x] RLS policies filter deleted entries
+- [x] Audit log records DELETE action
+- [x] Haptic feedback on delete
+- [x] All buttons have 48px touch targets
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Task 1 (Delete Confirmation Dialog):** Created `DeleteConfirmDialog.tsx` with AlertDialog, entry summary (date, client, duration), and loading state. 7 unit tests pass.
+
+2. **Task 3 (deleted_at Column):** Created migration `009_add_soft_delete.sql` with:
+   - Added `deleted_at` column to `time_entries`
+   - Created partial index `idx_time_entries_not_deleted` for query performance
+   - Updated RLS policies to filter deleted entries
+   - Created audit trigger `log_time_entry_changes()` that records soft deletes as 'DELETE' action
+   - Applied to Supabase Cloud successfully
+
+3. **Task 2 (Server Action):** Updated `deleteTimeEntry` to use soft delete (setting `deleted_at`) instead of hard delete. Includes ownership validation and 7-day edit restriction.
+
+4. **Task 4 (Delete Animation):** Added AnimatePresence with popLayout mode to entry list. Exit animation: slide left + fade out (200ms).
+
+5. **Task 5 (Integration):** Replaced inline AlertDialog in RecentEntries with new DeleteConfirmDialog component. Delete flow closes dialog and refreshes list.
+
+6. **Task 6 (Haptic Feedback):** Added navigator.vibrate([50, 50, 50]) on successful delete - distinct pattern from save actions.
 
 ### File List
 
-_To be filled with all created/modified files_
+**New Files:**
+- `src/components/entry/DeleteConfirmDialog.tsx` - Delete confirmation dialog component
+- `src/components/entry/DeleteConfirmDialog.test.tsx` - Unit tests (7 tests)
+- `supabase/migrations/20260102021926_009_add_soft_delete.sql` - Soft delete migration
+- `src/lib/haptic.ts` - Haptic feedback utility (added in code review)
+- `test/e2e/entry/delete-entry.test.ts` - E2E tests for delete functionality (added in code review)
+
+**Modified Files:**
+- `src/components/entry/index.ts` - Added DeleteConfirmDialog export
+- `src/actions/entry.ts` - Changed deleteTimeEntry to soft delete, added row verification
+- `src/app/(app)/entry/components/RecentEntries.tsx` - AnimatePresence, haptic, optimistic update
+- `src/types/database.types.ts` - Added deleted_at field to time_entries
+- `src/components/entry/EntryDetailsSheet.tsx` - Removed 7-day restriction for delete button
+
+## Code Review Fixes Applied
+
+1. **[HIGH] Removed 7-day delete restriction** - Delete now allowed for entries of any age (per AC1)
+2. **[HIGH] Added row count verification** - Server action now verifies update affected a row
+3. **[HIGH] Race condition fix** - Added `eq('deleted_at', null)` to prevent double-delete
+4. **[MEDIUM] Created E2E tests** - Added comprehensive E2E tests for delete RLS and audit
+5. **[MEDIUM] Extracted haptic utility** - Created reusable `src/lib/haptic.ts`
+6. **[MEDIUM] Implemented optimistic delete** - Proper exit animation via cache update
+
+## Change Log
+
+- 2026-01-02: Implemented Story 4.6 - Delete Own Time Entry (soft delete with animation)
+- 2026-01-02: Code review fixes applied - removed 7-day restriction, added E2E tests, haptic utility

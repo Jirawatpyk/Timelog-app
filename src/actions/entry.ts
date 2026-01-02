@@ -531,12 +531,14 @@ export async function getUserEntries(
 }
 
 // ============================================
-// DELETE TIME ENTRY (Story 4.6 - placeholder)
+// DELETE TIME ENTRY (Story 4.6 - Soft Delete)
 // ============================================
 
 /**
- * Delete a time entry
- * Story 4.6 - Full implementation in next story
+ * Delete a time entry (soft delete)
+ * Story 4.6 - AC3: Delete success
+ * Story 4.6 - AC5: Audit log (handled by database trigger)
+ * Story 4.6 - AC6: Soft delete implementation
  */
 export async function deleteTimeEntry(
   entryId: string
@@ -552,34 +554,33 @@ export async function deleteTimeEntry(
     return { success: false, error: 'Not authenticated' };
   }
 
-  // Get existing entry to check edit restriction
-  const { data: existingEntry, error: fetchError } = await supabase
+  // Soft delete: set deleted_at timestamp instead of actual delete
+  // RLS policy ensures user can only delete their own entries
+  // Database trigger will record this as a DELETE action in audit_logs
+  // Note: Unlike edit, delete is allowed for entries of any age (AC1: visible for all entries)
+  const { data: updatedEntry, error: updateError } = await supabase
     .from('time_entries')
-    .select('entry_date')
+    .update({
+      deleted_at: new Date().toISOString(),
+    })
     .eq('id', entryId)
+    .eq('user_id', user.id) // Extra safety check
+    .eq('deleted_at', null) // Prevent double-delete (Fix #3: race condition)
+    .select('id')
     .single();
 
-  if (fetchError || !existingEntry) {
-    return { success: false, error: 'Entry not found' };
+  if (updateError) {
+    // PGRST116 = no rows returned (entry not found or already deleted)
+    if (updateError.code === 'PGRST116') {
+      return { success: false, error: 'Entry not found or already deleted' };
+    }
+    console.error('Failed to delete time entry:', updateError);
+    return { success: false, error: 'Failed to delete entry' };
   }
 
-  // Check 7-day edit restriction
-  if (!canEditEntry(existingEntry.entry_date)) {
-    return {
-      success: false,
-      error: `Cannot delete entries older than ${EDIT_WINDOW_DAYS_CONST} days`,
-    };
-  }
-
-  // Delete entry
-  const { error: deleteError } = await supabase
-    .from('time_entries')
-    .delete()
-    .eq('id', entryId);
-
-  if (deleteError) {
-    console.error('Failed to delete time entry:', deleteError);
-    return { success: false, error: 'Failed to delete. Please try again.' };
+  // Fix #2: Verify a row was actually updated
+  if (!updatedEntry) {
+    return { success: false, error: 'Entry not found or already deleted' };
   }
 
   revalidatePath('/dashboard');

@@ -1,11 +1,27 @@
 /**
- * Dashboard Types - Story 5.1
+ * Dashboard Types - Story 5.1, 5.6
  *
  * Types for the Personal Dashboard feature including
- * period selection and statistics display.
+ * period selection, statistics display, and filtering.
  */
 
 export type Period = 'today' | 'week' | 'month';
+
+/**
+ * Story 5.6: Filter state for dashboard entries
+ */
+export interface FilterState {
+  clientId?: string;
+  // Future: serviceId, dateRange, etc.
+}
+
+/**
+ * Story 5.6: Client option for filter dropdown
+ */
+export interface ClientOption {
+  id: string;
+  name: string;
+}
 
 export interface DateRange {
   start: Date;
@@ -20,13 +36,17 @@ export interface DashboardStats {
     name: string;
     hours: number;
   };
-  // Story 5.4: Monthly stats
-  /** Number of unique days with entries (for monthly view) */
+  // Story 5.4, 5.5: Period-specific stats
+  /** Number of unique days with entries (for week/month view) */
   daysWithEntries?: number;
+  /** Average hours per day based on actual days with entries (for week/month) */
+  averagePerDay?: number;
   /** Number of weeks in the current month (for average calculation) */
   weeksInMonth?: number;
+  /** Average hours per week (for month view) */
+  averagePerWeek?: number;
 }
 
 export interface DashboardPageProps {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; client?: string }>;
 }

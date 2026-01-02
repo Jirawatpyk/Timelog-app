@@ -1,8 +1,9 @@
 /**
- * Stats Card Tests - Story 5.2
+ * Stats Card Tests - Story 5.2, 5.5
  *
  * Tests for StatsCard component enhancements
  * AC3: Total hours display with < 8 hours indicator
+ * Story 5.5: "Done for today! ✓" message, averagePerDay from actual days
  */
 
 import { describe, it, expect } from 'vitest';
@@ -116,6 +117,27 @@ describe('StatsCard', () => {
       render(<StatsCard stats={overtime} period="today" />);
       expect(screen.getByText('100% of target')).toBeInTheDocument();
     });
+
+    it('shows "Done for today! ✓" when at target (AC6)', () => {
+      const fullDay = { ...baseStats, totalHours: 8 };
+      render(<StatsCard stats={fullDay} period="today" />);
+      expect(screen.getByTestId('done-for-today')).toHaveTextContent(
+        'Done for today! ✓'
+      );
+    });
+
+    it('shows "Done for today! ✓" when over target (AC6)', () => {
+      const overtime = { ...baseStats, totalHours: 10 };
+      render(<StatsCard stats={overtime} period="today" />);
+      expect(screen.getByTestId('done-for-today')).toHaveTextContent(
+        'Done for today! ✓'
+      );
+    });
+
+    it('does not show "Done for today! ✓" when under target', () => {
+      render(<StatsCard stats={baseStats} period="today" />);
+      expect(screen.queryByTestId('done-for-today')).not.toBeInTheDocument();
+    });
   });
 
   describe('Week/Month Period', () => {
@@ -140,35 +162,61 @@ describe('StatsCard', () => {
     });
   });
 
-  describe('Weekly Average Display (AC4)', () => {
-    it('shows average per day for week period', () => {
-      const weeklyStats = { ...baseStats, totalHours: 21 }; // 21 / 7 = 3.0
+  describe('Weekly Stats Display (AC3 - Story 5.5)', () => {
+    it('shows average per day based on actual days with entries', () => {
+      // 21 hours logged over 3 days = 7.0 hr/day
+      const weeklyStats: DashboardStats = {
+        ...baseStats,
+        totalHours: 21,
+        daysWithEntries: 3,
+        averagePerDay: 7.0,
+      };
       render(<StatsCard stats={weeklyStats} period="week" />);
       expect(screen.getByText(/Avg.*day/i)).toBeInTheDocument();
-      expect(screen.getByTestId('weekly-avg')).toHaveTextContent('3.0 hr/day');
+      expect(screen.getByTestId('weekly-avg')).toHaveTextContent('7.0 hr/day');
     });
 
-    it('shows workday average for week period', () => {
-      const weeklyStats = { ...baseStats, totalHours: 40 }; // 40 / 5 = 8.0
+    it('shows days logged for week period', () => {
+      const weeklyStats: DashboardStats = {
+        ...baseStats,
+        totalHours: 40,
+        daysWithEntries: 5,
+        averagePerDay: 8.0,
+      };
       render(<StatsCard stats={weeklyStats} period="week" />);
-      expect(screen.getByText(/Mon-Fri/i)).toBeInTheDocument();
-      expect(screen.getByTestId('workday-avg')).toHaveTextContent('8.0 hr/day');
+      expect(screen.getByText('Days logged')).toBeInTheDocument();
+      expect(screen.getByTestId('days-logged-week')).toHaveTextContent('5 days');
     });
 
-    it('does not show weekly average for today period', () => {
+    it('shows singular "day" when only 1 day logged', () => {
+      const weeklyStats: DashboardStats = {
+        ...baseStats,
+        totalHours: 8,
+        daysWithEntries: 1,
+        averagePerDay: 8.0,
+      };
+      render(<StatsCard stats={weeklyStats} period="week" />);
+      expect(screen.getByTestId('days-logged-week')).toHaveTextContent('1 day');
+    });
+
+    it('does not show weekly stats for today period', () => {
       render(<StatsCard stats={baseStats} period="today" />);
-      expect(screen.queryByTestId('weekly-avg')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('weekly-stats')).not.toBeInTheDocument();
     });
 
-    it('does not show weekly average for month period', () => {
+    it('does not show weekly stats for month period', () => {
       render(<StatsCard stats={baseStats} period="month" />);
-      expect(screen.queryByTestId('weekly-avg')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('weekly-stats')).not.toBeInTheDocument();
     });
 
-    it('handles zero hours gracefully', () => {
-      const zeroStats = { ...baseStats, totalHours: 0 };
-      render(<StatsCard stats={zeroStats} period="week" />);
-      expect(screen.getByTestId('weekly-avg')).toHaveTextContent('0.0 hr/day');
+    it('handles missing averagePerDay gracefully', () => {
+      const incompleteStats: DashboardStats = {
+        ...baseStats,
+        totalHours: 20,
+        // No averagePerDay
+      };
+      render(<StatsCard stats={incompleteStats} period="week" />);
+      expect(screen.queryByTestId('weekly-avg')).not.toBeInTheDocument();
     });
   });
 
@@ -182,26 +230,41 @@ describe('StatsCard', () => {
     });
   });
 
-  describe('Monthly Stats Display (Story 5.4 - AC5)', () => {
+  describe('Monthly Stats Display (Story 5.4, 5.5 - AC4)', () => {
     const monthlyStats: DashboardStats = {
       totalHours: 160,
       entryCount: 80,
       topClient: { id: 'c1', name: 'Test Client', hours: 60 },
       daysWithEntries: 20,
+      averagePerDay: 8.0,
       weeksInMonth: 4,
+      averagePerWeek: 40.0,
     };
 
     it('shows average per week for month period', () => {
       render(<StatsCard stats={monthlyStats} period="month" />);
       expect(screen.getByTestId('monthly-stats')).toBeInTheDocument();
-      // 160 / 4 = 40 hrs/week
       expect(screen.getByTestId('weekly-avg-month')).toHaveTextContent('40.0 hr/wk');
+    });
+
+    it('shows average per day for month period', () => {
+      render(<StatsCard stats={monthlyStats} period="month" />);
+      expect(screen.getByTestId('daily-avg-month')).toHaveTextContent('8.0 hr/day');
     });
 
     it('shows days with entries for month period', () => {
       render(<StatsCard stats={monthlyStats} period="month" />);
       expect(screen.getByText('Days logged')).toBeInTheDocument();
       expect(screen.getByTestId('days-logged')).toHaveTextContent('20 days');
+    });
+
+    it('shows singular "day" when only 1 day logged in month', () => {
+      const singleDayStats: DashboardStats = {
+        ...monthlyStats,
+        daysWithEntries: 1,
+      };
+      render(<StatsCard stats={singleDayStats} period="month" />);
+      expect(screen.getByTestId('days-logged')).toHaveTextContent('1 day');
     });
 
     it('does not show monthly stats for today period', () => {

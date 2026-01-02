@@ -10,11 +10,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { formatPeriodLabel } from '@/lib/dashboard/period-utils';
-import {
-  WORK_HOURS_TARGET,
-  DAYS_PER_WEEK,
-  WORK_DAYS_PER_WEEK,
-} from '@/constants/business';
+import { WORK_HOURS_TARGET } from '@/constants/business';
 import type { Period, DashboardStats } from '@/types/dashboard';
 
 interface StatsCardProps {
@@ -25,6 +21,7 @@ interface StatsCardProps {
 export function StatsCard({ stats, period }: StatsCardProps) {
   const isToday = period === 'today';
   const isUnderTarget = isToday && stats.totalHours < WORK_HOURS_TARGET;
+  const isDoneForToday = isToday && stats.totalHours >= WORK_HOURS_TARGET;
   const hoursRemaining = Math.max(0, WORK_HOURS_TARGET - stats.totalHours);
   const progressPercent = Math.min(
     (stats.totalHours / WORK_HOURS_TARGET) * 100,
@@ -83,9 +80,7 @@ export function StatsCard({ stats, period }: StatsCardProps) {
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
-                  stats.totalHours >= WORK_HOURS_TARGET
-                    ? 'bg-green-500'
-                    : 'bg-amber-500'
+                  isDoneForToday ? 'bg-green-500' : 'bg-amber-500'
                 )}
                 style={{ width: `${progressPercent}%` }}
                 role="progressbar"
@@ -95,44 +90,68 @@ export function StatsCard({ stats, period }: StatsCardProps) {
                 data-testid="progress-bar"
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1 text-right">
-              {progressPercent.toFixed(0)}% of target
-            </p>
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-xs text-muted-foreground">
+                {progressPercent.toFixed(0)}% of target
+              </span>
+              {isDoneForToday && (
+                <span
+                  className="text-xs text-green-600 dark:text-green-500 font-medium"
+                  data-testid="done-for-today"
+                >
+                  Done for today! ✓
+                </span>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Weekly Average Display (AC4) */}
+        {/* Weekly Average Display (AC3) - Story 5.5 */}
         {period === 'week' && (
           <div className="mt-4 pt-4 border-t" data-testid="weekly-stats">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Avg per day</span>
-              <span className="font-medium" data-testid="weekly-avg">
-                {(stats.totalHours / DAYS_PER_WEEK).toFixed(1)} hr/day
-              </span>
-            </div>
-            <div className="flex justify-between text-sm mt-1">
-              <span className="text-muted-foreground">Mon-Fri avg</span>
-              <span className="font-medium" data-testid="workday-avg">
-                {(stats.totalHours / WORK_DAYS_PER_WEEK).toFixed(1)} hr/day
-              </span>
-            </div>
+            {stats.averagePerDay !== undefined && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Avg per day</span>
+                <span className="font-medium" data-testid="weekly-avg">
+                  {stats.averagePerDay.toFixed(1)} hr/day
+                </span>
+              </div>
+            )}
+            {stats.daysWithEntries !== undefined && (
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-muted-foreground">Days logged</span>
+                <span className="font-medium" data-testid="days-logged-week">
+                  {stats.daysWithEntries} {stats.daysWithEntries === 1 ? 'day' : 'days'}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Monthly Stats Display (Story 5.4 - AC5) */}
-        {period === 'month' && stats.weeksInMonth && (
+        {/* Monthly Stats Display (Story 5.4, 5.5 - AC4) */}
+        {period === 'month' && (
           <div className="mt-4 pt-4 border-t" data-testid="monthly-stats">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Avg per week</span>
-              <span className="font-medium" data-testid="weekly-avg-month">
-                {(stats.totalHours / stats.weeksInMonth).toFixed(1)} hr/wk
-              </span>
-            </div>
+            {stats.averagePerWeek !== undefined && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Avg per week</span>
+                <span className="font-medium" data-testid="weekly-avg-month">
+                  {stats.averagePerWeek.toFixed(1)} hr/wk
+                </span>
+              </div>
+            )}
+            {stats.averagePerDay !== undefined && (
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-muted-foreground">Avg per day</span>
+                <span className="font-medium" data-testid="daily-avg-month">
+                  {stats.averagePerDay.toFixed(1)} hr/day
+                </span>
+              </div>
+            )}
             {stats.daysWithEntries !== undefined && (
               <div className="flex justify-between text-sm mt-1">
                 <span className="text-muted-foreground">Days logged</span>
                 <span className="font-medium" data-testid="days-logged">
-                  {stats.daysWithEntries} days
+                  {stats.daysWithEntries} {stats.daysWithEntries === 1 ? 'day' : 'days'}
                 </span>
               </div>
             )}

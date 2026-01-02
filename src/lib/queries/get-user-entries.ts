@@ -124,18 +124,27 @@ export async function getDashboardStats(
     .sort((a, b) => b[1].hours - a[1].hours)
     .map(([id, data]) => ({ id, ...data }))[0];
 
-  // Calculate monthly-specific stats (Story 5.4)
+  // Calculate period-specific stats (Story 5.4, 5.5)
   let daysWithEntries: number | undefined;
+  let averagePerDay: number | undefined;
   let weeksInMonth: number | undefined;
+  let averagePerWeek: number | undefined;
 
-  if (period === 'month') {
-    // Count unique days with entries
+  // Calculate days with entries for week and month periods
+  if (period === 'week' || period === 'month') {
     const uniqueDates = new Set(
       entries?.map((e) => (e as { entry_date: string }).entry_date) || []
     );
     daysWithEntries = uniqueDates.size;
 
-    // Calculate number of weeks in the month
+    // Calculate average per day based on actual days with entries
+    if (daysWithEntries > 0) {
+      averagePerDay = totalHours / daysWithEntries;
+    }
+  }
+
+  // Calculate monthly-specific stats
+  if (period === 'month') {
     const year = dateRange.start.getFullYear();
     const month = dateRange.start.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -151,6 +160,11 @@ export async function getDashboardStats(
       current.setDate(current.getDate() + daysUntilMonday);
     }
     weeksInMonth = weekCount;
+
+    // Calculate average per week
+    if (weeksInMonth > 0) {
+      averagePerWeek = totalHours / weeksInMonth;
+    }
   }
 
   return {
@@ -158,6 +172,8 @@ export async function getDashboardStats(
     entryCount: entries?.length || 0,
     topClient,
     daysWithEntries,
+    averagePerDay,
     weeksInMonth,
+    averagePerWeek,
   };
 }

@@ -80,11 +80,11 @@ development_status:
   4-10-form-draft-auto-save: done
   4-11-desktop-sidebar-navigation: done
   4-12-desktop-header-enhancement: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   # Epic 5: Personal Dashboard (8 stories)
   epic-5: in-progress
-  5-1-dashboard-layout-period-selector: ready-for-dev
+  5-1-dashboard-layout-period-selector: done
   5-2-todays-entries-view: ready-for-dev
   5-3-weekly-entries-view: ready-for-dev
   5-4-monthly-entries-view: ready-for-dev

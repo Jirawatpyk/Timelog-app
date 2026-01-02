@@ -1,6 +1,6 @@
 # Story 5.1: Dashboard Layout & Period Selector
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -63,53 +63,53 @@ So that **I can track my logged hours effectively**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create Dashboard Page Structure** (AC: 1, 7)
-  - [ ] 1.1 Create `app/(app)/dashboard/page.tsx` as Server Component
-  - [ ] 1.2 Create `app/(app)/dashboard/layout.tsx` if needed
-  - [ ] 1.3 Define page title and meta
-  - [ ] 1.4 Set up container with mobile-first padding
+- [x] **Task 1: Create Dashboard Page Structure** (AC: 1, 7)
+  - [x] 1.1 Create `app/(app)/dashboard/page.tsx` as Server Component
+  - [x] 1.2 Create `app/(app)/dashboard/layout.tsx` - Provides metadata and extensibility point
+  - [x] 1.3 Define page title and meta (in layout.tsx)
+  - [x] 1.4 Set up container with mobile-first padding
 
-- [ ] **Task 2: Implement Period Selector Component** (AC: 2, 3)
-  - [ ] 2.1 Create `components/dashboard/PeriodSelector.tsx`
-  - [ ] 2.2 Create tab buttons with proper styling
-  - [ ] 2.3 Add active state styling
-  - [ ] 2.4 Ensure 44x44px touch targets
-  - [ ] 2.5 Add smooth transition animations
+- [x] **Task 2: Implement Period Selector Component** (AC: 2, 3)
+  - [x] 2.1 Create `components/dashboard/PeriodSelector.tsx`
+  - [x] 2.2 Create tab buttons with proper styling
+  - [x] 2.3 Add active state styling
+  - [x] 2.4 Ensure 44x44px touch targets
+  - [x] 2.5 Add smooth transition animations
 
-- [ ] **Task 3: URL State Management** (AC: 4)
-  - [ ] 3.1 Use searchParams from page props
-  - [ ] 3.2 Create `lib/dashboard/period-utils.ts` for period calculations
-  - [ ] 3.3 Update URL on tab change using useRouter
-  - [ ] 3.4 Validate period param (default to 'today' if invalid)
+- [x] **Task 3: URL State Management** (AC: 4)
+  - [x] 3.1 Use searchParams from page props
+  - [x] 3.2 Create `lib/dashboard/period-utils.ts` for period calculations
+  - [x] 3.3 Update URL on tab change using useRouter
+  - [x] 3.4 Validate period param (default to 'today' if invalid)
 
-- [ ] **Task 4: Date Range Calculation** (AC: 6)
-  - [ ] 4.1 Create `getDateRangeForPeriod(period: Period)` utility
-  - [ ] 4.2 Handle week calculation (Monday-Sunday)
-  - [ ] 4.3 Handle month calculation (1st to last day)
-  - [ ] 4.4 Account for timezone (user's local time)
+- [x] **Task 4: Date Range Calculation** (AC: 6)
+  - [x] 4.1 Create `getDateRangeForPeriod(period: Period)` utility
+  - [x] 4.2 Handle week calculation (Monday-Sunday)
+  - [x] 4.3 Handle month calculation (1st to last day)
+  - [x] 4.4 Account for timezone (user's local time)
 
-- [ ] **Task 5: Dashboard Layout Components** (AC: 1)
-  - [ ] 5.1 Create `components/dashboard/DashboardHeader.tsx`
-  - [ ] 5.2 Create `components/dashboard/StatsCard.tsx` placeholder
-  - [ ] 5.3 Create `components/dashboard/EntryList.tsx` placeholder
-  - [ ] 5.4 Arrange components in mobile-optimized stack
+- [x] **Task 5: Dashboard Layout Components** (AC: 1)
+  - [x] 5.1 Create `components/dashboard/DashboardHeader.tsx`
+  - [x] 5.2 Create `components/dashboard/StatsCard.tsx` placeholder
+  - [x] 5.3 Create `components/dashboard/EntryList.tsx` placeholder
+  - [x] 5.4 Arrange components in mobile-optimized stack
 
-- [ ] **Task 6: Server Data Fetching** (AC: 5, 7)
-  - [ ] 6.1 Create `lib/queries/get-user-entries.ts` server function
-  - [ ] 6.2 Fetch entries based on period and user_id
-  - [ ] 6.3 Aggregate stats (total hours, count)
-  - [ ] 6.4 Use Supabase server client
+- [x] **Task 6: Server Data Fetching** (AC: 5, 7)
+  - [x] 6.1 Create `lib/queries/get-user-entries.ts` server function
+  - [x] 6.2 Fetch entries based on period and user_id
+  - [x] 6.3 Aggregate stats (total hours, count)
+  - [x] 6.4 Use Supabase server client
 
-- [ ] **Task 7: Loading States** (AC: 5)
-  - [ ] 7.1 Create `app/(app)/dashboard/loading.tsx` for Suspense
-  - [ ] 7.2 Create skeleton components for stats and list
-  - [ ] 7.3 Ensure no layout shift (CLS < 0.1)
+- [x] **Task 7: Loading States** (AC: 5)
+  - [x] 7.1 Create `app/(app)/dashboard/loading.tsx` for Suspense
+  - [x] 7.2 Create skeleton components for stats and list
+  - [x] 7.3 Ensure no layout shift (CLS < 0.1)
 
-- [ ] **Task 8: Integration and Testing** (AC: 1-7)
-  - [ ] 8.1 Integrate all components in page
-  - [ ] 8.2 Test period switching
-  - [ ] 8.3 Test URL state persistence
-  - [ ] 8.4 Test on mobile viewport
+- [x] **Task 8: Integration and Testing** (AC: 1-7)
+  - [x] 8.1 Integrate all components in page
+  - [x] 8.2 Test period switching
+  - [x] 8.3 Test URL state persistence
+  - [x] 8.4 Test on mobile viewport
 
 ## Dev Notes
 
@@ -678,29 +678,66 @@ test.describe('Dashboard Period Selector', () => {
 
 ## Definition of Done
 
-- [ ] Dashboard page created at /dashboard
-- [ ] Period selector tabs displayed (วันนี้, สัปดาห์นี้, เดือนนี้)
-- [ ] "วันนี้" selected by default
-- [ ] URL updates with period query param
-- [ ] Period selection persists on refresh
-- [ ] Stats update on period change
-- [ ] Date range calculations are correct for each period
-- [ ] Server Components used (no TanStack Query)
-- [ ] Loading states with skeletons implemented
-- [ ] Mobile-optimized layout
-- [ ] Touch targets are 44x44px minimum
-- [ ] Accessible via keyboard
+- [x] Dashboard page created at /dashboard
+- [x] Period selector tabs displayed (วันนี้, สัปดาห์นี้, เดือนนี้)
+- [x] "วันนี้" selected by default
+- [x] URL updates with period query param
+- [x] Period selection persists on refresh
+- [x] Stats update on period change
+- [x] Date range calculations are correct for each period
+- [x] Server Components used (no TanStack Query)
+- [x] Loading states with skeletons implemented
+- [x] Mobile-optimized layout
+- [x] Touch targets are 44x44px minimum
+- [x] Accessible via keyboard
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. Created dashboard types in `src/types/dashboard.ts` with Period, DateRange, DashboardStats interfaces
+2. Implemented period utilities in `src/lib/dashboard/period-utils.ts` with comprehensive date range calculations
+3. Added 12 unit tests for period utilities covering edge cases (Sunday/Monday week boundaries, leap year, etc.)
+4. Built Dashboard page as Server Component with Suspense boundaries
+5. Created PeriodSelector as Client Component with URL state management via useRouter
+6. Implemented server-side queries for entries and stats using Supabase
+7. Built skeleton loading states for stats and entry list
+8. Fixed build error: Changed `entry.description` to `entry.notes` to match database schema
+9. All 1026 tests pass (including 12 new period-utils tests)
+10. Build compiles successfully with dashboard as dynamic route
 
 ### File List
 
-_To be filled with all created/modified files_
+**New Files:**
+- `src/types/dashboard.ts` - Dashboard type definitions
+- `src/lib/dashboard/period-utils.ts` - Period calculation utilities
+- `src/lib/dashboard/period-utils.test.ts` - Unit tests for period utilities
+- `src/app/(app)/dashboard/page.tsx` - Dashboard page (Server Component)
+- `src/app/(app)/dashboard/layout.tsx` - Dashboard layout with metadata
+- `src/app/(app)/dashboard/loading.tsx` - Route-level Suspense fallback
+- `src/components/dashboard/DashboardHeader.tsx` - Dashboard header + DashboardHeaderSkeleton
+- `src/components/dashboard/PeriodSelector.tsx` - Period selector tabs (Client Component)
+- `src/components/dashboard/PeriodSelectorSkeleton.tsx` - Period selector skeleton (Server Component)
+- `src/components/dashboard/DashboardContent.tsx` - Dashboard content (Server Component)
+- `src/components/dashboard/StatsCard.tsx` - Statistics card component
+- `src/components/dashboard/EntryList.tsx` - Entry list component
+- `src/components/dashboard/DashboardSkeleton.tsx` - Dashboard skeleton loading state
+- `src/lib/queries/get-user-entries.ts` - Server-side query functions
+
+**Modified Files:**
+- `src/components/dashboard/index.ts` - Added barrel exports for new components
+
+### Code Review Fixes
+
+1. ✅ **PeriodSelector keyboard navigation** - Added arrow key navigation (Left/Right/Up/Down), Home/End keys
+2. ✅ **PeriodSelector id attributes** - Added `id={tab-${period}}` to match `aria-labelledby` in DashboardContent
+3. ✅ **PeriodSelector tabIndex** - Added `tabIndex={0/-1}` for proper roving tabindex pattern
+4. ✅ **Test comment fixed** - Changed "Thai labels" → "English labels" in period-utils.test.ts
+5. ✅ **Created layout.tsx** - Added `dashboard/layout.tsx` for metadata and future extensibility
+6. ✅ **Skeleton components** - Created `DashboardHeaderSkeleton` and `PeriodSelectorSkeleton` to prevent loading.tsx drift
+7. ✅ **Refactored loading.tsx** - Now uses reusable skeleton components instead of inline markup
+8. ✅ **Separated PeriodSelectorSkeleton** - Moved to own file (Server Component) to avoid bundling Skeleton in client

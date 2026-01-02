@@ -10,9 +10,9 @@ vi.mock('@/hooks/use-entry-data', () => ({
 }));
 
 const mockTasks = [
-  { id: 'task-1', name: 'Development', active: true, created_at: '', updated_at: '' },
-  { id: 'task-2', name: 'Meeting', active: true, created_at: '', updated_at: '' },
-  { id: 'task-3', name: 'Review', active: true, created_at: '', updated_at: '' },
+  { id: 'task-1', name: 'Development', active: true, created_at: '' },
+  { id: 'task-2', name: 'Meeting', active: true, created_at: '' },
+  { id: 'task-3', name: 'Review', active: true, created_at: '' },
 ];
 
 describe('TaskSelector', () => {
@@ -195,7 +195,7 @@ describe('TaskSelector', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useTasks>);
+    } as unknown as ReturnType<typeof useEntryData.useTasks>);
 
     render(<TaskSelector value={null} onChange={mockOnChange} />);
 

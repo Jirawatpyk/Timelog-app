@@ -139,7 +139,7 @@ describe('ClientSelector', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useClients>);
+    } as unknown as ReturnType<typeof useEntryData.useClients>);
 
     render(<ClientSelector value="" onChange={mockOnChange} />);
 

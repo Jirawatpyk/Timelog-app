@@ -111,6 +111,9 @@ function createMockEntry(overrides: Partial<TimeEntryWithDetails> = {}): TimeEnt
   return {
     id: 'entry-1',
     user_id: 'user-1',
+    job_id: 'job-1',
+    service_id: 'service-1',
+    task_id: 'task-1',
     duration_minutes: 120,
     entry_date: today,
     notes: 'Test notes',

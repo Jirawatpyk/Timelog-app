@@ -13,6 +13,16 @@
 export const WORK_HOURS_TARGET = 8;
 
 /**
+ * Days in a week for weekly average calculations.
+ */
+export const DAYS_PER_WEEK = 7;
+
+/**
+ * Working days per week (Mon-Fri) for workday average calculations.
+ */
+export const WORK_DAYS_PER_WEEK = 5;
+
+/**
  * Edit window for time entries in days.
  * Entries older than this cannot be edited by staff.
  * Already defined in src/lib/entry-rules.ts - exported here for reference.

@@ -10,7 +10,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { formatPeriodLabel } from '@/lib/dashboard/period-utils';
-import { WORK_HOURS_TARGET } from '@/constants/business';
+import {
+  WORK_HOURS_TARGET,
+  DAYS_PER_WEEK,
+  WORK_DAYS_PER_WEEK,
+} from '@/constants/business';
 import type { Period, DashboardStats } from '@/types/dashboard';
 
 interface StatsCardProps {
@@ -103,13 +107,13 @@ export function StatsCard({ stats, period }: StatsCardProps) {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Avg per day</span>
               <span className="font-medium" data-testid="weekly-avg">
-                {(stats.totalHours / 7).toFixed(1)} hr/day
+                {(stats.totalHours / DAYS_PER_WEEK).toFixed(1)} hr/day
               </span>
             </div>
             <div className="flex justify-between text-sm mt-1">
               <span className="text-muted-foreground">Mon-Fri avg</span>
               <span className="font-medium" data-testid="workday-avg">
-                {(stats.totalHours / 5).toFixed(1)} hr/day
+                {(stats.totalHours / WORK_DAYS_PER_WEEK).toFixed(1)} hr/day
               </span>
             </div>
           </div>

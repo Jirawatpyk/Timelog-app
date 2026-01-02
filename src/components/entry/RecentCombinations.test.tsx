@@ -86,7 +86,7 @@ describe('RecentCombinations', () => {
       data: [],
       isLoading: false,
       error: null,
-    } as ReturnType<typeof useRecentCombinations>);
+    } as unknown as ReturnType<typeof useRecentCombinations>);
 
     renderWithProvider(<RecentCombinations onSelect={vi.fn()} />);
 

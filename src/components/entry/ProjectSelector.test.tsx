@@ -10,8 +10,8 @@ vi.mock('@/hooks/use-entry-data', () => ({
 }));
 
 const mockProjects = [
-  { id: 'project-1', name: 'Project A', client_id: 'client-1', active: true, created_at: '', updated_at: '' },
-  { id: 'project-2', name: 'Project B', client_id: 'client-1', active: true, created_at: '', updated_at: '' },
+  { id: 'project-1', name: 'Project A', client_id: 'client-1', active: true, created_at: '' },
+  { id: 'project-2', name: 'Project B', client_id: 'client-1', active: true, created_at: '' },
 ];
 
 describe('ProjectSelector', () => {
@@ -116,7 +116,7 @@ describe('ProjectSelector', () => {
       isFetching: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useProjects>);
+    } as unknown as ReturnType<typeof useEntryData.useProjects>);
 
     render(<ProjectSelector clientId="client-1" value="" onChange={mockOnChange} />);
 

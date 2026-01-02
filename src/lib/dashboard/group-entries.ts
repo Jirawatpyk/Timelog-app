@@ -64,7 +64,7 @@ export function groupEntriesByDate(
     // Sort entries within day by created_at descending (newest first)
     dayEntries.sort(
       (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
     );
 
     // Calculate total minutes and convert to hours

@@ -27,16 +27,18 @@ vi.mock('@/actions/entry', () => ({
 function createMockEntry(
   overrides: Partial<TimeEntryWithDetails> & { entry_date: string; duration_minutes: number }
 ): TimeEntryWithDetails {
+  const { entry_date, duration_minutes, created_at, ...rest } = overrides;
   return {
     id: crypto.randomUUID(),
     user_id: 'user-1',
     job_id: 'job-1',
     service_id: 'service-1',
     task_id: null,
-    entry_date: overrides.entry_date,
-    duration_minutes: overrides.duration_minutes,
-    description: null,
-    created_at: overrides.created_at ?? new Date().toISOString(),
+    entry_date,
+    duration_minutes,
+    notes: null,
+    department_id: 'dept-1',
+    created_at: created_at ?? new Date().toISOString(),
     updated_at: new Date().toISOString(),
     deleted_at: null,
     job: {
@@ -57,7 +59,7 @@ function createMockEntry(
       name: 'Development',
     },
     task: null,
-    ...overrides,
+    ...rest,
   };
 }
 

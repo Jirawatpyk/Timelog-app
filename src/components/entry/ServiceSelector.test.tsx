@@ -10,9 +10,9 @@ vi.mock('@/hooks/use-entry-data', () => ({
 }));
 
 const mockServices = [
-  { id: 'service-1', name: 'Development', active: true, created_at: '', updated_at: '' },
-  { id: 'service-2', name: 'Testing', active: true, created_at: '', updated_at: '' },
-  { id: 'service-3', name: 'Design', active: true, created_at: '', updated_at: '' },
+  { id: 'service-1', name: 'Development', active: true, created_at: '' },
+  { id: 'service-2', name: 'Testing', active: true, created_at: '' },
+  { id: 'service-3', name: 'Design', active: true, created_at: '' },
 ];
 
 describe('ServiceSelector', () => {
@@ -160,7 +160,7 @@ describe('ServiceSelector', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useServices>);
+    } as unknown as ReturnType<typeof useEntryData.useServices>);
 
     render(<ServiceSelector value="" onChange={mockOnChange} />);
 

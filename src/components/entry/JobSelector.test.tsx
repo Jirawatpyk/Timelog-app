@@ -10,8 +10,8 @@ vi.mock('@/hooks/use-entry-data', () => ({
 }));
 
 const mockJobs = [
-  { id: 'job-1', name: 'Job A', job_no: 'J001', project_id: 'project-1', active: true, created_at: '', updated_at: '' },
-  { id: 'job-2', name: 'Job B', job_no: null, project_id: 'project-1', active: true, created_at: '', updated_at: '' },
+  { id: 'job-1', name: 'Job A', job_no: 'J001', project_id: 'project-1', active: true, created_at: '', so_no: null },
+  { id: 'job-2', name: 'Job B', job_no: null, project_id: 'project-1', active: true, created_at: '', so_no: null },
 ];
 
 describe('JobSelector', () => {
@@ -137,7 +137,7 @@ describe('JobSelector', () => {
       isFetching: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useJobs>);
+    } as unknown as ReturnType<typeof useEntryData.useJobs>);
 
     render(<JobSelector projectId="project-1" value="" onChange={mockOnChange} />);
 

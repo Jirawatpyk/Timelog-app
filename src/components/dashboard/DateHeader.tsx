@@ -30,6 +30,8 @@ export function DateHeader({
   return (
     <div
       data-testid="date-header"
+      role="heading"
+      aria-level={3}
       className={cn(
         'flex items-center justify-between py-2 px-1',
         'border-b',

@@ -12,18 +12,18 @@ vi.mock('@/actions/entry', () => ({
 }));
 
 const mockClients = [
-  { id: 'client-1', name: 'Client A', active: true, created_at: '', updated_at: '' },
-  { id: 'client-2', name: 'Client B', active: true, created_at: '', updated_at: '' },
+  { id: 'client-1', name: 'Client A', active: true, created_at: '' },
+  { id: 'client-2', name: 'Client B', active: true, created_at: '' },
 ];
 
 const mockProjects = [
-  { id: 'project-1', name: 'Project A', client_id: 'client-1', active: true, created_at: '', updated_at: '' },
-  { id: 'project-2', name: 'Project B', client_id: 'client-1', active: true, created_at: '', updated_at: '' },
+  { id: 'project-1', name: 'Project A', client_id: 'client-1', active: true, created_at: '' },
+  { id: 'project-2', name: 'Project B', client_id: 'client-1', active: true, created_at: '' },
 ];
 
 const mockJobs = [
-  { id: 'job-1', name: 'Job A', job_no: 'J001', project_id: 'project-1', active: true, created_at: '', updated_at: '' },
-  { id: 'job-2', name: 'Job B', job_no: null, project_id: 'project-1', active: true, created_at: '', updated_at: '' },
+  { id: 'job-1', name: 'Job A', job_no: 'J001', project_id: 'project-1', active: true, created_at: '', so_no: null },
+  { id: 'job-2', name: 'Job B', job_no: null, project_id: 'project-1', active: true, created_at: '', so_no: null },
 ];
 
 function createWrapper() {

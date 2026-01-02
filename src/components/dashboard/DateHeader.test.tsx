@@ -143,5 +143,18 @@ describe('DateHeader', () => {
 
       expect(screen.getByTestId('date-header')).toBeInTheDocument();
     });
+
+    it('has semantic heading role for screen readers', () => {
+      render(
+        <DateHeader
+          date="2025-01-15"
+          totalHours={4.5}
+          entryCount={3}
+        />
+      );
+
+      const header = screen.getByRole('heading', { level: 3 });
+      expect(header).toBeInTheDocument();
+    });
   });
 });

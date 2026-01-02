@@ -10,7 +10,7 @@ import { ReactNode, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from './SearchInput';
-import { FilterSheet, FilterField } from './FilterSheet';
+import { FilterSheet, FilterField as _FilterField } from './FilterSheet';
 import { FilterChips } from './FilterChip';
 import { cn } from '@/lib/utils';
 

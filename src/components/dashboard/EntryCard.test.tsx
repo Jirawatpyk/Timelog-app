@@ -128,4 +128,14 @@ describe('EntryCard', () => {
     const card = screen.getByTestId('entry-card');
     expect(card).toHaveClass('focus-visible:ring-2');
   });
+
+  it('has accessible aria-label', () => {
+    render(<EntryCard entry={mockEntry} onTap={vi.fn()} />);
+
+    const card = screen.getByTestId('entry-card');
+    expect(card).toHaveAttribute(
+      'aria-label',
+      'View details for Acme Corp - JOB-001 - Website Redesign'
+    );
+  });
 });

@@ -85,6 +85,20 @@ export function EntryDetailsSheet({
                 value={entry.notes}
               />
             )}
+
+            {/* Timestamps - AC5 */}
+            <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
+              <div className="flex justify-between">
+                <span>Created</span>
+                <span>{formatTimestamp(entry.created_at)}</span>
+              </div>
+              {entry.updated_at !== entry.created_at && (
+                <div className="flex justify-between">
+                  <span>Updated</span>
+                  <span>{formatTimestamp(entry.updated_at)}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Edit restriction warning */}
@@ -139,4 +153,15 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <span className="font-medium text-right">{value}</span>
     </div>
   );
+}
+
+function formatTimestamp(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 }

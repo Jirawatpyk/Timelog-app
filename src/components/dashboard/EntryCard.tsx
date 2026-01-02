@@ -29,6 +29,7 @@ export function EntryCard({ entry, onTap }: EntryCardProps) {
       type="button"
       onClick={() => onTap(entry)}
       data-testid="entry-card"
+      aria-label={`View details for ${clientName} - ${jobDisplay}`}
       className={cn(
         'w-full text-left p-4 rounded-lg border bg-card',
         'transition-colors duration-200',

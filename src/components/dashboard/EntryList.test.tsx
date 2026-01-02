@@ -33,8 +33,9 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock deleteTimeEntry action
+const mockDeleteTimeEntry = vi.fn(() => Promise.resolve({ success: true, data: undefined }));
 vi.mock('@/actions/entry', () => ({
-  deleteTimeEntry: vi.fn(() => Promise.resolve({ success: true, data: undefined })),
+  deleteTimeEntry: mockDeleteTimeEntry,
 }));
 
 const mockEntry: TimeEntryWithDetails = {
@@ -179,6 +180,58 @@ describe('EntryList', () => {
       // Delete confirmation should appear
       await waitFor(() => {
         expect(screen.getByText('Delete this entry?')).toBeInTheDocument();
+      });
+    });
+
+    it('calls deleteTimeEntry and shows success toast on confirm', async () => {
+      const { toast } = await import('sonner');
+      const user = userEvent.setup();
+      mockDeleteTimeEntry.mockResolvedValueOnce({ success: true, data: undefined });
+
+      render(<EntryList entries={[mockEntry]} />);
+
+      // Open sheet and click delete
+      await user.click(screen.getByTestId('entry-card'));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: /delete/i }));
+
+      // Confirm delete
+      await waitFor(() => {
+        expect(screen.getByText('Delete this entry?')).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(mockDeleteTimeEntry).toHaveBeenCalledWith('entry-1');
+        expect(toast.success).toHaveBeenCalledWith('Entry deleted');
+        expect(mockRefresh).toHaveBeenCalled();
+      });
+    });
+
+    it('shows error toast on delete failure', async () => {
+      const { toast } = await import('sonner');
+      const user = userEvent.setup();
+      mockDeleteTimeEntry.mockResolvedValueOnce({ success: false, error: 'Delete failed' });
+
+      render(<EntryList entries={[mockEntry]} />);
+
+      // Open sheet and click delete
+      await user.click(screen.getByTestId('entry-card'));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: /delete/i }));
+
+      // Confirm delete
+      await waitFor(() => {
+        expect(screen.getByText('Delete this entry?')).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith('Delete failed');
       });
     });
   });

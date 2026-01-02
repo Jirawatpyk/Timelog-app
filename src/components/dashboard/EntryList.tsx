@@ -62,15 +62,20 @@ export function EntryList({
     if (!entryToDelete) return;
 
     setIsDeleting(true);
-    const result = await deleteTimeEntry(entryToDelete.id);
-    setIsDeleting(false);
+    try {
+      const result = await deleteTimeEntry(entryToDelete.id);
 
-    if (result.success) {
-      toast.success('Entry deleted');
-      setEntryToDelete(null);
-      router.refresh();
-    } else {
-      toast.error(result.error);
+      if (result.success) {
+        toast.success('Entry deleted');
+        setEntryToDelete(null);
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    } catch {
+      toast.error('Failed to delete entry. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 

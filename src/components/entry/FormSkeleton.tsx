@@ -58,7 +58,7 @@ interface SelectorSkeletonProps {
  * Selector Skeleton Component
  * Matches height of Select components (h-9 = 36px, shadcn default)
  */
-export function SelectorSkeleton({ label, optional }: SelectorSkeletonProps) {
+export function SelectorSkeleton({ label: _label, optional }: SelectorSkeletonProps) {
   return (
     <div className="space-y-2" data-testid="selector-skeleton">
       <div className="flex items-center gap-1">

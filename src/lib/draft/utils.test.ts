@@ -3,8 +3,8 @@ import {
   cleanupExpiredDrafts,
   hasDraft,
   getDraftAge,
-} from './draft-utils';
-import { DRAFT_KEYS, DRAFT_EXPIRY_MS } from '@/constants/storage';
+} from './utils';
+import { DRAFT_KEYS, DRAFT_EXPIRY_MS } from './constants';
 
 describe('draft-utils', () => {
   beforeEach(() => {

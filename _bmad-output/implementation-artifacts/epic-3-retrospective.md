@@ -128,10 +128,39 @@
 
 | # | Action Item | Owner | Priority | Status |
 |---|-------------|-------|----------|--------|
-| 1 | Create Generic CRUD Factory `createMasterDataList<T>()` | Charlie (Dev) | High | Pending |
-| 2 | Create Test Helpers for Master Data CRUD | Dana (QA) | High | Pending |
-| 3 | Document Radix UI Mock Rationale in test/setup.ts | Elena (Dev) | Medium | Pending |
-| 4 | Add Library Selection Criteria to CLAUDE.md | Charlie (Dev) | Low | Pending |
+| 1 | Create Generic CRUD Factory `createMasterDataList<T>()` | Charlie (Dev) | High | ✅ Done (2026-01-02) |
+| 2 | Create Test Helpers for Master Data CRUD | Dana (QA) | High | ✅ Done (2026-01-02) |
+| 3 | Document Radix UI Mock Rationale in test/setup.ts | Elena (Dev) | Medium | ✅ Done (2026-01-02) |
+| 4 | Add Library Selection Criteria to CLAUDE.md | Charlie (Dev) | Low | ✅ Done (2026-01-02) |
+
+### Action Items Completion Notes (2026-01-02)
+
+**Item 1: Generic CRUD Factory**
+- Created `src/lib/master-data/create-list-fetcher.ts` with `createListFetcher<T>()` factory
+- Reduces boilerplate for Server Components (ServicesList, ClientsList, TasksList)
+- 11 unit tests created and passing
+- Note: Full component genericization avoided due to entity-specific dialogs/actions
+
+**Item 2: Test Helpers for Master Data CRUD**
+- Created `test/helpers/master-data.ts` with:
+  - `createMockSupabaseQuery()` - Mock Supabase query chain
+  - `mockService()`, `mockClient()`, `mockTask()`, etc. - Entity factories
+  - `successResponse()`, `errorResponse()`, `emptyResponse()` - Response helpers
+- 20 unit tests created and passing
+
+**Item 3: Radix UI Mock Documentation**
+- Updated `test/setup.ts` with comprehensive JSDoc explaining:
+  - Why mocks are needed (jsdom limitations)
+  - When to add new mocks
+  - Reference links to Radix UI docs
+
+**Item 4: Library Selection Criteria**
+- Added to `CLAUDE.md`:
+  - Must Have criteria (TypeScript, maintenance, bundle size, security)
+  - Prefer criteria (tree-shakeable, minimal deps, widely adopted)
+  - Current library decisions table with rationale
+  - Explicitly avoided libraries with reasons
+  - Guidelines for adding new libraries
 
 ### Previous Retrospective Action Items Status
 

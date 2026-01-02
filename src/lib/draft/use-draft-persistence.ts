@@ -1,13 +1,19 @@
 'use client';
 
+/**
+ * Draft Persistence Hook
+ *
+ * React hook to persist form data as a draft in sessionStorage.
+ * - Saves form data with debounce (2 seconds)
+ * - Restores draft on mount if not expired (24 hours)
+ * - Shows toast with clear action on restoration
+ */
+
 import { useEffect, useRef, useCallback } from 'react';
 import { useWatch, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
-import {
-  DRAFT_EXPIRY_MS,
-  DRAFT_SAVE_DEBOUNCE_MS,
-} from '@/constants/storage';
-import type { FormDraft } from '@/types/draft';
+import { DRAFT_EXPIRY_MS, DRAFT_SAVE_DEBOUNCE_MS } from './constants';
+import type { FormDraft } from './types';
 
 interface UseDraftPersistenceOptions<T extends Record<string, unknown>> {
   form: UseFormReturn<T>;
@@ -21,13 +27,28 @@ interface UseDraftPersistenceReturn {
 }
 
 /**
- * Hook to persist form data as a draft in sessionStorage
- * - Saves form data with debounce (2 seconds)
- * - Restores draft on mount if not expired (24 hours)
- * - Shows toast with clear action on restoration
+ * Hook to persist form data as a draft in sessionStorage.
  *
  * @param options Configuration options
  * @returns Object with clearDraft function
+ *
+ * @example
+ * ```typescript
+ * import { useDraftPersistence, DRAFT_KEYS } from '@/lib/draft';
+ *
+ * function MyForm() {
+ *   const form = useForm<MyFormData>();
+ *   const { clearDraft } = useDraftPersistence({
+ *     form,
+ *     storageKey: DRAFT_KEYS.entry,
+ *   });
+ *
+ *   const onSubmit = () => {
+ *     // ... submit logic
+ *     clearDraft(); // Clear draft on successful submit
+ *   };
+ * }
+ * ```
  */
 export function useDraftPersistence<T extends Record<string, unknown>>({
   form,

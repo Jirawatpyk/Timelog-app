@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { cleanupExpiredDrafts } from '@/lib/draft-utils';
+import { cleanupExpiredDrafts } from '@/lib/draft';
 
 /**
  * Client component to cleanup expired drafts on app initialization

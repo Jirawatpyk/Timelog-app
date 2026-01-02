@@ -22,8 +22,7 @@ import {
 } from '@/schemas/time-entry.schema';
 import { updateTimeEntry } from '@/actions/entry';
 import { minutesToHours } from '@/lib/duration';
-import { DRAFT_KEYS } from '@/constants/storage';
-import { useDraftPersistence } from '@/hooks/use-draft-persistence';
+import { DRAFT_KEYS, useDraftPersistence } from '@/lib/draft';
 import type { TimeEntryWithDetails } from '@/types/domain';
 
 interface EditEntryFormProps {

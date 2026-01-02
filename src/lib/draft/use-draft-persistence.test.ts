@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
 import { useDraftPersistence } from './use-draft-persistence';
-import { DRAFT_KEYS, DRAFT_EXPIRY_MS, DRAFT_SAVE_DEBOUNCE_MS } from '@/constants/storage';
+import { DRAFT_EXPIRY_MS, DRAFT_SAVE_DEBOUNCE_MS } from './constants';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({

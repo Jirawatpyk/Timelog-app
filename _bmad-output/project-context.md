@@ -19,7 +19,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 | Technology | Version | Notes |
 |------------|---------|-------|
-| Next.js | 14 | App Router, Server Components default |
+| Next.js | 16 | App Router, Server Components default |
 | TypeScript | Strict mode | `noImplicitAny`, `strictNullChecks` |
 | Supabase | Latest | Auth + PostgreSQL + RLS + Realtime |
 | TanStack Query | v5 | **ONLY for Entry page** |
@@ -319,35 +319,57 @@ export default function EntryLayout({ children }: { children: React.ReactNode })
 ## Form Handling Pattern
 
 ```typescript
-// ✅ React Hook Form + Zod + Server Action
+// ✅ React Hook Form + Zod + Server Action + Draft Persistence
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { entrySchema } from '@/schemas/entry.schema';
 import { createEntry } from '@/actions/entry';
+import { useDraftPersistence, DRAFT_KEYS } from '@/lib/draft';
 
 const form = useForm({ resolver: zodResolver(entrySchema) });
 
-// Form draft persistence
-useEffect(() => {
-  const subscription = form.watch((data) => {
-    sessionStorage.setItem(DRAFT_KEYS.entry, JSON.stringify(data));
-  });
-  return () => subscription.unsubscribe();
-}, [form]);
+// ✅ Use draft persistence hook (auto-save with 2s debounce, 24h expiry)
+const { clearDraft } = useDraftPersistence({
+  form,
+  storageKey: DRAFT_KEYS.entry,
+});
+
+// Clear draft on successful submit
+const onSubmit = async (data: FormData) => {
+  const result = await createEntry(data);
+  if (result.success) {
+    clearDraft();
+  }
+};
 ```
 
 ---
 
 ## Constants & Configuration
 
-### Draft Keys (Form Persistence)
+### Draft Module (Form Persistence)
+
+The draft module (`src/lib/draft/`) provides auto-save and restoration for forms.
 
 ```typescript
-// src/constants/storage.ts
-export const DRAFT_KEYS = {
-  entry: 'draft-entry',
-  editEntry: (id: string) => `draft-entry-${id}`,
-} as const;
+// src/lib/draft/ - Consolidated module structure
+// ├── types.ts       - FormDraft<T> interface
+// ├── constants.ts   - DRAFT_KEYS, DRAFT_EXPIRY_MS, DRAFT_SAVE_DEBOUNCE_MS
+// ├── utils.ts       - cleanupExpiredDrafts(), hasDraft(), getDraftAge()
+// ├── use-draft-persistence.ts - Main hook
+// └── index.ts       - Barrel exports
+
+// Import everything from barrel export:
+import {
+  useDraftPersistence,
+  DRAFT_KEYS,
+  DRAFT_EXPIRY_MS,       // 24 hours
+  DRAFT_SAVE_DEBOUNCE_MS, // 2 seconds
+  cleanupExpiredDrafts,
+  hasDraft,
+  getDraftAge,
+  type FormDraft
+} from '@/lib/draft';
 ```
 
 ### Polling Intervals

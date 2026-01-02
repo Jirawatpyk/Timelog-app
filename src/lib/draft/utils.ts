@@ -1,9 +1,15 @@
-import { DRAFT_KEYS, DRAFT_EXPIRY_MS } from '@/constants/storage';
-import type { FormDraft } from '@/types/draft';
+/**
+ * Draft Utilities
+ *
+ * Helper functions for managing form drafts in sessionStorage.
+ */
+
+import { DRAFT_KEYS, DRAFT_EXPIRY_MS } from './constants';
+import type { FormDraft } from './types';
 
 /**
- * Clean up all expired drafts from sessionStorage
- * Call this on app initialization
+ * Clean up all expired drafts from sessionStorage.
+ * Call this on app initialization.
  */
 export function cleanupExpiredDrafts(): void {
   if (typeof window === 'undefined') return;
@@ -41,16 +47,16 @@ function cleanupDraftIfExpired(key: string, now: number): void {
 }
 
 /**
- * Check if a draft exists for given key
- * Note: Only call from client components
+ * Check if a draft exists for given key.
+ * Note: Only call from client components.
  */
 export function hasDraft(key: string): boolean {
   return sessionStorage.getItem(key) !== null;
 }
 
 /**
- * Get draft age in minutes
- * Note: Only call from client components
+ * Get draft age in minutes.
+ * Note: Only call from client components.
  */
 export function getDraftAge(key: string): number | null {
   const saved = sessionStorage.getItem(key);

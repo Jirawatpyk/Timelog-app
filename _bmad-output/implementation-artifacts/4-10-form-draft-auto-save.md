@@ -922,3 +922,57 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 5. **L1 Fixed**: Updated all test names to snake_case convention
 6. **L2 Fixed**: Moved clearDraft() before form.reset() with accurate comment
 7. **L3 Fixed**: Removed redundant SSR checks from `hasDraft` and `getDraftAge`
+
+## Post-Implementation Refactoring (Action Item 3)
+
+### Draft Code Consolidation
+
+Consolidated draft-related code from 4 scattered locations into single `src/lib/draft/` module:
+
+**Before (scattered):**
+```
+src/constants/storage.ts           # Draft keys, expiry, debounce
+src/types/draft.ts                 # FormDraft type
+src/hooks/use-draft-persistence.ts # Hook
+src/lib/draft-utils.ts             # Cleanup utilities
+```
+
+**After (consolidated):**
+```
+src/lib/draft/
+├── index.ts               # Barrel export
+├── types.ts               # FormDraft type
+├── constants.ts           # DRAFT_KEYS, DRAFT_EXPIRY_MS, DRAFT_SAVE_DEBOUNCE_MS
+├── utils.ts               # cleanupExpiredDrafts, hasDraft, getDraftAge
+├── utils.test.ts          # 9 tests
+├── use-draft-persistence.ts       # Main hook
+└── use-draft-persistence.test.ts  # 10 tests
+```
+
+**Import changes:**
+```typescript
+// Before
+import { DRAFT_KEYS, DRAFT_EXPIRY_MS } from '@/constants/storage';
+import { useDraftPersistence } from '@/hooks/use-draft-persistence';
+import { cleanupExpiredDrafts } from '@/lib/draft-utils';
+
+// After
+import { DRAFT_KEYS, useDraftPersistence, cleanupExpiredDrafts } from '@/lib/draft';
+```
+
+**Files updated:**
+- `src/app/(app)/entry/components/TimeEntryForm.tsx`
+- `src/components/entry/EditEntryForm.tsx`
+- `src/components/shared/draft-cleanup.tsx`
+- `src/components/shared/draft-cleanup.test.tsx`
+
+**Files deleted:**
+- `src/constants/storage.ts`
+- `src/constants/storage.test.ts`
+- `src/types/draft.ts`
+- `src/hooks/use-draft-persistence.ts`
+- `src/hooks/use-draft-persistence.test.ts`
+- `src/lib/draft-utils.ts`
+- `src/lib/draft-utils.test.ts`
+
+All 1059 tests passing after consolidation.

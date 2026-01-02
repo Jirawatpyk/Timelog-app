@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { DraftCleanup } from './draft-cleanup';
-import * as draftUtils from '@/lib/draft-utils';
+import * as draftModule from '@/lib/draft';
 
-// Mock the draft-utils module
-vi.mock('@/lib/draft-utils', () => ({
+// Mock the draft module
+vi.mock('@/lib/draft', () => ({
   cleanupExpiredDrafts: vi.fn(),
 }));
 
@@ -16,7 +16,7 @@ describe('DraftCleanup', () => {
   it('calls_cleanupExpiredDrafts_on_mount', () => {
     render(<DraftCleanup />);
 
-    expect(draftUtils.cleanupExpiredDrafts).toHaveBeenCalledTimes(1);
+    expect(draftModule.cleanupExpiredDrafts).toHaveBeenCalledTimes(1);
   });
 
   it('renders_null_no_visible_output', () => {
@@ -32,6 +32,6 @@ describe('DraftCleanup', () => {
     rerender(<DraftCleanup />);
 
     // useEffect with [] deps should only run once
-    expect(draftUtils.cleanupExpiredDrafts).toHaveBeenCalledTimes(1);
+    expect(draftModule.cleanupExpiredDrafts).toHaveBeenCalledTimes(1);
   });
 });

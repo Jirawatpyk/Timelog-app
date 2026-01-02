@@ -24,9 +24,8 @@ import {
 } from '@/schemas/time-entry.schema';
 import { createTimeEntry, upsertRecentCombination } from '@/actions/entry';
 import { getTodayISO } from '@/lib/thai-date';
-import { DRAFT_KEYS } from '@/constants/storage';
+import { DRAFT_KEYS, useDraftPersistence } from '@/lib/draft';
 import { scrollToFirstError, triggerErrorHaptic, triggerSuccessHaptic } from '@/lib/form-utils';
-import { useDraftPersistence } from '@/hooks/use-draft-persistence';
 import type { RecentCombination } from '@/types/domain';
 
 /**

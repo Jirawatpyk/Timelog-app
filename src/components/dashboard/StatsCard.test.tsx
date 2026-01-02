@@ -181,4 +181,47 @@ describe('StatsCard', () => {
       expect(progressBar).toHaveAttribute('aria-valuemax', '8');
     });
   });
+
+  describe('Monthly Stats Display (Story 5.4 - AC5)', () => {
+    const monthlyStats: DashboardStats = {
+      totalHours: 160,
+      entryCount: 80,
+      topClient: { id: 'c1', name: 'Test Client', hours: 60 },
+      daysWithEntries: 20,
+      weeksInMonth: 4,
+    };
+
+    it('shows average per week for month period', () => {
+      render(<StatsCard stats={monthlyStats} period="month" />);
+      expect(screen.getByTestId('monthly-stats')).toBeInTheDocument();
+      // 160 / 4 = 40 hrs/week
+      expect(screen.getByTestId('weekly-avg-month')).toHaveTextContent('40.0 hr/wk');
+    });
+
+    it('shows days with entries for month period', () => {
+      render(<StatsCard stats={monthlyStats} period="month" />);
+      expect(screen.getByText('Days logged')).toBeInTheDocument();
+      expect(screen.getByTestId('days-logged')).toHaveTextContent('20 days');
+    });
+
+    it('does not show monthly stats for today period', () => {
+      render(<StatsCard stats={monthlyStats} period="today" />);
+      expect(screen.queryByTestId('monthly-stats')).not.toBeInTheDocument();
+    });
+
+    it('does not show monthly stats for week period', () => {
+      render(<StatsCard stats={monthlyStats} period="week" />);
+      expect(screen.queryByTestId('monthly-stats')).not.toBeInTheDocument();
+    });
+
+    it('handles missing monthly fields gracefully', () => {
+      const incompleteStats: DashboardStats = {
+        totalHours: 100,
+        entryCount: 50,
+      };
+      render(<StatsCard stats={incompleteStats} period="month" />);
+      // Should still render without crashing
+      expect(screen.getByTestId('stats-card')).toBeInTheDocument();
+    });
+  });
 });

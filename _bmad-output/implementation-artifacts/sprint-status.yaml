@@ -87,7 +87,7 @@ development_status:
   5-1-dashboard-layout-period-selector: done
   5-2-todays-entries-view: done
   5-3-weekly-entries-view: done
-  5-4-monthly-entries-view: ready-for-dev
+  5-4-monthly-entries-view: done
   5-5-total-hours-statistics: ready-for-dev
   5-6-filter-by-client: ready-for-dev
   5-7-search-entries: ready-for-dev

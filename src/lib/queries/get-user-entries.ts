@@ -58,10 +58,13 @@ export async function getUserEntries(
 
 /**
  * Calculate dashboard statistics for a date range
- * Returns total hours, entry count, and top client
+ * Returns total hours, entry count, top client, and monthly stats (for month period)
+ *
+ * Story 5.4: Added period parameter for monthly stats calculation
  */
 export async function getDashboardStats(
-  dateRange: DateRange
+  dateRange: DateRange,
+  period?: 'today' | 'week' | 'month'
 ): Promise<DashboardStats> {
   const supabase = await createClient();
 
@@ -79,6 +82,7 @@ export async function getDashboardStats(
     .select(
       `
       duration_minutes,
+      entry_date,
       job:jobs(
         project:projects(
           client:clients(id, name)
@@ -120,9 +124,40 @@ export async function getDashboardStats(
     .sort((a, b) => b[1].hours - a[1].hours)
     .map(([id, data]) => ({ id, ...data }))[0];
 
+  // Calculate monthly-specific stats (Story 5.4)
+  let daysWithEntries: number | undefined;
+  let weeksInMonth: number | undefined;
+
+  if (period === 'month') {
+    // Count unique days with entries
+    const uniqueDates = new Set(
+      entries?.map((e) => (e as { entry_date: string }).entry_date) || []
+    );
+    daysWithEntries = uniqueDates.size;
+
+    // Calculate number of weeks in the month
+    const year = dateRange.start.getFullYear();
+    const month = dateRange.start.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    // Count weeks by counting how many Mondays (or partial weeks) there are
+    let weekCount = 0;
+    const current = new Date(firstDay);
+    while (current <= lastDay) {
+      weekCount++;
+      // Move to next Monday
+      const daysUntilMonday = current.getDay() === 0 ? 1 : 8 - current.getDay();
+      current.setDate(current.getDate() + daysUntilMonday);
+    }
+    weeksInMonth = weekCount;
+  }
+
   return {
     totalHours,
     entryCount: entries?.length || 0,
     topClient,
+    daysWithEntries,
+    weeksInMonth,
   };
 }

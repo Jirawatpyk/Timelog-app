@@ -20,6 +20,11 @@ export interface DashboardStats {
     name: string;
     hours: number;
   };
+  // Story 5.4: Monthly stats
+  /** Number of unique days with entries (for monthly view) */
+  daysWithEntries?: number;
+  /** Number of weeks in the current month (for average calculation) */
+  weeksInMonth?: number;
 }
 
 export interface DashboardPageProps {

@@ -118,6 +118,26 @@ export function StatsCard({ stats, period }: StatsCardProps) {
             </div>
           </div>
         )}
+
+        {/* Monthly Stats Display (Story 5.4 - AC5) */}
+        {period === 'month' && stats.weeksInMonth && (
+          <div className="mt-4 pt-4 border-t" data-testid="monthly-stats">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Avg per week</span>
+              <span className="font-medium" data-testid="weekly-avg-month">
+                {(stats.totalHours / stats.weeksInMonth).toFixed(1)} hr/wk
+              </span>
+            </div>
+            {stats.daysWithEntries !== undefined && (
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-muted-foreground">Days logged</span>
+                <span className="font-medium" data-testid="days-logged">
+                  {stats.daysWithEntries} days
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

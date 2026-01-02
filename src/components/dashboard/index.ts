@@ -18,6 +18,10 @@ export { DashboardSkeleton } from './DashboardSkeleton';
 export { GroupedEntryList } from './GroupedEntryList';
 export { DateHeader } from './DateHeader';
 
+// Story 5.4 - Monthly view components
+export { WeekHeader } from './WeekHeader';
+export { MonthlyEntryList } from './MonthlyEntryList';
+
 // Legacy skeleton exports (Story 4.9)
 export { EntryListSkeleton, EntryCardSkeleton } from './EntryListSkeleton';
 export { StatsSkeleton, PeriodSelectorSkeleton as LegacyPeriodSelectorSkeleton } from './StatsSkeleton';

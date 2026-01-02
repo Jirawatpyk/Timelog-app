@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,10 @@ interface DurationInputProps {
 /**
  * Duration Input Component with preset buttons
  * Story 4.3 - AC3, AC4, AC5: Duration input with presets and decimal support
+ * Story 4.7 - AC3: Support forwardRef for focus management on quick fill
  */
-export function DurationInput({ value, onChange, error }: DurationInputProps) {
+export const DurationInput = forwardRef<HTMLInputElement, DurationInputProps>(
+  function DurationInput({ value, onChange, error }, ref) {
   const [inputValue, setInputValue] = useState(value ? String(value) : '');
 
   // Sync input value when external value changes (e.g., preset button click)
@@ -83,6 +85,7 @@ export function DurationInput({ value, onChange, error }: DurationInputProps) {
       {/* Custom input */}
       <div className="relative">
         <Input
+          ref={ref}
           id="duration"
           type="number"
           step="0.25"
@@ -110,4 +113,4 @@ export function DurationInput({ value, onChange, error }: DurationInputProps) {
       </p>
     </div>
   );
-}
+});

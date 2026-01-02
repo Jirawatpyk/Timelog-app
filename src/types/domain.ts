@@ -107,3 +107,28 @@ export interface JobWithProject extends Job {
   clientName: string;
   clientId: string;
 }
+
+// ============================================
+// RECENT COMBINATIONS TYPE (Story 4.7)
+// ============================================
+
+/**
+ * Recent combination with joined data for display
+ * Used for quick entry feature on /entry page
+ */
+export interface RecentCombination {
+  id: string;
+  userId: string;
+  clientId: string;
+  projectId: string;
+  jobId: string;
+  serviceId: string;
+  taskId: string | null;
+  lastUsedAt: string;
+  // Joined data for display
+  client: { id: string; name: string };
+  project: { id: string; name: string };
+  job: { id: string; name: string; jobNo: string | null };
+  service: { id: string; name: string };
+  task: { id: string; name: string } | null;
+}

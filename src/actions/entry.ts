@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { hoursToMinutes } from '@/lib/duration';
 import { canEditEntry, EDIT_WINDOW_DAYS_CONST } from '@/lib/entry-rules';
-import type { ActionResult, Client, Project, Job, Service, Task, TimeEntry, TimeEntryWithDetails } from '@/types/domain';
+import type { ActionResult, Client, Project, Job, Service, Task, TimeEntry, TimeEntryWithDetails, RecentCombination } from '@/types/domain';
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -128,6 +128,83 @@ export async function getActiveTasks(): Promise<ActionResult<Task[]>> {
 
   if (error) return { success: false, error: error.message };
   return { success: true, data: data ?? [] };
+}
+
+// ============================================
+// RECENT COMBINATIONS QUERY (Story 4.7)
+// ============================================
+
+/**
+ * Get user's recent combinations for quick entry
+ * Story 4.7 - AC1: Display up to 5 recent combinations
+ * Story 4.7 - AC2: Include Client › Project › Job › Service (Task)
+ */
+export async function getRecentCombinations(): Promise<ActionResult<RecentCombination[]>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { data, error } = await supabase
+    .from('user_recent_combinations')
+    .select(`
+      id,
+      user_id,
+      client_id,
+      project_id,
+      job_id,
+      service_id,
+      task_id,
+      last_used_at,
+      client:clients (id, name),
+      project:projects (id, name),
+      job:jobs (id, name, job_no),
+      service:services (id, name),
+      task:tasks (id, name)
+    `)
+    .eq('user_id', user.id)
+    .order('last_used_at', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error('Failed to fetch recent combinations:', error);
+    return { success: false, error: error.message };
+  }
+
+  // Transform snake_case to camelCase for React components
+  // Note: Supabase returns nested relations as single objects when using proper foreign key joins
+  const transformed: RecentCombination[] = (data ?? []).map((row) => {
+    // Type guards for nested objects
+    const clientData = row.client as unknown as { id: string; name: string };
+    const projectData = row.project as unknown as { id: string; name: string };
+    const jobData = row.job as unknown as { id: string; name: string; job_no: string | null };
+    const serviceData = row.service as unknown as { id: string; name: string };
+    const taskData = row.task as unknown as { id: string; name: string } | null;
+
+    return {
+      id: row.id,
+      userId: row.user_id,
+      clientId: row.client_id,
+      projectId: row.project_id,
+      jobId: row.job_id,
+      serviceId: row.service_id,
+      taskId: row.task_id,
+      lastUsedAt: row.last_used_at,
+      client: clientData,
+      project: projectData,
+      job: {
+        id: jobData.id,
+        name: jobData.name,
+        jobNo: jobData.job_no,
+      },
+      service: serviceData,
+      task: taskData,
+    };
+  });
+
+  return { success: true, data: transformed };
 }
 
 // ============================================

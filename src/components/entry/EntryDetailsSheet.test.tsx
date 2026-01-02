@@ -189,7 +189,7 @@ describe('EntryDetailsSheet', () => {
     expect(editButton).toBeDisabled();
   });
 
-  it('disables Delete button for entries older than 7 days', () => {
+  it('allows Delete button for entries older than 7 days (no restriction per AC1)', () => {
     const entry = createMockEntry({ entry_date: '2025-12-20' });
 
     render(
@@ -203,7 +203,7 @@ describe('EntryDetailsSheet', () => {
     );
 
     const deleteButton = screen.getByRole('button', { name: /delete/i });
-    expect(deleteButton).toBeDisabled();
+    expect(deleteButton).not.toBeDisabled();
   });
 
   it('shows restriction message for old entries', () => {

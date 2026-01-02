@@ -161,16 +161,24 @@ describe('Delete Time Entry (Story 4.6)', () => {
       const staffClient = await createUserClient(testUsers.staff.email);
 
       // Delete the entry (soft delete)
-      const { data: deleted, error } = await staffClient
+      // Note: We can't use .select() here because after setting deleted_at,
+      // RLS SELECT policy (deleted_at IS NULL) will filter out the row
+      const { error } = await staffClient
         .from('time_entries')
         .update({ deleted_at: new Date().toISOString() })
-        .eq('id', testData.entries.toDelete.id)
-        .select()
-        .single();
+        .eq('id', testData.entries.toDelete.id);
 
       expect(error).toBeNull();
-      expect(deleted).not.toBeNull();
-      expect(deleted!.deleted_at).not.toBeNull();
+
+      // Verify using service client (bypasses RLS) that deleted_at was set
+      const { data: verifyEntry } = await serviceClient
+        .from('time_entries')
+        .select('deleted_at')
+        .eq('id', testData.entries.toDelete.id)
+        .single();
+
+      expect(verifyEntry).not.toBeNull();
+      expect(verifyEntry!.deleted_at).not.toBeNull();
     });
 
     it('deleted entry no longer appears in user queries', async () => {

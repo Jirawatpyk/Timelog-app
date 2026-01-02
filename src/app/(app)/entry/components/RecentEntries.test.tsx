@@ -64,6 +64,22 @@ vi.mock('@/components/entry', () => ({
       </div>
     ) : null
   ),
+  DeleteConfirmDialog: ({ entry, open, onOpenChange, onConfirm, isDeleting }: {
+    entry: TimeEntryWithDetails | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onConfirm: () => void;
+    isDeleting: boolean;
+  }) => (
+    open && entry ? (
+      <div data-testid="delete-confirm-dialog">
+        <span>Delete Entry?</span>
+        <span>This action cannot be undone</span>
+        <button onClick={() => onOpenChange(false)}>Cancel</button>
+        <button onClick={onConfirm} disabled={isDeleting}>Delete</button>
+      </div>
+    ) : null
+  ),
 }));
 
 const mockGetUserEntries = vi.mocked(getUserEntries);

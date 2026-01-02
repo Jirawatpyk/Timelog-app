@@ -7,7 +7,9 @@ import {
   getJobsByProject,
   getActiveServices,
   getActiveTasks,
+  getRecentCombinations,
 } from '@/actions/entry';
+import { STALE_TIME_MS } from '@/constants/time';
 
 /**
  * Hook to fetch active clients
@@ -85,5 +87,21 @@ export function useTasks() {
       if (!result.success) throw new Error(result.error);
       return result.data;
     },
+  });
+}
+
+/**
+ * Hook to fetch user's recent combinations
+ * Story 4.7 - AC1, AC6: Used in RecentCombinations component
+ */
+export function useRecentCombinations() {
+  return useQuery({
+    queryKey: ['recentCombinations'],
+    queryFn: async () => {
+      const result = await getRecentCombinations();
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    staleTime: STALE_TIME_MS, // 30 seconds
   });
 }

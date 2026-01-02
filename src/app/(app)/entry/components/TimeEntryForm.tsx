@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,6 +15,7 @@ import {
   DatePicker,
   SubmitButton,
   SuccessAnimation,
+  RecentCombinations,
 } from '@/components/entry';
 import {
   timeEntryFormSchema,
@@ -23,15 +24,18 @@ import {
 import { createTimeEntry, upsertRecentCombination } from '@/actions/entry';
 import { getTodayISO } from '@/lib/thai-date';
 import { DRAFT_KEYS } from '@/constants/storage';
+import type { RecentCombination } from '@/types/domain';
 
 /**
  * Time Entry Form Component
  * Story 4.2: Cascading Client → Project → Job selectors
  * Story 4.3: Service, Task, and Duration fields
  * Story 4.4: Date selection, submission, and success animation
+ * Story 4.7: Recent combinations quick entry
  */
 export function TimeEntryForm() {
   const queryClient = useQueryClient();
+  const durationInputRef = useRef<HTMLInputElement>(null);
 
   // Local state for cascading dependency tracking
   const [clientId, setClientId] = useState<string | null>(null);
@@ -116,6 +120,35 @@ export function TimeEntryForm() {
   };
 
   /**
+   * Handle recent combination selection
+   * Story 4.7 - AC3: Quick fill on tap
+   */
+  const handleRecentSelect = (combination: RecentCombination) => {
+    // Set all form values
+    form.setValue('clientId', combination.clientId, { shouldValidate: true });
+    form.setValue('projectId', combination.projectId, { shouldValidate: true });
+    form.setValue('jobId', combination.jobId, { shouldValidate: true });
+    form.setValue('serviceId', combination.serviceId, { shouldValidate: true });
+    form.setValue('taskId', combination.taskId);
+
+    // Update cascading state
+    setClientId(combination.clientId);
+    setProjectId(combination.projectId);
+
+    // Reset duration to 0 and keep today's date (user needs to fill these)
+    form.setValue('durationHours', 0, { shouldValidate: false });
+    form.setValue('entryDate', getTodayISO(), { shouldValidate: true });
+
+    // Focus duration input for quick entry
+    setTimeout(() => {
+      durationInputRef.current?.focus();
+    }, 100);
+
+    // Toast feedback
+    toast.info('Filled! Enter duration to continue');
+  };
+
+  /**
    * Form submission handler
    * Story 4.4 - AC5, AC6, AC7
    */
@@ -194,6 +227,14 @@ export function TimeEntryForm() {
 
   return (
     <>
+      {/* Recent Combinations - Quick Entry (Story 4.7) */}
+      <div className="mb-6">
+        <RecentCombinations onSelect={handleRecentSelect} />
+      </div>
+
+      {/* Divider */}
+      <div className="border-t mb-6" />
+
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-6"
@@ -254,6 +295,7 @@ export function TimeEntryForm() {
           <legend className="sr-only">Duration and Date</legend>
 
           <DurationInput
+            ref={durationInputRef}
             value={form.watch('durationHours')}
             onChange={(val) => form.setValue('durationHours', val, { shouldValidate: true })}
             error={form.formState.errors.durationHours?.message}

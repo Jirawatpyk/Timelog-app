@@ -35,6 +35,7 @@ const createMockEntry = (): TimeEntryWithDetails => ({
   department_id: 'dept-1',
   created_at: '2026-01-02T10:00:00Z',
   updated_at: '2026-01-02T10:00:00Z',
+  deleted_at: null,
   job: {
     id: 'job-1',
     name: 'Test Job',

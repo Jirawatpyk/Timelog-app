@@ -117,6 +117,7 @@ function createMockEntry(overrides: Partial<TimeEntryWithDetails> = {}): TimeEnt
     department_id: 'dept-1',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    deleted_at: null,
     job: {
       id: 'job-1',
       name: 'Job Name',
@@ -289,7 +290,7 @@ describe('RecentEntries', () => {
     it('deletes entry on confirmation', async () => {
       const mockEntries = [createMockEntry()];
       mockGetUserEntries.mockResolvedValue({ success: true, data: mockEntries });
-      mockDeleteTimeEntry.mockResolvedValue({ success: true, data: {} });
+      mockDeleteTimeEntry.mockResolvedValue({ success: true, data: undefined });
 
       renderWithProviders(<RecentEntries />);
 

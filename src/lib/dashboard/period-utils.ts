@@ -93,3 +93,27 @@ export function formatPeriodLabel(period: Period): string {
   };
   return labels[period];
 }
+
+/**
+ * Get all dates in a range as ISO strings (YYYY-MM-DD)
+ * Returns dates in chronological order (oldest to newest)
+ *
+ * @param start - Start date (inclusive)
+ * @param end - End date (inclusive)
+ * @returns Array of ISO date strings
+ */
+export function getDaysInRange(start: Date, end: Date): string[] {
+  const dates: string[] = [];
+  const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  while (current <= endDate) {
+    const year = current.getFullYear();
+    const month = String(current.getMonth() + 1).padStart(2, '0');
+    const day = String(current.getDate()).padStart(2, '0');
+    dates.push(`${year}-${month}-${day}`);
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+}

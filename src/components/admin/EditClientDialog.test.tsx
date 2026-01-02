@@ -34,7 +34,6 @@ const mockClient: Client = {
   name: 'Original Client Name',
   active: true,
   created_at: '2025-01-01T00:00:00Z',
-  updated_at: '2025-01-01T00:00:00Z',
 };
 
 describe('EditClientDialog', () => {
@@ -109,7 +108,6 @@ describe('EditClientDialog', () => {
       const updatedClient: Client = {
         ...mockClient,
         name: 'Updated Client Name',
-        updated_at: new Date().toISOString(),
       };
 
       mockUpdateClientAction.mockResolvedValue({ success: true, data: updatedClient });
@@ -133,7 +131,6 @@ describe('EditClientDialog', () => {
       const updatedClient: Client = {
         ...mockClient,
         name: 'Updated Client',
-        updated_at: new Date().toISOString(),
       };
 
       mockUpdateClientAction.mockResolvedValue({ success: true, data: updatedClient });

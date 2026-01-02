@@ -140,6 +140,38 @@ describe('StatsCard', () => {
     });
   });
 
+  describe('Weekly Average Display (AC4)', () => {
+    it('shows average per day for week period', () => {
+      const weeklyStats = { ...baseStats, totalHours: 21 }; // 21 / 7 = 3.0
+      render(<StatsCard stats={weeklyStats} period="week" />);
+      expect(screen.getByText(/Avg.*day/i)).toBeInTheDocument();
+      expect(screen.getByTestId('weekly-avg')).toHaveTextContent('3.0 hr/day');
+    });
+
+    it('shows workday average for week period', () => {
+      const weeklyStats = { ...baseStats, totalHours: 40 }; // 40 / 5 = 8.0
+      render(<StatsCard stats={weeklyStats} period="week" />);
+      expect(screen.getByText(/Mon-Fri/i)).toBeInTheDocument();
+      expect(screen.getByTestId('workday-avg')).toHaveTextContent('8.0 hr/day');
+    });
+
+    it('does not show weekly average for today period', () => {
+      render(<StatsCard stats={baseStats} period="today" />);
+      expect(screen.queryByTestId('weekly-avg')).not.toBeInTheDocument();
+    });
+
+    it('does not show weekly average for month period', () => {
+      render(<StatsCard stats={baseStats} period="month" />);
+      expect(screen.queryByTestId('weekly-avg')).not.toBeInTheDocument();
+    });
+
+    it('handles zero hours gracefully', () => {
+      const zeroStats = { ...baseStats, totalHours: 0 };
+      render(<StatsCard stats={zeroStats} period="week" />);
+      expect(screen.getByTestId('weekly-avg')).toHaveTextContent('0.0 hr/day');
+    });
+  });
+
   describe('Accessibility', () => {
     it('has progressbar role with aria attributes', () => {
       render(<StatsCard stats={baseStats} period="today" />);

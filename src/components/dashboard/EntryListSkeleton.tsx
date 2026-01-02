@@ -26,25 +26,36 @@ export function EntryListSkeleton({ count = 5 }: EntryListSkeletonProps) {
 
 /**
  * Single Entry Card Skeleton
- * Matches the layout of EntryRow component from RecentEntries
+ * Story 5.2 - Matches the layout of EntryCard component
+ *
+ * Layout:
+ * - Left: Client name, Job display, Service • Task
+ * - Right: Duration, Date
  */
 export function EntryCardSkeleton() {
   return (
     <div
-      className="p-4 rounded-lg border bg-card"
+      className="p-4 rounded-lg border bg-card min-h-[72px]"
       data-testid="entry-card-skeleton"
     >
-      <div className="flex justify-between items-start">
-        <div className="space-y-2 flex-1">
+      <div className="flex justify-between items-start gap-2">
+        {/* Left: Client > Job > Service */}
+        <div className="flex-1 min-w-0 space-y-2">
           {/* Client name */}
-          <Skeleton className="h-5 w-3/4" />
-          {/* Project • Job */}
-          <Skeleton className="h-4 w-1/2" />
-          {/* Date • Duration */}
-          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-4 w-2/3" />
+          {/* Job display */}
+          <Skeleton className="h-3 w-1/2" />
+          {/* Service • Task */}
+          <Skeleton className="h-3 w-2/5" />
         </div>
-        {/* Chevron icon skeleton */}
-        <Skeleton className="h-5 w-5 rounded" />
+
+        {/* Right: Duration and Date */}
+        <div className="shrink-0 space-y-2 text-right">
+          {/* Duration */}
+          <Skeleton className="h-5 w-16 ml-auto" />
+          {/* Date */}
+          <Skeleton className="h-3 w-20 ml-auto" />
+        </div>
       </div>
     </div>
   );

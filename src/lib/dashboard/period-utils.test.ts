@@ -4,6 +4,7 @@ import {
   getPeriodFromSearchParams,
   getDateRangeForPeriod,
   formatPeriodLabel,
+  getDaysInRange,
 } from './period-utils';
 
 describe('period-utils', () => {
@@ -175,6 +176,66 @@ describe('period-utils', () => {
       expect(formatPeriodLabel('today')).toBe('Today');
       expect(formatPeriodLabel('week')).toBe('This Week');
       expect(formatPeriodLabel('month')).toBe('This Month');
+    });
+  });
+
+  describe('getDaysInRange', () => {
+    it('returns array of ISO date strings for a date range', () => {
+      const start = new Date(2025, 0, 13); // Monday Jan 13
+      const end = new Date(2025, 0, 19);   // Sunday Jan 19
+
+      const days = getDaysInRange(start, end);
+
+      expect(days).toHaveLength(7);
+      expect(days[0]).toBe('2025-01-13');
+      expect(days[6]).toBe('2025-01-19');
+    });
+
+    it('handles single day range', () => {
+      const start = new Date(2025, 0, 15);
+      const end = new Date(2025, 0, 15);
+
+      const days = getDaysInRange(start, end);
+
+      expect(days).toHaveLength(1);
+      expect(days[0]).toBe('2025-01-15');
+    });
+
+    it('handles cross-month range', () => {
+      const start = new Date(2025, 0, 30); // Jan 30
+      const end = new Date(2025, 1, 2);    // Feb 2
+
+      const days = getDaysInRange(start, end);
+
+      expect(days).toHaveLength(4);
+      expect(days[0]).toBe('2025-01-30');
+      expect(days[1]).toBe('2025-01-31');
+      expect(days[2]).toBe('2025-02-01');
+      expect(days[3]).toBe('2025-02-02');
+    });
+
+    it('handles cross-year range (year boundary)', () => {
+      const start = new Date(2025, 11, 29); // Dec 29, 2025
+      const end = new Date(2026, 0, 4);     // Jan 4, 2026
+
+      const days = getDaysInRange(start, end);
+
+      expect(days).toHaveLength(7);
+      expect(days[0]).toBe('2025-12-29');
+      expect(days[2]).toBe('2025-12-31');
+      expect(days[3]).toBe('2026-01-01');
+      expect(days[6]).toBe('2026-01-04');
+    });
+
+    it('returns dates sorted oldest to newest', () => {
+      const start = new Date(2025, 0, 13);
+      const end = new Date(2025, 0, 15);
+
+      const days = getDaysInRange(start, end);
+
+      // Should be chronological order
+      expect(days[0] < days[1]).toBe(true);
+      expect(days[1] < days[2]).toBe(true);
     });
   });
 });

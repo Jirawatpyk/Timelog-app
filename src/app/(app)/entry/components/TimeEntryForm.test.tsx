@@ -15,18 +15,18 @@ vi.mock('@/hooks/use-entry-data', () => ({
 }));
 
 const mockClients = [
-  { id: 'client-1', name: 'Client A', active: true, created_at: '', updated_at: '' },
-  { id: 'client-2', name: 'Client B', active: true, created_at: '', updated_at: '' },
+  { id: 'client-1', name: 'Client A', active: true, created_at: '' },
+  { id: 'client-2', name: 'Client B', active: true, created_at: '' },
 ];
 
 const mockServices = [
-  { id: 'service-1', name: 'Development', active: true, created_at: '', updated_at: '' },
-  { id: 'service-2', name: 'Testing', active: true, created_at: '', updated_at: '' },
+  { id: 'service-1', name: 'Development', active: true, created_at: '' },
+  { id: 'service-2', name: 'Testing', active: true, created_at: '' },
 ];
 
 const mockTasks = [
-  { id: 'task-1', name: 'Coding', active: true, created_at: '', updated_at: '' },
-  { id: 'task-2', name: 'Review', active: true, created_at: '', updated_at: '' },
+  { id: 'task-1', name: 'Coding', active: true, created_at: '' },
+  { id: 'task-2', name: 'Review', active: true, created_at: '' },
 ];
 
 function createWrapper() {
@@ -46,13 +46,13 @@ describe('TimeEntryForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock implementations
+    // Default mock implementations - use 'as unknown as' to bypass strict UseQueryResult typing
     vi.mocked(useEntryData.useClients).mockReturnValue({
       data: mockClients,
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useClients>);
+    } as unknown as ReturnType<typeof useEntryData.useClients>);
 
     vi.mocked(useEntryData.useProjects).mockReturnValue({
       data: [],
@@ -60,7 +60,7 @@ describe('TimeEntryForm', () => {
       isFetching: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useProjects>);
+    } as unknown as ReturnType<typeof useEntryData.useProjects>);
 
     vi.mocked(useEntryData.useJobs).mockReturnValue({
       data: [],
@@ -68,7 +68,7 @@ describe('TimeEntryForm', () => {
       isFetching: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useJobs>);
+    } as unknown as ReturnType<typeof useEntryData.useJobs>);
 
     // Story 4.3: Service and Task hooks
     vi.mocked(useEntryData.useServices).mockReturnValue({
@@ -76,21 +76,21 @@ describe('TimeEntryForm', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useServices>);
+    } as unknown as ReturnType<typeof useEntryData.useServices>);
 
     vi.mocked(useEntryData.useTasks).mockReturnValue({
       data: mockTasks,
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useTasks>);
+    } as unknown as ReturnType<typeof useEntryData.useTasks>);
 
     // Story 4.7: Recent combinations hook
     vi.mocked(useEntryData.useRecentCombinations).mockReturnValue({
       data: [],
       isLoading: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useRecentCombinations>);
+    } as unknown as ReturnType<typeof useEntryData.useRecentCombinations>);
   });
 
   it('renders the form with all selectors', () => {

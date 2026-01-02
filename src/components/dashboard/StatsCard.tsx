@@ -10,14 +10,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { formatPeriodLabel } from '@/lib/dashboard/period-utils';
+import { WORK_HOURS_TARGET } from '@/constants/business';
 import type { Period, DashboardStats } from '@/types/dashboard';
 
 interface StatsCardProps {
   stats: DashboardStats;
   period: Period;
 }
-
-const WORK_HOURS_TARGET = 8;
 
 export function StatsCard({ stats, period }: StatsCardProps) {
   const isToday = period === 'today';
@@ -95,6 +94,24 @@ export function StatsCard({ stats, period }: StatsCardProps) {
             <p className="text-xs text-muted-foreground mt-1 text-right">
               {progressPercent.toFixed(0)}% of target
             </p>
+          </div>
+        )}
+
+        {/* Weekly Average Display (AC4) */}
+        {period === 'week' && (
+          <div className="mt-4 pt-4 border-t" data-testid="weekly-stats">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Avg per day</span>
+              <span className="font-medium" data-testid="weekly-avg">
+                {(stats.totalHours / 7).toFixed(1)} hr/day
+              </span>
+            </div>
+            <div className="flex justify-between text-sm mt-1">
+              <span className="text-muted-foreground">Mon-Fri avg</span>
+              <span className="font-medium" data-testid="workday-avg">
+                {(stats.totalHours / 5).toFixed(1)} hr/day
+              </span>
+            </div>
           </div>
         )}
       </CardContent>

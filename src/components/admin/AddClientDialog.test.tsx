@@ -91,7 +91,6 @@ describe('AddClientDialog', () => {
         name: 'Test Client',
         active: true,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       };
 
       mockCreateClientAction.mockResolvedValue({ success: true, data: mockClient });
@@ -114,7 +113,6 @@ describe('AddClientDialog', () => {
         name: 'New Client',
         active: true,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       };
 
       mockCreateClientAction.mockResolvedValue({ success: true, data: mockClient });

@@ -10,8 +10,8 @@ vi.mock('@/hooks/use-entry-data', () => ({
 }));
 
 const mockClients = [
-  { id: 'client-1', name: 'Client A', active: true, created_at: '', updated_at: '' },
-  { id: 'client-2', name: 'Client B', active: true, created_at: '', updated_at: '' },
+  { id: 'client-1', name: 'Client A', active: true, created_at: '' },
+  { id: 'client-2', name: 'Client B', active: true, created_at: '' },
 ];
 
 describe('ClientSelector', () => {
@@ -27,7 +27,7 @@ describe('ClientSelector', () => {
       isLoading: true,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useClients>);
+    } as unknown as ReturnType<typeof useEntryData.useClients>);
 
     render(<ClientSelector value="" onChange={mockOnChange} />);
 
@@ -75,7 +75,7 @@ describe('ClientSelector', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useClients>);
+    } as unknown as ReturnType<typeof useEntryData.useClients>);
 
     render(<ClientSelector value="" onChange={mockOnChange} />);
 
@@ -89,7 +89,7 @@ describe('ClientSelector', () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useEntryData.useClients>);
+    } as unknown as ReturnType<typeof useEntryData.useClients>);
 
     render(<ClientSelector value="client-1" onChange={mockOnChange} />);
 

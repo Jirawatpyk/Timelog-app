@@ -731,7 +731,9 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 | HIGH-3: Missing created/updated timestamps | HIGH | Added timestamps section to EntryDetailsSheet |
 | MEDIUM-3: No try-catch in delete handler | MEDIUM | Wrapped delete in try-catch-finally |
 | MEDIUM-1: Incomplete delete tests | MEDIUM | Added success/error toast tests |
+| MEDIUM-2: Hardcoded 8-hour target | MEDIUM | Created `src/constants/business.ts` with `WORK_HOURS_TARGET` |
 | LOW-1: Missing aria-label | LOW | Added descriptive aria-label to EntryCard |
+| LOW-2: Skeleton mismatch | LOW | Updated EntryCardSkeleton to match EntryCard layout |
 
 **Additional files modified during code review:**
 - `src/components/entry/EntryDetailsSheet.tsx` - Added timestamps display (AC5)
@@ -739,3 +741,6 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 - `src/components/dashboard/EntryList.tsx` - Added try-catch error handling
 - `src/components/dashboard/EntryList.test.tsx` - Added 2 more delete flow tests
 - `src/components/dashboard/EntryCard.test.tsx` - Added aria-label test
+- `src/constants/business.ts` - Created with WORK_HOURS_TARGET constant
+- `src/components/dashboard/StatsCard.tsx` - Import from constants/business
+- `src/components/dashboard/EntryListSkeleton.tsx` - Updated to match EntryCard layout

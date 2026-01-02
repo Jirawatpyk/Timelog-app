@@ -23,7 +23,6 @@ import { EditJobDialog } from '@/components/admin/EditJobDialog';
 import { DeactivateConfirmDialog } from '@/components/admin/DeactivateConfirmDialog';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Button as _Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -35,7 +34,7 @@ import { toggleJobActive, checkJobUsage } from '@/actions/master-data';
 import type { JobWithProject, Client, ProjectWithClient } from '@/types/domain';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Briefcase, Plus as _Plus } from 'lucide-react';
+import { Briefcase } from 'lucide-react';
 
 interface JobsListClientProps {
   initialJobs: JobWithProject[];

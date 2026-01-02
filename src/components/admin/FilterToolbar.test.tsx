@@ -36,7 +36,6 @@ describe('FilterToolbar', () => {
   });
 
   it('renders search input and updates on type', async () => {
-    const _user = userEvent.setup();
     const onSearchChange = vi.fn();
 
     render(<FilterToolbar {...defaultProps} onSearchChange={onSearchChange} />);

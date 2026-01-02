@@ -87,18 +87,20 @@ export function EntryDetailsSheet({
             )}
 
             {/* Timestamps - AC5 */}
-            <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
-              <div className="flex justify-between">
-                <span>Created</span>
-                <span>{formatTimestamp(entry.created_at)}</span>
-              </div>
-              {entry.updated_at !== entry.created_at && (
+            {entry.created_at && (
+              <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
                 <div className="flex justify-between">
-                  <span>Updated</span>
-                  <span>{formatTimestamp(entry.updated_at)}</span>
+                  <span>Created</span>
+                  <span>{formatTimestamp(entry.created_at)}</span>
                 </div>
-              )}
-            </div>
+                {entry.updated_at && entry.updated_at !== entry.created_at && (
+                  <div className="flex justify-between">
+                    <span>Updated</span>
+                    <span>{formatTimestamp(entry.updated_at)}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Edit restriction warning */}

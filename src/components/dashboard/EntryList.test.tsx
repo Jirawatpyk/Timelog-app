@@ -33,10 +33,13 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock deleteTimeEntry action
-const mockDeleteTimeEntry = vi.fn(() => Promise.resolve({ success: true, data: undefined }));
 vi.mock('@/actions/entry', () => ({
-  deleteTimeEntry: mockDeleteTimeEntry,
+  deleteTimeEntry: vi.fn(() => Promise.resolve({ success: true, data: undefined })),
 }));
+
+// Get reference to mock for assertions
+import { deleteTimeEntry } from '@/actions/entry';
+const mockDeleteTimeEntry = vi.mocked(deleteTimeEntry);
 
 const mockEntry: TimeEntryWithDetails = {
   id: 'entry-1',
@@ -197,11 +200,13 @@ describe('EntryList', () => {
       });
       await user.click(screen.getByRole('button', { name: /delete/i }));
 
-      // Confirm delete
+      // Confirm delete - button in AlertDialog says "Delete"
       await waitFor(() => {
         expect(screen.getByText('Delete this entry?')).toBeInTheDocument();
       });
-      await user.click(screen.getByRole('button', { name: /confirm/i }));
+      // Get all delete buttons, the confirm one is in the AlertDialog footer
+      const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
+      await user.click(deleteButtons[deleteButtons.length - 1]); // Click the confirm button
 
       await waitFor(() => {
         expect(mockDeleteTimeEntry).toHaveBeenCalledWith('entry-1');
@@ -228,7 +233,8 @@ describe('EntryList', () => {
       await waitFor(() => {
         expect(screen.getByText('Delete this entry?')).toBeInTheDocument();
       });
-      await user.click(screen.getByRole('button', { name: /confirm/i }));
+      const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
+      await user.click(deleteButtons[deleteButtons.length - 1]);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Delete failed');

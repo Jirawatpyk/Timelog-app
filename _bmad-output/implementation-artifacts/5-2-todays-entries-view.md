@@ -1,6 +1,6 @@
 # Story 5.2: Today's Entries View
 
-Status: review
+Status: done
 
 ## Story
 
@@ -721,5 +721,21 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 **Modified:**
 - `src/components/dashboard/StatsCard.tsx` - Added progress bar and under-target indicator
 - `src/components/dashboard/EntryList.tsx` - Converted to client component with sheet integration
-- `src/components/dashboard/EntryList.test.tsx` - 9 tests for enhanced functionality
+- `src/components/dashboard/EntryList.test.tsx` - 11 tests for enhanced functionality
 - `src/components/dashboard/index.ts` - Added exports for new components
+
+### Code Review Fixes
+
+| Issue | Severity | Fix Applied |
+|-------|----------|-------------|
+| HIGH-3: Missing created/updated timestamps | HIGH | Added timestamps section to EntryDetailsSheet |
+| MEDIUM-3: No try-catch in delete handler | MEDIUM | Wrapped delete in try-catch-finally |
+| MEDIUM-1: Incomplete delete tests | MEDIUM | Added success/error toast tests |
+| LOW-1: Missing aria-label | LOW | Added descriptive aria-label to EntryCard |
+
+**Additional files modified during code review:**
+- `src/components/entry/EntryDetailsSheet.tsx` - Added timestamps display (AC5)
+- `src/components/dashboard/EntryCard.tsx` - Added aria-label for accessibility
+- `src/components/dashboard/EntryList.tsx` - Added try-catch error handling
+- `src/components/dashboard/EntryList.test.tsx` - Added 2 more delete flow tests
+- `src/components/dashboard/EntryCard.test.tsx` - Added aria-label test

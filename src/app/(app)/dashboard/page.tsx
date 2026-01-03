@@ -15,6 +15,7 @@ import { DashboardWrapper } from '@/components/dashboard/DashboardWrapper';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FilterChip } from '@/components/dashboard/FilterChip';
+import { ErrorToast } from '@/components/shared/error-toast';
 import { getPeriodFromSearchParams } from '@/lib/dashboard/period-utils';
 import { getFilterFromSearchParams } from '@/lib/dashboard/filter-utils';
 import { getUserClients } from '@/lib/queries/get-user-entries';
@@ -33,6 +34,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <div className="flex flex-col gap-4">
+      <ErrorToast />
       <DashboardHeader />
 
       <DashboardWrapper

@@ -6,11 +6,34 @@
  *
  * Story 5.7: Added search filtering across multiple fields.
  * Story 5.8: Added first-time user detection.
+ * Epic 5 Action Item #3: Added performance monitoring (dev mode only).
  */
 
 import { createClient } from '@/lib/supabase/server';
 import type { DateRange, DashboardStats, FilterState, ClientOption } from '@/types/dashboard';
 import type { TimeEntryWithDetails } from '@/types/domain';
+
+/**
+ * Performance monitoring utility for dashboard queries.
+ * Logs query timing in development mode only.
+ *
+ * Target: <200ms p95 per NFR-P6 (API Response Time)
+ * Check server logs for timing data to identify slow queries.
+ *
+ * TODO: Replace with proper observability tool (Datadog/Sentry) for production monitoring.
+ */
+const perfLog = {
+  start: (label: string) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.time(label);
+    }
+  },
+  end: (label: string) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.timeEnd(label);
+    }
+  },
+};
 
 /**
  * Fetch user's time entries for a date range
@@ -23,6 +46,9 @@ export async function getUserEntries(
   dateRange: DateRange,
   filter?: FilterState
 ): Promise<TimeEntryWithDetails[]> {
+  const perfLabel = `getUserEntries${filter?.clientId ? ':filter' : ''}${filter?.searchQuery ? ':search' : ''}`;
+  perfLog.start(perfLabel);
+
   const supabase = await createClient();
 
   const {
@@ -75,6 +101,7 @@ export async function getUserEntries(
     entries = filterEntriesBySearch(entries, filter.searchQuery);
   }
 
+  perfLog.end(perfLabel);
   return entries;
 }
 
@@ -126,6 +153,9 @@ export async function getDashboardStats(
   period?: 'today' | 'week' | 'month',
   filter?: FilterState
 ): Promise<DashboardStats> {
+  const perfLabel = `getDashboardStats:${period || 'all'}${filter?.clientId ? ':filter' : ''}${filter?.searchQuery ? ':search' : ''}`;
+  perfLog.start(perfLabel);
+
   const supabase = await createClient();
 
   const {
@@ -265,7 +295,7 @@ export async function getDashboardStats(
     }
   }
 
-  return {
+  const stats = {
     totalHours,
     entryCount: entries.length,
     topClient,
@@ -274,6 +304,9 @@ export async function getDashboardStats(
     weeksInMonth,
     averagePerWeek,
   };
+
+  perfLog.end(perfLabel);
+  return stats;
 }
 
 /**
@@ -284,6 +317,8 @@ export async function getDashboardStats(
  * Falls back to JS deduplication if RPC not available.
  */
 export async function getUserClients(): Promise<ClientOption[]> {
+  perfLog.start('getUserClients');
+
   const supabase = await createClient();
 
   const {
@@ -336,9 +371,12 @@ export async function getUserClients(): Promise<ClientOption[]> {
   }
 
   // Convert to array and sort alphabetically
-  return Array.from(clientMap.entries())
+  const clients = Array.from(clientMap.entries())
     .map(([id, name]) => ({ id, name }))
     .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+
+  perfLog.end('getUserClients');
+  return clients;
 }
 
 /**
@@ -347,6 +385,8 @@ export async function getUserClients(): Promise<ClientOption[]> {
  * Used to show a welcoming empty state for new users.
  */
 export async function checkIsFirstTimeUser(): Promise<boolean> {
+  perfLog.start('checkIsFirstTimeUser');
+
   const supabase = await createClient();
 
   const {
@@ -365,8 +405,11 @@ export async function checkIsFirstTimeUser(): Promise<boolean> {
 
   if (error) {
     // On error, assume not first-time to avoid showing wrong state
+    perfLog.end('checkIsFirstTimeUser');
     return false;
   }
 
-  return count === 0;
+  const isFirstTime = count === 0;
+  perfLog.end('checkIsFirstTimeUser');
+  return isFirstTime;
 }

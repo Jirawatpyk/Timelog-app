@@ -220,7 +220,7 @@ describe('LoggedMemberCard', () => {
     });
 
     it('renders department badge with correct styling', () => {
-      const { container } = render(
+      render(
         <LoggedMemberCard
           member={{ ...baseMember, totalHours: 5.0, entryCount: 2 }}
           showDepartmentName={true}

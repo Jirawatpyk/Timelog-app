@@ -233,7 +233,6 @@ describe('getTeamMembers', () => {
 describe('getTeamMembersWithTodayStats', () => {
   const mockSelect = vi.fn();
   const mockIn = vi.fn();
-  const mockEq = vi.fn();
   const mockFrom = vi.fn();
 
   beforeEach(() => {
@@ -288,7 +287,7 @@ describe('getTeamMembersWithTodayStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -367,7 +366,7 @@ describe('getTeamMembersWithTodayStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -423,7 +422,7 @@ describe('getTeamMembersWithTodayStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -486,7 +485,7 @@ describe('getTeamMembersWithTodayStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -504,11 +503,6 @@ describe('getTeamMembersWithTodayStats', () => {
 import { getTeamStats, getWeeklyBreakdown } from './team';
 
 describe('getTeamStats', () => {
-  const mockSelect = vi.fn();
-  const mockIn = vi.fn();
-  const mockEq = vi.fn();
-  const mockGte = vi.fn();
-  const mockLte = vi.fn();
   const mockFrom = vi.fn();
 
   beforeEach(() => {
@@ -551,7 +545,7 @@ describe('getTeamStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -594,7 +588,7 @@ describe('getTeamStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -629,7 +623,7 @@ describe('getTeamStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -691,7 +685,7 @@ describe('getTeamStats', () => {
         const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
         return { select: entriesSelect };
       }
-      return { select: mockSelect };
+      return { select: vi.fn() };
     });
 
     vi.mocked(createClient).mockResolvedValue({
@@ -710,10 +704,6 @@ describe('getTeamStats', () => {
 });
 
 describe('getWeeklyBreakdown', () => {
-  const mockSelect = vi.fn();
-  const mockIn = vi.fn();
-  const mockGte = vi.fn();
-  const mockLte = vi.fn();
   const mockFrom = vi.fn();
 
   beforeEach(() => {

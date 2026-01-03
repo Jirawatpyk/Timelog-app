@@ -14,7 +14,6 @@ import {
   createServiceClient,
   createAuthUser,
   deleteAuthUser,
-  createUserClient,
 } from '../../helpers/supabase-test';
 import { testUsers, testDepartments } from '../../helpers/test-users';
 import { groupEntriesByWeek } from '@/lib/dashboard/group-entries';
@@ -95,8 +94,7 @@ function generateMonthlyEntries(
 
 describe('Monthly Entries View (Story 5.4)', () => {
   const serviceClient = createServiceClient();
-  const testEntries: ReturnType<typeof generateMonthlyEntries> = [];
-  let createdEntryIds: string[] = [];
+  const createdEntryIds: string[] = [];
 
   beforeAll(async () => {
     // Create departments

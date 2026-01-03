@@ -62,7 +62,7 @@ describe('LoggedMembersList', () => {
     });
 
     it('centers empty state content', () => {
-      const { container } = render(<LoggedMembersList members={[]} />);
+      render(<LoggedMembersList members={[]} />);
       const emptyDiv = screen.getByText('No one logged today').closest('div');
       expect(emptyDiv?.className).toContain('items-center');
       expect(emptyDiv?.className).toContain('text-center');

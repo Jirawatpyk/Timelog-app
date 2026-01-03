@@ -29,23 +29,102 @@ interface MasterDataPageProps {
   searchParams: Promise<{ tab?: string }>;
 }
 
+/**
+ * Table Skeleton Components
+ * Matches actual FilterToolbar layouts for each tab type
+ *
+ * Mobile: Search (flex-1) + Filter button (icon) + Add button (icon)
+ * Desktop: Search (w-64) + inline filters + Add button
+ *
+ * Filter widths based on actual components:
+ * - Client filter: w-[180px]
+ * - Project filter: w-[180px]
+ * - Status filter: w-[140px]
+ */
+
+// Base table rows skeleton (shared by all variants)
+function TableRowsSkeleton() {
+  return (
+    <div className="border rounded-md">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex items-center gap-4 p-4 border-b last:border-b-0">
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 w-20 hidden sm:block" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Clients, Services, Tasks: 1 filter (Status only)
 function TableSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Skeleton className="h-10 w-full sm:w-64" />
-        <Skeleton className="h-10 w-full sm:w-32" />
-        <Skeleton className="h-10 w-full sm:w-24 sm:ml-auto" />
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 sm:gap-4 sm:justify-between">
+        {/* Mobile: Search + Filter button + Add button */}
+        <div className="flex items-center gap-2 flex-1 sm:flex-none">
+          <Skeleton className="h-10 flex-1 sm:w-64 sm:flex-none" />
+          <Skeleton className="h-10 w-10 sm:hidden" /> {/* Filter button (mobile) */}
+          <Skeleton className="h-9 w-9 sm:hidden" /> {/* Add button (mobile) */}
+        </div>
+        {/* Desktop: Status filter + Add button */}
+        <div className="hidden sm:flex sm:items-center sm:gap-2">
+          <Skeleton className="h-10 w-[140px]" /> {/* Status filter */}
+          <Skeleton className="h-9 w-[100px]" /> {/* Add button */}
+        </div>
       </div>
-      <div className="border rounded-md">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex items-center gap-4 p-4 border-b last:border-b-0">
-            <Skeleton className="h-5 flex-1" />
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-8 w-24" />
-          </div>
-        ))}
+      <TableRowsSkeleton />
+    </div>
+  );
+}
+
+// Projects: 2 filters (Client + Status)
+function ProjectsTableSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 sm:gap-4 sm:justify-between">
+        {/* Mobile: Search + Filter button + Add button */}
+        <div className="flex items-center gap-2 flex-1 sm:flex-none">
+          <Skeleton className="h-10 flex-1 sm:w-64 sm:flex-none" />
+          <Skeleton className="h-10 w-10 sm:hidden" /> {/* Filter button (mobile) */}
+          <Skeleton className="h-9 w-9 sm:hidden" /> {/* Add button (mobile) */}
+        </div>
+        {/* Desktop: Client filter + Status filter + Add button */}
+        <div className="hidden sm:flex sm:items-center sm:gap-2">
+          <Skeleton className="h-10 w-[180px]" /> {/* Client filter */}
+          <Skeleton className="h-10 w-[140px]" /> {/* Status filter */}
+          <Skeleton className="h-9 w-[120px]" /> {/* Add button */}
+        </div>
       </div>
+      <TableRowsSkeleton />
+    </div>
+  );
+}
+
+// Jobs: 3 filters (Client + Project + Status)
+function JobsTableSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 sm:gap-4 sm:justify-between">
+        {/* Mobile: Search + Filter button + Add button */}
+        <div className="flex items-center gap-2 flex-1 sm:flex-none">
+          <Skeleton className="h-10 flex-1 sm:w-64 sm:flex-none" />
+          <Skeleton className="h-10 w-10 sm:hidden" /> {/* Filter button (mobile) */}
+          <Skeleton className="h-9 w-9 sm:hidden" /> {/* Add button (mobile) */}
+        </div>
+        {/* Desktop: Client + Project + Status filters + Add button */}
+        <div className="hidden sm:flex sm:items-center sm:gap-2">
+          <Skeleton className="h-10 w-[180px]" /> {/* Client filter */}
+          <Skeleton className="h-10 w-[180px]" /> {/* Project filter */}
+          <Skeleton className="h-10 w-[140px]" /> {/* Status filter */}
+          <Skeleton className="h-9 w-[100px]" /> {/* Add button */}
+        </div>
+      </div>
+      <TableRowsSkeleton />
     </div>
   );
 }
@@ -102,13 +181,13 @@ export default async function MasterDataPage({ searchParams }: MasterDataPagePro
         </TabsContent>
 
         <TabsContent value="projects" className="mt-0">
-          <Suspense fallback={<TableSkeleton />}>
+          <Suspense fallback={<ProjectsTableSkeleton />}>
             <ProjectsList />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="jobs" className="mt-0">
-          <Suspense fallback={<TableSkeleton />}>
+          <Suspense fallback={<JobsTableSkeleton />}>
             <JobsList />
           </Suspense>
         </TabsContent>

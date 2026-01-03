@@ -13,7 +13,7 @@
 
 import { useState, useMemo } from 'react';
 import { DataTable, type Column } from '@/components/admin/DataTable';
-import { SearchInput } from '@/components/admin/SearchInput';
+import { FilterToolbar, FilterField, type FilterConfig } from '@/components/admin/FilterToolbar';
 import { StatusFilter, type StatusFilterValue } from '@/components/admin/StatusFilter';
 import { EmptyState } from '@/components/admin/EmptyState';
 import { AddClientDialog } from '@/components/admin/AddClientDialog';
@@ -119,6 +119,52 @@ export function ClientsListClient({ initialClients }: ClientsListClientProps) {
     setAddDialogOpen(false);
   };
 
+  // Get display value for filter chips
+  const getStatusDisplayValue = () => {
+    if (statusFilter === 'all') return '';
+    return statusFilter === 'active' ? 'Active' : 'Inactive';
+  };
+
+  // Filter configuration for FilterToolbar
+  const filterConfigs: FilterConfig[] = [
+    {
+      key: 'status',
+      label: 'Status',
+      value: statusFilter,
+      displayValue: getStatusDisplayValue(),
+    },
+  ];
+
+  const handleFilterRemove = (key: string) => {
+    if (key === 'status') {
+      setStatusFilter('all');
+    }
+  };
+
+  const handleFiltersClear = () => {
+    setStatusFilter('all');
+  };
+
+  // Desktop filter controls
+  const desktopFilters = (
+    <StatusFilter
+      value={statusFilter}
+      onChange={setStatusFilter}
+      className="w-[140px]"
+    />
+  );
+
+  // Mobile filter controls (in sheet)
+  const mobileFilters = (
+    <FilterField label="Status">
+      <StatusFilter
+        value={statusFilter}
+        onChange={setStatusFilter}
+        className="w-full"
+      />
+    </FilterField>
+  );
+
   const columns: Column<Client>[] = [
     {
       key: 'name',
@@ -191,27 +237,21 @@ export function ClientsListClient({ initialClients }: ClientsListClientProps) {
 
   return (
     <div className="space-y-4" data-testid="clients-list">
-      {/* Toolbar - Mobile: Search on top, Filter+Add below | Desktop: all in one row */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search clients..."
-          className="w-full sm:flex-1 sm:max-w-xs"
-        />
-        <div className="flex gap-2 justify-between sm:justify-end">
-          <StatusFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-            className="flex-1 sm:flex-none sm:w-[140px]"
-          />
+      <FilterToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search clients..."
+        filters={filterConfigs}
+        onFilterRemove={handleFilterRemove}
+        onFiltersClear={handleFiltersClear}
+        desktopFilters={desktopFilters}
+        mobileFilters={mobileFilters}
+        addButtonSlot={
           <AddClientDialog
-            open={addDialogOpen}
-            onOpenChange={setAddDialogOpen}
             onClientCreated={handleClientCreated}
           />
-        </div>
-      </div>
+        }
+      />
 
       {filteredClients.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">

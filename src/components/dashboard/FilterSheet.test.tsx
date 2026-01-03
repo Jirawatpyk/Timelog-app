@@ -110,7 +110,7 @@ describe('FilterSheet', () => {
     await user.click(screen.getByRole('option', { name: 'Beta Inc' }));
 
     // Click Apply
-    await user.click(screen.getByRole('button', { name: 'Apply Filter' }));
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
 
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('client=client-2'));
     expect(handleClose).toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe('FilterSheet', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Apply Filter' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
   });
 

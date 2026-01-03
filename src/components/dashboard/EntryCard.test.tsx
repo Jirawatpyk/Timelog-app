@@ -91,11 +91,11 @@ describe('EntryCard', () => {
     expect(screen.queryByText(/Frontend/)).not.toBeInTheDocument();
   });
 
-  it('renders duration in Thai format', () => {
+  it('renders duration in short format', () => {
     render(<EntryCard entry={mockEntry} onTap={vi.fn()} />);
 
-    // 90 minutes = 1.5 hours = "1.5 ชม."
-    expect(screen.getByText('1.5 ชม.')).toBeInTheDocument();
+    // 90 minutes = 1.5 hours = "1.5 hrs"
+    expect(screen.getByText('1.5 hrs')).toBeInTheDocument();
   });
 
   it('renders entry date', () => {

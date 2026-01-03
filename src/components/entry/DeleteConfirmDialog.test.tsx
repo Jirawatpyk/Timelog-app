@@ -78,8 +78,8 @@ describe('DeleteConfirmDialog', () => {
 
     // Check for client name
     expect(screen.getByText('Acme Corp')).toBeInTheDocument();
-    // Check for duration (120 minutes = 2 ชม.)
-    expect(screen.getByText('2 ชม.')).toBeInTheDocument();
+    // Check for duration (120 minutes = 2 hrs)
+    expect(screen.getByText('2 hrs')).toBeInTheDocument();
     // Check for labels
     expect(screen.getByText('Date')).toBeInTheDocument();
     expect(screen.getByText('Duration')).toBeInTheDocument();

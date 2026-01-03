@@ -50,43 +50,43 @@ describe('minutesToHours', () => {
 describe('formatDuration', () => {
   describe('short format', () => {
     it('formats whole hours', () => {
-      expect(formatDuration(60, 'short')).toBe('1 ชม.');
-      expect(formatDuration(120, 'short')).toBe('2 ชม.');
-      expect(formatDuration(480, 'short')).toBe('8 ชม.');
+      expect(formatDuration(60, 'short')).toBe('1 hrs');
+      expect(formatDuration(120, 'short')).toBe('2 hrs');
+      expect(formatDuration(480, 'short')).toBe('8 hrs');
     });
 
     it('formats decimal hours', () => {
-      expect(formatDuration(30, 'short')).toBe('0.5 ชม.');
-      expect(formatDuration(90, 'short')).toBe('1.5 ชม.');
-      expect(formatDuration(135, 'short')).toBe('2.25 ชม.');
+      expect(formatDuration(30, 'short')).toBe('0.5 hrs');
+      expect(formatDuration(90, 'short')).toBe('1.5 hrs');
+      expect(formatDuration(135, 'short')).toBe('2.25 hrs');
     });
 
     it('defaults to short format', () => {
-      expect(formatDuration(60)).toBe('1 ชม.');
+      expect(formatDuration(60)).toBe('1 hrs');
     });
   });
 
   describe('long format', () => {
     it('formats whole hours', () => {
-      expect(formatDuration(60, 'long')).toBe('1 ชม.');
-      expect(formatDuration(120, 'long')).toBe('2 ชม.');
-      expect(formatDuration(480, 'long')).toBe('8 ชม.');
+      expect(formatDuration(60, 'long')).toBe('1 hrs');
+      expect(formatDuration(120, 'long')).toBe('2 hrs');
+      expect(formatDuration(480, 'long')).toBe('8 hrs');
     });
 
     it('formats minutes only', () => {
-      expect(formatDuration(30, 'long')).toBe('30 นาที');
-      expect(formatDuration(15, 'long')).toBe('15 นาที');
-      expect(formatDuration(45, 'long')).toBe('45 นาที');
+      expect(formatDuration(30, 'long')).toBe('30 mins');
+      expect(formatDuration(15, 'long')).toBe('15 mins');
+      expect(formatDuration(45, 'long')).toBe('45 mins');
     });
 
     it('formats hours and minutes', () => {
-      expect(formatDuration(90, 'long')).toBe('1 ชม. 30 นาที');
-      expect(formatDuration(135, 'long')).toBe('2 ชม. 15 นาที');
-      expect(formatDuration(75, 'long')).toBe('1 ชม. 15 นาที');
+      expect(formatDuration(90, 'long')).toBe('1 hrs 30 mins');
+      expect(formatDuration(135, 'long')).toBe('2 hrs 15 mins');
+      expect(formatDuration(75, 'long')).toBe('1 hrs 15 mins');
     });
 
     it('handles zero', () => {
-      expect(formatDuration(0, 'long')).toBe('0 นาที');
+      expect(formatDuration(0, 'long')).toBe('0 mins');
     });
   });
 });

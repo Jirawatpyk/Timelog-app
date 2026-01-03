@@ -25,7 +25,7 @@ export function minutesToHours(minutes: number): number {
  * Format duration for display
  * @param minutes - duration in minutes
  * @param format - 'short' | 'long'
- * @returns formatted string in Thai
+ * @returns formatted string in English
  */
 export function formatDuration(
   minutes: number,
@@ -35,18 +35,18 @@ export function formatDuration(
   const mins = minutes % 60;
 
   if (format === 'short') {
-    // "1.5 ชม."
-    return `${minutesToHours(minutes)} ชม.`;
+    // "1.5 hrs"
+    return `${minutesToHours(minutes)} hrs`;
   }
 
-  // Long format: "1 ชม. 30 นาที"
+  // Long format: "1 hrs 30 mins"
   if (hours === 0) {
-    return `${mins} นาที`;
+    return `${mins} mins`;
   }
   if (mins === 0) {
-    return `${hours} ชม.`;
+    return `${hours} hrs`;
   }
-  return `${hours} ชม. ${mins} นาที`;
+  return `${hours} hrs ${mins} mins`;
 }
 
 /**

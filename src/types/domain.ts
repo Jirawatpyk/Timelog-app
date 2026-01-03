@@ -132,3 +132,21 @@ export interface RecentCombination {
   service: { id: string; name: string };
   task: { id: string; name: string } | null;
 }
+
+// ============================================
+// DEPARTMENT FILTER TYPES (Story 6.5)
+// ============================================
+
+/**
+ * Department option for filter dropdown
+ */
+export interface DepartmentOption {
+  id: string;
+  name: string;
+}
+
+/**
+ * Department filter for URL params
+ * 'all' means show all departments, otherwise specific department ID
+ */
+export type DepartmentFilter = 'all' | string;

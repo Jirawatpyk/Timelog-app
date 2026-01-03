@@ -1,16 +1,21 @@
 // src/lib/queries/team.ts
 import { createClient } from '@/lib/supabase/server';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, isToday } from 'date-fns';
 import type {
   ManagerDepartment,
   TeamMember,
   TeamMemberWithStats,
   TeamMembersGrouped,
+  TeamStats,
+  DailyBreakdown,
+  TeamStatsPeriod,
 } from '@/types/team';
+import type { ActionResult, DepartmentOption } from '@/types/domain';
 
 export async function getManagerDepartments(
   userId: string,
   isAdmin: boolean
-): Promise<ManagerDepartment[]> {
+): Promise<ActionResult<DepartmentOption[]>> {
   const supabase = await createClient();
 
   if (isAdmin) {
@@ -21,8 +26,11 @@ export async function getManagerDepartments(
       .eq('active', true)
       .order('name');
 
-    if (error) throw error;
-    return data || [];
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data || [] };
   }
 
   // Manager sees only assigned departments
@@ -35,8 +43,11 @@ export async function getManagerDepartments(
     )
     .eq('manager_id', userId);
 
-  if (error) throw error;
+  if (error) {
+    return { success: false, error: error.message };
+  }
 
+  // Type assertion needed because Supabase infers join as array
   type DepartmentRow = {
     department: {
       id: string;
@@ -44,10 +55,12 @@ export async function getManagerDepartments(
     };
   };
 
-  return (data || []).map((row: DepartmentRow) => ({
+  const departments = ((data || []) as unknown as DepartmentRow[]).map((row) => ({
     id: row.department.id,
     name: row.department.name,
   }));
+
+  return { success: true, data: departments };
 }
 
 export async function getTeamMembers(
@@ -76,6 +89,7 @@ export async function getTeamMembers(
 
   if (error) throw error;
 
+  // Type assertion needed because Supabase infers join as array
   type UserRow = {
     id: string;
     email: string;
@@ -87,10 +101,12 @@ export async function getTeamMembers(
     } | null;
   };
 
+  const users = (data || []) as unknown as UserRow[];
+
   // Filter and map (skip any without department_id for data integrity)
-  return (data || [])
-    .filter((user: UserRow) => user.department_id && user.department)
-    .map((user: UserRow) => ({
+  return users
+    .filter((user) => user.department_id && user.department)
+    .map((user) => ({
       id: user.id,
       email: user.email,
       displayName: user.display_name || user.email.split('@')[0],
@@ -153,6 +169,7 @@ export async function getTeamMembersWithTodayStats(
   const logged: TeamMemberWithStats[] = [];
   const notLogged: TeamMemberWithStats[] = [];
 
+  // Type assertion needed because Supabase infers join as array
   type UserRow = {
     id: string;
     email: string;
@@ -164,10 +181,12 @@ export async function getTeamMembersWithTodayStats(
     } | null;
   };
 
+  const membersList = (members || []) as unknown as UserRow[];
+
   // Filter and map members (skip any without department_id for data integrity)
-  (members || [])
-    .filter((member: UserRow) => member.department_id && member.department)
-    .forEach((member: UserRow) => {
+  membersList
+    .filter((member) => member.department_id && member.department)
+    .forEach((member) => {
       const stats = statsMap.get(member.id);
       const totalHours = stats ? stats.totalMinutes / 60 : 0;
       const entryCount = stats?.count || 0;
@@ -199,4 +218,166 @@ export async function getTeamMembersWithTodayStats(
   notLogged.sort((a, b) => a.displayName.localeCompare(b.displayName, 'th'));
 
   return { logged, notLogged };
+}
+
+// ============================================
+// STORY 6.4: Team Stats Functions
+// ============================================
+
+/**
+ * Get aggregated team statistics for a given period
+ */
+export async function getTeamStats(
+  period: TeamStatsPeriod,
+  departmentIds: string[]
+): Promise<ActionResult<TeamStats>> {
+  // Return empty stats if no departments
+  if (departmentIds.length === 0) {
+    return {
+      success: true,
+      data: {
+        totalHours: 0,
+        memberCount: 0,
+        loggedCount: 0,
+        averageHours: 0,
+      },
+    };
+  }
+
+  const supabase = await createClient();
+  const today = new Date();
+
+  // Get all team members in departments
+  const { data: members, error: membersError } = await supabase
+    .from('users')
+    .select('id')
+    .in('department_id', departmentIds);
+
+  if (membersError) {
+    return { success: false, error: membersError.message };
+  }
+
+  const memberIds = (members || []).map((m) => m.id);
+  const memberCount = memberIds.length;
+
+  if (memberCount === 0) {
+    return {
+      success: true,
+      data: {
+        totalHours: 0,
+        memberCount: 0,
+        loggedCount: 0,
+        averageHours: 0,
+      },
+    };
+  }
+
+  // Build date filter based on period
+  let entriesQuery = supabase
+    .from('time_entries')
+    .select('user_id, duration_minutes')
+    .in('user_id', memberIds);
+
+  if (period === 'today') {
+    const todayStr = format(today, 'yyyy-MM-dd');
+    entriesQuery = entriesQuery.eq('entry_date', todayStr);
+  } else {
+    // Week period - Monday to Sunday
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    entriesQuery = entriesQuery
+      .gte('entry_date', format(weekStart, 'yyyy-MM-dd'))
+      .lte('entry_date', format(weekEnd, 'yyyy-MM-dd'));
+  }
+
+  const { data: entries, error: entriesError } = await entriesQuery;
+
+  if (entriesError) {
+    return { success: false, error: entriesError.message };
+  }
+
+  // Calculate stats
+  let totalMinutes = 0;
+  const loggedUserIds = new Set<string>();
+
+  (entries || []).forEach((entry) => {
+    totalMinutes += entry.duration_minutes;
+    loggedUserIds.add(entry.user_id);
+  });
+
+  const totalHours = totalMinutes / 60;
+  const loggedCount = loggedUserIds.size;
+  const averageHours = loggedCount > 0 ? totalHours / loggedCount : 0;
+
+  return {
+    success: true,
+    data: {
+      totalHours,
+      memberCount,
+      loggedCount,
+      averageHours,
+    },
+  };
+}
+
+/**
+ * Get weekly breakdown of hours by day
+ */
+export async function getWeeklyBreakdown(
+  departmentIds: string[]
+): Promise<ActionResult<DailyBreakdown[]>> {
+  const today = new Date();
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+
+  // Generate all 7 days of the week
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Return empty breakdown if no departments
+  if (departmentIds.length === 0) {
+    return {
+      success: true,
+      data: weekDays.map((day) => ({
+        date: format(day, 'yyyy-MM-dd'),
+        dayOfWeek: format(day, 'EEE'),
+        totalHours: 0,
+        isToday: isToday(day),
+      })),
+    };
+  }
+
+  const supabase = await createClient();
+
+  // Get entries for the week
+  const { data: entries, error } = await supabase
+    .from('time_entries')
+    .select('entry_date, duration_minutes')
+    .in('department_id', departmentIds)
+    .gte('entry_date', format(weekStart, 'yyyy-MM-dd'))
+    .lte('entry_date', format(weekEnd, 'yyyy-MM-dd'));
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  // Aggregate hours by date
+  const hoursByDate = new Map<string, number>();
+  (entries || []).forEach((entry) => {
+    const current = hoursByDate.get(entry.entry_date) || 0;
+    hoursByDate.set(entry.entry_date, current + entry.duration_minutes);
+  });
+
+  // Build breakdown
+  const breakdown: DailyBreakdown[] = weekDays.map((day) => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const totalMinutes = hoursByDate.get(dateStr) || 0;
+    return {
+      date: dateStr,
+      dayOfWeek: format(day, 'EEE'),
+      totalHours: totalMinutes / 60,
+      isToday: isToday(day),
+    };
+  });
+
+  return { success: true, data: breakdown };
 }

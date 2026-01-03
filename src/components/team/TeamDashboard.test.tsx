@@ -1,5 +1,5 @@
 /**
- * Team Dashboard Tests - Story 6.1
+ * Team Dashboard Tests - Stories 6.1, 6.4
  *
  * Tests for TeamDashboard component
  * AC2: Dashboard layout structure
@@ -15,6 +15,17 @@ import type { ManagerDepartment, TeamMembersGrouped } from '@/types/team';
 // Mock date-fns
 vi.mock('date-fns', () => ({
   format: vi.fn(() => 'Friday, January 3, 2026'),
+}));
+
+// Mock next/navigation for TeamPeriodSelector
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: vi.fn(),
+  }),
+  useSearchParams: () => ({
+    toString: () => '',
+  }),
+  usePathname: () => '/team',
 }));
 
 const mockDepartments: ManagerDepartment[] = [
@@ -147,5 +158,32 @@ describe('TeamDashboard', () => {
 
     const layout = container.querySelector('[class*="gap-4"]');
     expect(layout).toBeInTheDocument();
+  });
+
+  it('shows error state when statsError is provided', () => {
+    render(
+      <TeamDashboard
+        departments={mockDepartments}
+        membersGrouped={mockMembersGrouped}
+        statsError="Unable to load stats"
+      />
+    );
+
+    expect(screen.getByText('Unable to load stats')).toBeInTheDocument();
+    // TeamStatsCard should not render when there's an error
+    expect(screen.queryByText('team members')).not.toBeInTheDocument();
+  });
+
+  it('shows TeamStatsCard when no statsError', () => {
+    render(
+      <TeamDashboard
+        departments={mockDepartments}
+        membersGrouped={mockMembersGrouped}
+        statsError={null}
+      />
+    );
+
+    expect(screen.getByText('team members')).toBeInTheDocument();
+    expect(screen.queryByText('Unable to load stats')).not.toBeInTheDocument();
   });
 });

@@ -6,9 +6,13 @@ import type { TeamMemberWithStats } from '@/types/team';
 
 interface LoggedMembersListProps {
   members: TeamMemberWithStats[];
+  showDepartmentName?: boolean;
 }
 
-export function LoggedMembersList({ members }: LoggedMembersListProps) {
+export function LoggedMembersList({
+  members,
+  showDepartmentName = false,
+}: LoggedMembersListProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -30,7 +34,11 @@ export function LoggedMembersList({ members }: LoggedMembersListProps) {
         ) : (
           <div className="space-y-2">
             {members.map((member) => (
-              <LoggedMemberCard key={member.id} member={member} />
+              <LoggedMemberCard
+                key={member.id}
+                member={member}
+                showDepartmentName={showDepartmentName}
+              />
             ))}
           </div>
         )}

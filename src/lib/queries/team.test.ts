@@ -44,7 +44,7 @@ describe('getManagerDepartments', () => {
 
     const result = await getManagerDepartments('user-1', true);
 
-    expect(result).toEqual(mockDepartments);
+    expect(result).toEqual({ success: true, data: mockDepartments });
     expect(mockFrom).toHaveBeenCalledWith('departments');
     expect(mockEq).toHaveBeenCalledWith('active', true);
   });
@@ -72,15 +72,16 @@ describe('getManagerDepartments', () => {
 
     const result = await getManagerDepartments('manager-1', false);
 
-    expect(result).toEqual([
-      { id: 'dept-1', name: 'Engineering' },
-    ]);
+    expect(result).toEqual({
+      success: true,
+      data: [{ id: 'dept-1', name: 'Engineering' }],
+    });
     expect(mockFrom).toHaveBeenCalledWith('manager_departments');
     expect(mockEq).toHaveBeenCalledWith('manager_id', 'manager-1');
   });
 
-  it('throws error when query fails', async () => {
-    const mockError = new Error('Database error');
+  it('returns error when query fails', async () => {
+    const mockError = { message: 'Database error' };
 
     mockOrder.mockResolvedValue({
       data: null,
@@ -94,7 +95,9 @@ describe('getManagerDepartments', () => {
       from: mockFrom,
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
-    await expect(getManagerDepartments('user-1', true)).rejects.toThrow('Database error');
+    const result = await getManagerDepartments('user-1', true);
+
+    expect(result).toEqual({ success: false, error: 'Database error' });
   });
 });
 
@@ -491,5 +494,321 @@ describe('getTeamMembersWithTodayStats', () => {
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     await expect(getTeamMembersWithTodayStats(['dept-1'])).rejects.toThrow('Entries error');
+  });
+});
+
+// ============================================
+// STORY 6.4: Team Stats Tests
+// ============================================
+
+import { getTeamStats, getWeeklyBreakdown } from './team';
+
+describe('getTeamStats', () => {
+  const mockSelect = vi.fn();
+  const mockIn = vi.fn();
+  const mockEq = vi.fn();
+  const mockGte = vi.fn();
+  const mockLte = vi.fn();
+  const mockFrom = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns empty stats when no department IDs provided', async () => {
+    const result = await getTeamStats('today', []);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.totalHours).toBe(0);
+      expect(result.data.memberCount).toBe(0);
+      expect(result.data.loggedCount).toBe(0);
+      expect(result.data.averageHours).toBe(0);
+    }
+  });
+
+  it('calculates correct stats for today period', async () => {
+    const mockMembers = [
+      { id: 'user-1', department_id: 'dept-1' },
+      { id: 'user-2', department_id: 'dept-1' },
+      { id: 'user-3', department_id: 'dept-1' },
+    ];
+
+    const mockEntries = [
+      { user_id: 'user-1', duration_minutes: 120 }, // 2 hours
+      { user_id: 'user-1', duration_minutes: 60 },  // 1 hour (same user)
+      { user_id: 'user-2', duration_minutes: 240 }, // 4 hours
+    ];
+
+    // Mock separate query chains for users and time_entries tables
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'users') {
+        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
+        return { select: usersSelect };
+      } else if (table === 'time_entries') {
+        const entriesEq = vi.fn().mockResolvedValue({ data: mockEntries, error: null });
+        const entriesIn = vi.fn().mockReturnValue({ eq: entriesEq });
+        const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
+        return { select: entriesSelect };
+      }
+      return { select: mockSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getTeamStats('today', ['dept-1']);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.totalHours).toBe(7); // 3 + 4 = 7 hours
+      expect(result.data.memberCount).toBe(3);
+      expect(result.data.loggedCount).toBe(2); // user-1 and user-2
+      expect(result.data.averageHours).toBe(3.5); // 7 / 2 = 3.5
+    }
+  });
+
+  it('calculates correct stats for week period', async () => {
+    const mockMembers = [
+      { id: 'user-1', department_id: 'dept-1' },
+      { id: 'user-2', department_id: 'dept-1' },
+    ];
+
+    const mockEntries = [
+      { user_id: 'user-1', duration_minutes: 480, entry_date: '2026-01-01' }, // 8 hours
+      { user_id: 'user-1', duration_minutes: 480, entry_date: '2026-01-02' }, // 8 hours
+      { user_id: 'user-2', duration_minutes: 240, entry_date: '2026-01-01' }, // 4 hours
+    ];
+
+    // Mock separate query chains for users and time_entries tables
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'users') {
+        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
+        return { select: usersSelect };
+      } else if (table === 'time_entries') {
+        const entriesLte = vi.fn().mockResolvedValue({ data: mockEntries, error: null });
+        const entriesGte = vi.fn().mockReturnValue({ lte: entriesLte });
+        const entriesIn = vi.fn().mockReturnValue({ gte: entriesGte });
+        const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
+        return { select: entriesSelect };
+      }
+      return { select: mockSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getTeamStats('week', ['dept-1']);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.totalHours).toBe(20); // 16 + 4 = 20 hours
+      expect(result.data.memberCount).toBe(2);
+      expect(result.data.loggedCount).toBe(2); // Both logged
+      expect(result.data.averageHours).toBe(10); // 20 / 2 = 10
+    }
+  });
+
+  it('returns average of 0 when no one has logged', async () => {
+    const mockMembers = [
+      { id: 'user-1', department_id: 'dept-1' },
+    ];
+
+    // Mock separate query chains for users and time_entries tables
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'users') {
+        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
+        return { select: usersSelect };
+      } else if (table === 'time_entries') {
+        const entriesEq = vi.fn().mockResolvedValue({ data: [], error: null });
+        const entriesIn = vi.fn().mockReturnValue({ eq: entriesEq });
+        const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
+        return { select: entriesSelect };
+      }
+      return { select: mockSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getTeamStats('today', ['dept-1']);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.totalHours).toBe(0);
+      expect(result.data.loggedCount).toBe(0);
+      expect(result.data.averageHours).toBe(0);
+    }
+  });
+
+  it('handles database errors gracefully', async () => {
+    const mockError = { message: 'Database error' };
+
+    // Mock users query to return error
+    mockFrom.mockImplementation(() => {
+      const usersIn = vi.fn().mockResolvedValue({ data: null, error: mockError });
+      const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
+      return { select: usersSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getTeamStats('today', ['dept-1']);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Database error');
+    }
+  });
+
+  it('aggregates across multiple departments', async () => {
+    const mockMembers = [
+      { id: 'user-1', department_id: 'dept-1' },
+      { id: 'user-2', department_id: 'dept-2' },
+    ];
+
+    const mockEntries = [
+      { user_id: 'user-1', duration_minutes: 120 },
+      { user_id: 'user-2', duration_minutes: 180 },
+    ];
+
+    // Mock separate query chains for users and time_entries tables
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'users') {
+        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
+        return { select: usersSelect };
+      } else if (table === 'time_entries') {
+        const entriesEq = vi.fn().mockResolvedValue({ data: mockEntries, error: null });
+        const entriesIn = vi.fn().mockReturnValue({ eq: entriesEq });
+        const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
+        return { select: entriesSelect };
+      }
+      return { select: mockSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getTeamStats('today', ['dept-1', 'dept-2']);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.totalHours).toBe(5); // 2 + 3 = 5 hours
+      expect(result.data.memberCount).toBe(2);
+      expect(result.data.loggedCount).toBe(2);
+    }
+  });
+});
+
+describe('getWeeklyBreakdown', () => {
+  const mockSelect = vi.fn();
+  const mockIn = vi.fn();
+  const mockGte = vi.fn();
+  const mockLte = vi.fn();
+  const mockFrom = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 7 days with 0 hours when no department IDs provided', async () => {
+    const result = await getWeeklyBreakdown([]);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toHaveLength(7);
+      result.data.forEach(day => {
+        expect(day.totalHours).toBe(0);
+      });
+    }
+  });
+
+  it('returns 7 days with correct breakdown', async () => {
+    const mockEntries = [
+      { entry_date: '2026-01-01', duration_minutes: 480 },
+      { entry_date: '2026-01-01', duration_minutes: 240 }, // Same day
+      { entry_date: '2026-01-02', duration_minutes: 240 },
+    ];
+
+    // Mock time_entries query
+    mockFrom.mockImplementation(() => {
+      const entriesLte = vi.fn().mockResolvedValue({ data: mockEntries, error: null });
+      const entriesGte = vi.fn().mockReturnValue({ lte: entriesLte });
+      const entriesIn = vi.fn().mockReturnValue({ gte: entriesGte });
+      const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
+      return { select: entriesSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getWeeklyBreakdown(['dept-1']);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toHaveLength(7);
+      // Each day should have date, dayOfWeek, totalHours, isToday
+      expect(result.data[0]).toHaveProperty('date');
+      expect(result.data[0]).toHaveProperty('dayOfWeek');
+      expect(result.data[0]).toHaveProperty('totalHours');
+      expect(result.data[0]).toHaveProperty('isToday');
+    }
+  });
+
+  it('marks today correctly', async () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Mock time_entries query with empty data
+    mockFrom.mockImplementation(() => {
+      const entriesLte = vi.fn().mockResolvedValue({ data: [], error: null });
+      const entriesGte = vi.fn().mockReturnValue({ lte: entriesLte });
+      const entriesIn = vi.fn().mockReturnValue({ gte: entriesGte });
+      const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
+      return { select: entriesSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getWeeklyBreakdown(['dept-1']);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      const todayEntry = result.data.find(d => d.date === today);
+      expect(todayEntry?.isToday).toBe(true);
+    }
+  });
+
+  it('handles database errors gracefully', async () => {
+    const mockError = { message: 'Database error' };
+
+    mockFrom.mockImplementation(() => {
+      const entriesLte = vi.fn().mockResolvedValue({ data: null, error: mockError });
+      const entriesGte = vi.fn().mockReturnValue({ lte: entriesLte });
+      const entriesIn = vi.fn().mockReturnValue({ gte: entriesGte });
+      const entriesSelect = vi.fn().mockReturnValue({ in: entriesIn });
+      return { select: entriesSelect };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getWeeklyBreakdown(['dept-1']);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Database error');
+    }
   });
 });

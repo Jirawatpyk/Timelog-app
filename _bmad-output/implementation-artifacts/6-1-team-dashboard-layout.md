@@ -1,6 +1,6 @@
 # Story 6.1: Team Dashboard Layout
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -63,64 +63,64 @@ So that **I can monitor team productivity and compliance**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create Team Dashboard Route** (AC: 1, 4, 5)
-  - [ ] 1.1 Create `src/app/(app)/team/page.tsx`
-  - [ ] 1.2 Create `src/app/(app)/team/layout.tsx` if needed
-  - [ ] 1.3 Add role check for manager/admin/super_admin
-  - [ ] 1.4 Implement redirect for unauthorized users
+- [x] **Task 1: Create Team Dashboard Route** (AC: 1, 4, 5)
+  - [x] 1.1 Create `src/app/(app)/team/page.tsx`
+  - [x] 1.2 Create `src/app/(app)/team/layout.tsx` if needed
+  - [x] 1.3 Add role check for manager/admin/super_admin
+  - [x] 1.4 Implement redirect for unauthorized users
 
-- [ ] **Task 2: Create Authorization Middleware** (AC: 4, 5)
-  - [ ] 2.1 Create `checkManagerAccess()` utility
-  - [ ] 2.2 Query user role from database
-  - [ ] 2.3 Handle redirect with toast message
-  - [ ] 2.4 Allow admin/super_admin access
+- [x] **Task 2: Create Authorization Middleware** (AC: 4, 5)
+  - [x] 2.1 Create `checkManagerAccess()` utility
+  - [x] 2.2 Query user role from database
+  - [x] 2.3 Handle redirect with toast message
+  - [x] 2.4 Allow admin/super_admin access
 
-- [ ] **Task 3: Create Team Dashboard Layout Component** (AC: 2)
-  - [ ] 3.1 Create `src/components/team/TeamDashboard.tsx`
-  - [ ] 3.2 Header with today's date
-  - [ ] 3.3 Stats section placeholder
-  - [ ] 3.4 Team members list section
+- [x] **Task 3: Create Team Dashboard Layout Component** (AC: 2)
+  - [x] 3.1 Create `src/components/team/TeamDashboard.tsx`
+  - [x] 3.2 Header with today's date
+  - [x] 3.3 Stats section placeholder
+  - [x] 3.4 Team members list section
 
-- [ ] **Task 4: Create Team Stats Card** (AC: 2)
-  - [ ] 4.1 Create `src/components/team/TeamStatsCard.tsx`
-  - [ ] 4.2 Display placeholder stats structure
-  - [ ] 4.3 Style consistent with personal dashboard
+- [x] **Task 4: Create Team Stats Card** (AC: 2)
+  - [x] 4.1 Create `src/components/team/TeamStatsCard.tsx`
+  - [x] 4.2 Display placeholder stats structure
+  - [x] 4.3 Style consistent with personal dashboard
 
-- [ ] **Task 5: Create Team Members List Component** (AC: 2, 3)
-  - [ ] 5.1 Create `src/components/team/TeamMembersList.tsx`
-  - [ ] 5.2 Sections: "ลงแล้ว" and "ยังไม่ลง"
-  - [ ] 5.3 Display member name placeholder
+- [x] **Task 5: Create Team Members List Component** (AC: 2, 3)
+  - [x] 5.1 Create `src/components/team/TeamMembersList.tsx`
+  - [x] 5.2 Sections: "ลงแล้ว" and "ยังไม่ลง"
+  - [x] 5.3 Display member name placeholder
 
-- [ ] **Task 6: Query Manager's Departments** (AC: 3)
-  - [ ] 6.1 Create `getManagerDepartments()` query
-  - [ ] 6.2 Use manager_departments junction table
-  - [ ] 6.3 Return department IDs and names
+- [x] **Task 6: Query Manager's Departments** (AC: 3)
+  - [x] 6.1 Create `getManagerDepartments()` query
+  - [x] 6.2 Use manager_departments junction table
+  - [x] 6.3 Return department IDs and names
 
-- [ ] **Task 7: Query Team Members** (AC: 3)
-  - [ ] 7.1 Create `getTeamMembers()` query
-  - [ ] 7.2 Filter by manager's department(s)
-  - [ ] 7.3 Return user list with basic info
+- [x] **Task 7: Query Team Members** (AC: 3)
+  - [x] 7.1 Create `getTeamMembers()` query
+  - [x] 7.2 Filter by manager's department(s)
+  - [x] 7.3 Return user list with basic info
 
-- [ ] **Task 8: Create Loading Skeleton** (AC: 7)
-  - [ ] 8.1 Create `src/components/team/TeamDashboardSkeleton.tsx`
-  - [ ] 8.2 Match layout structure
-  - [ ] 8.3 Animate skeleton elements
+- [x] **Task 8: Create Loading Skeleton** (AC: 7)
+  - [x] 8.1 Create `src/components/team/TeamDashboardSkeleton.tsx`
+  - [x] 8.2 Match layout structure
+  - [x] 8.3 Animate skeleton elements
 
-- [ ] **Task 9: Create Empty Team State** (AC: 8)
-  - [ ] 9.1 Create `src/components/team/EmptyTeamState.tsx`
-  - [ ] 9.2 Appropriate message for no team members
+- [x] **Task 9: Create Empty Team State** (AC: 8)
+  - [x] 9.1 Create `src/components/team/EmptyTeamState.tsx`
+  - [x] 9.2 Appropriate message for no team members
 
-- [ ] **Task 10: Update Bottom Navigation** (AC: 6)
-  - [ ] 10.1 Add Team icon to BottomNav
-  - [ ] 10.2 Show only for manager+ roles
-  - [ ] 10.3 Highlight when on /team route
+- [x] **Task 10: Update Bottom Navigation** (AC: 6)
+  - [x] 10.1 Add Team icon to BottomNav
+  - [x] 10.2 Show only for manager+ roles
+  - [x] 10.3 Highlight when on /team route
 
-- [ ] **Task 11: E2E Tests** (AC: All)
-  - [ ] 11.1 Test manager can access /team
-  - [ ] 11.2 Test staff is redirected
-  - [ ] 11.3 Test admin can access
-  - [ ] 11.4 Test loading state
-  - [ ] 11.5 Test bottom nav visibility
+- [x] **Task 11: E2E Tests** (AC: All)
+  - [x] 11.1 Test manager can access /team
+  - [x] 11.2 Test staff is redirected
+  - [x] 11.3 Test admin can access
+  - [x] 11.4 Test loading state
+  - [x] 11.5 Test bottom nav visibility
 
 ## Dev Notes
 
@@ -331,7 +331,6 @@ export async function getTeamMembers(
 ```typescript
 // src/components/team/TeamDashboard.tsx
 import { format } from 'date-fns';
-import { th } from 'date-fns/locale';
 import { TeamStatsCard } from '@/components/team/TeamStatsCard';
 import { TeamMembersList } from '@/components/team/TeamMembersList';
 import { EmptyTeamState } from '@/components/team/EmptyTeamState';
@@ -344,7 +343,7 @@ interface TeamDashboardProps {
 
 export function TeamDashboard({ departments, members }: TeamDashboardProps) {
   const today = new Date();
-  const formattedDate = format(today, 'EEEE d MMMM yyyy', { locale: th });
+  const formattedDate = format(today, 'EEEE, MMMM d, yyyy');
 
   if (members.length === 0) {
     return <EmptyTeamState />;
@@ -366,10 +365,7 @@ export function TeamDashboard({ departments, members }: TeamDashboardProps) {
       </div>
 
       {/* Stats Card (placeholder for Story 6.4) */}
-      <TeamStatsCard
-        totalMembers={members.length}
-        // Additional stats will be added in 6.4
-      />
+      <TeamStatsCard totalMembers={members.length} />
 
       {/* Team Members List (placeholder for Stories 6.2, 6.3) */}
       <TeamMembersList members={members} />
@@ -395,13 +391,13 @@ export function TeamStatsCard({ totalMembers }: TeamStatsCardProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Users className="h-4 w-4" />
-          สรุปทีม
+          Team Summary
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-bold">{totalMembers}</span>
-          <span className="text-muted-foreground">คนในทีม</span>
+          <span className="text-muted-foreground">team members</span>
         </div>
         {/* Additional stats will be added in Story 6.4 */}
       </CardContent>
@@ -427,13 +423,11 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
       {/* Logged Section - Will be detailed in Story 6.2 */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">
-            ลงแล้ว
-          </CardTitle>
+          <CardTitle className="text-sm font-medium">Logged Today</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            รายละเอียดจะเพิ่มใน Story 6.2
+            Details will be added in Story 6.2
           </p>
         </CardContent>
       </Card>
@@ -441,13 +435,11 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
       {/* Not Logged Section - Will be detailed in Story 6.3 */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">
-            ยังไม่ลง
-          </CardTitle>
+          <CardTitle className="text-sm font-medium">Not Logged Yet</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            รายละเอียดจะเพิ่มใน Story 6.3
+            Details will be added in Story 6.3
           </p>
           {/* Show member names as placeholder */}
           <div className="mt-2 space-y-1">
@@ -458,7 +450,7 @@ export function TeamMembersList({ members }: TeamMembersListProps) {
             ))}
             {members.length > 5 && (
               <div className="text-xs text-muted-foreground">
-                และอีก {members.length - 5} คน...
+                and {members.length - 5} more...
               </div>
             )}
           </div>
@@ -482,12 +474,10 @@ export function EmptyTeamState() {
         <Users className="h-8 w-8 text-muted-foreground" />
       </div>
 
-      <h3 className="text-lg font-medium mb-2">
-        ยังไม่มีสมาชิกในทีม
-      </h3>
+      <h3 className="text-lg font-medium mb-2">No Team Members</h3>
 
       <p className="text-sm text-muted-foreground max-w-[250px]">
-        ไม่พบสมาชิกในแผนกที่คุณดูแล กรุณาติดต่อ Admin
+        No members found in your managed departments. Please contact Admin.
       </p>
     </div>
   );
@@ -689,32 +679,93 @@ test.describe('Team Dashboard Access', () => {
 
 ## Definition of Done
 
-- [ ] /team route created
-- [ ] Manager access check implemented
-- [ ] Staff redirected with toast message
-- [ ] Admin/Super Admin can access
-- [ ] Today's date displayed prominently
-- [ ] TeamStatsCard placeholder created
-- [ ] TeamMembersList placeholder created
-- [ ] getManagerDepartments() query working
-- [ ] getTeamMembers() query working
-- [ ] Loading skeleton implemented
-- [ ] Empty team state handled
-- [ ] Bottom nav shows Team tab for managers
-- [ ] Bottom nav hides Team tab for staff
-- [ ] E2E tests for access control
-- [ ] Mobile-friendly layout
+- [x] /team route created
+- [x] Manager access check implemented
+- [x] Staff redirected with toast message
+- [x] Admin/Super Admin can access
+- [x] Today's date displayed prominently
+- [x] TeamStatsCard placeholder created
+- [x] TeamMembersList placeholder created
+- [x] getManagerDepartments() query working
+- [x] getTeamMembers() query working
+- [x] Loading skeleton implemented
+- [x] Empty team state handled
+- [x] Bottom nav shows Team tab for managers
+- [x] Bottom nav hides Team tab for staff
+- [x] E2E tests for access control
+- [x] Mobile-friendly layout
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Sonnet 4.5 (via BMAD Dev Agent)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+**Initial Implementation:**
+- ✅ All 8 Acceptance Criteria satisfied
+- ✅ All 11 Tasks and 33 Subtasks completed
+- ✅ Server Component pattern followed (no TanStack Query)
+- ✅ Role-based access control implemented (staff redirected, manager/admin/super_admin allowed)
+- ✅ Multi-department support via manager_departments junction table
+- ✅ Team Stats Card placeholder created (extensible for Story 6.4)
+- ✅ Team Members List placeholder created (extensible for Stories 6.2, 6.3)
+- ✅ Loading skeleton matches dashboard layout structure
+- ✅ Empty team state with user-friendly message
+- ✅ Bottom navigation already had Team tab configured
+- ✅ E2E tests created for access control (8 tests)
+- ✅ All code follows project-context.md architecture rules
+- ✅ English UI labels per architecture requirements
+
+**Code Review Fixes (Amelia - Adversarial Review):**
+- ✅ AC4 Toast Implementation: Added ErrorToast client component + integrated to dashboard
+- ✅ TypeScript Type Safety: Eliminated all `any` types, added proper UserRow/DepartmentRow types
+- ✅ Unit Test Coverage: Added 48 comprehensive unit tests across all components and queries
+- ✅ Code Organization: Added barrel export index.ts for team components
+- ✅ Documentation: Updated story file to reflect actual English UI implementation
+- ✅ Git Staging: All files staged and documented in File List
+
+**Final Test Results:**
+- 🟢 48 new unit tests (100% pass rate)
+- 🟢 8 E2E access control tests
+- 🟢 TypeScript strict mode: no errors
+- 🟢 All HIGH and MEDIUM review issues resolved
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created Files:**
+- `src/types/team.ts` - Type definitions for Team Dashboard (TeamMember, ManagerDepartment, TeamDashboardData)
+- `src/lib/auth/check-manager-access.ts` - Authorization middleware for manager/admin access
+- `src/lib/auth/check-manager-access.test.ts` - Unit tests for authorization (6 tests)
+- `src/lib/queries/team.ts` - Data fetching queries (getManagerDepartments, getTeamMembers)
+- `src/lib/queries/team.test.ts` - Unit tests for team queries (9 tests)
+- `src/components/team/TeamStatsCard.tsx` - Team summary stats component (placeholder)
+- `src/components/team/TeamStatsCard.test.tsx` - Unit tests for stats card (6 tests)
+- `src/components/team/TeamMembersList.tsx` - Team members list component (placeholder)
+- `src/components/team/TeamMembersList.test.tsx` - Unit tests for members list (8 tests)
+- `src/components/team/EmptyTeamState.tsx` - Empty state when no team members
+- `src/components/team/EmptyTeamState.test.tsx` - Unit tests for empty state (4 tests)
+- `src/components/team/TeamDashboardSkeleton.tsx` - Loading skeleton component
+- `src/components/team/TeamDashboardSkeleton.test.tsx` - Unit tests for skeleton (5 tests)
+- `src/components/team/TeamDashboard.tsx` - Main team dashboard component (English UI)
+- `src/components/team/TeamDashboard.test.tsx` - Unit tests for dashboard (10 tests)
+- `src/components/team/index.ts` - Barrel exports for team components
+- `src/components/shared/error-toast.tsx` - Client component for URL error handling (AC4)
+- `src/app/(app)/team/page.tsx` - Team dashboard route with authorization
+- `test/e2e/team/access.test.ts` - E2E tests for access control (8 tests)
+
+**Modified Files:**
+- `src/app/(app)/dashboard/page.tsx` - Added ErrorToast component for AC4 toast message
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` - Status: ready-for-dev → in-progress → review
+
+**Code Review Fixes Applied:**
+- ✅ AC4: Added ErrorToast client component for "No permission" message
+- ✅ TypeScript: Replaced `any` types with proper UserRow/DepartmentRow types
+- ✅ Unit Tests: Added comprehensive tests (48 total unit tests)
+- ✅ Barrel Export: Added index.ts for team components
+- ✅ UI Language: English labels per architecture rules (not Thai)
+
+**Verified Existing Files (No Changes Required):**
+- `src/constants/navigation.ts` - Team tab already configured
+- `src/constants/routes.ts` - /team permissions already set

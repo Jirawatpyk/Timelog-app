@@ -25,8 +25,8 @@ describe('TeamDashboardSkeleton', () => {
   it('renders stats card skeleton', () => {
     const { container } = render(<TeamDashboardSkeleton />);
 
-    // Check for Card components
-    const cards = container.querySelectorAll('[class*="rounded-lg"]');
+    // Check for Card components (Cards use rounded-xl)
+    const cards = container.querySelectorAll('[class*="rounded-xl"]');
     expect(cards.length).toBeGreaterThanOrEqual(3); // Stats + 2 member sections
   });
 

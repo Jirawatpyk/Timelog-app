@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { checkManagerAccess } from '@/lib/auth/check-manager-access';
-import { getManagerDepartments, getTeamMembers } from '@/lib/queries/team';
+import { getManagerDepartments, getTeamMembersWithTodayStats } from '@/lib/queries/team';
 import { TeamDashboard } from '@/components/team/TeamDashboard';
 import { TeamDashboardSkeleton } from '@/components/team/TeamDashboardSkeleton';
 
@@ -31,7 +31,9 @@ async function TeamDashboardContent({
   isAdmin: boolean;
 }) {
   const departments = await getManagerDepartments(userId, isAdmin);
-  const members = await getTeamMembers(departments.map((d) => d.id));
+  const membersGrouped = await getTeamMembersWithTodayStats(
+    departments.map((d) => d.id)
+  );
 
-  return <TeamDashboard departments={departments} members={members} />;
+  return <TeamDashboard departments={departments} membersGrouped={membersGrouped} />;
 }

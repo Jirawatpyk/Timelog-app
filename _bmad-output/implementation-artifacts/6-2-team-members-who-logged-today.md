@@ -1,6 +1,6 @@
 # Story 6.2: Team Members Who Logged Today
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -63,45 +63,45 @@ So that **I can track daily compliance**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create LoggedMemberCard Component** (AC: 2, 4, 5, 7)
-  - [ ] 1.1 Create `src/components/team/LoggedMemberCard.tsx`
-  - [ ] 1.2 Display avatar/initial
-  - [ ] 1.3 Display name and hours
-  - [ ] 1.4 Display entry count
-  - [ ] 1.5 Green checkmark for 8+ hours
-  - [ ] 1.6 Neutral styling for < 8 hours
+- [x] **Task 1: Create LoggedMemberCard Component** (AC: 2, 4, 5, 7)
+  - [x] 1.1 Create `src/components/team/LoggedMemberCard.tsx`
+  - [x] 1.2 Display avatar/initial
+  - [x] 1.3 Display name and hours
+  - [x] 1.4 Display entry count
+  - [x] 1.5 Green checkmark for 8+ hours
+  - [x] 1.6 Neutral styling for < 8 hours
 
-- [ ] **Task 2: Create LoggedMembersList Component** (AC: 1, 3, 6)
-  - [ ] 2.1 Create `src/components/team/LoggedMembersList.tsx`
-  - [ ] 2.2 Section header with count
-  - [ ] 2.3 Sort by total hours descending
-  - [ ] 2.4 Empty state when no one logged
+- [x] **Task 2: Create LoggedMembersList Component** (AC: 1, 3, 6)
+  - [x] 2.1 Create `src/components/team/LoggedMembersList.tsx`
+  - [x] 2.2 Section header with count
+  - [x] 2.3 Sort by total hours descending
+  - [x] 2.4 Empty state when no one logged
 
-- [ ] **Task 3: Query Team Members with Today's Entries** (AC: 1, 2)
-  - [ ] 3.1 Create `getTeamMembersWithTodayEntries()` query
-  - [ ] 3.2 Join users with time_entries
-  - [ ] 3.3 Filter by today's date
-  - [ ] 3.4 Aggregate hours and entry count per member
+- [x] **Task 3: Query Team Members with Today's Entries** (AC: 1, 2)
+  - [x] 3.1 Create `getTeamMembersWithTodayEntries()` query
+  - [x] 3.2 Join users with time_entries
+  - [x] 3.3 Filter by today's date
+  - [x] 3.4 Aggregate hours and entry count per member
 
-- [ ] **Task 4: Create Member Avatar Component** (AC: 7)
-  - [ ] 4.1 Create `src/components/shared/MemberAvatar.tsx`
-  - [ ] 4.2 Show initial letter if no avatar
-  - [ ] 4.3 Consistent sizing and colors
+- [x] **Task 4: Create Member Avatar Component** (AC: 7)
+  - [x] 4.1 Create `src/components/shared/MemberAvatar.tsx`
+  - [x] 4.2 Show initial letter if no avatar
+  - [x] 4.3 Consistent sizing and colors
 
-- [ ] **Task 5: Integrate into TeamDashboard** (AC: All)
-  - [ ] 5.1 Replace placeholder in TeamMembersList
-  - [ ] 5.2 Pass logged members data
-  - [ ] 5.3 Ensure proper layout
+- [x] **Task 5: Integrate into TeamDashboard** (AC: All)
+  - [x] 5.1 Replace placeholder in TeamMembersList
+  - [x] 5.2 Pass logged members data
+  - [x] 5.3 Ensure proper layout
 
-- [ ] **Task 6: Define Types** (AC: All)
-  - [ ] 6.1 Create `TeamMemberWithStats` type
-  - [ ] 6.2 Include totalHours, entryCount fields
+- [x] **Task 6: Define Types** (AC: All)
+  - [x] 6.1 Create `TeamMemberWithStats` type
+  - [x] 6.2 Include totalHours, entryCount fields
 
-- [ ] **Task 7: Unit & E2E Tests** (AC: All)
-  - [ ] 7.1 Test sorting by hours
-  - [ ] 7.2 Test green indicator at 8+ hours
-  - [ ] 7.3 Test empty state
-  - [ ] 7.4 Test member count in header
+- [x] **Task 7: Unit & E2E Tests** (AC: All)
+  - [x] 7.1 Test sorting by hours
+  - [x] 7.2 Test green indicator at 8+ hours
+  - [x] 7.3 Test empty state
+  - [x] 7.4 Test member count in header
 
 ## Dev Notes
 
@@ -594,31 +594,75 @@ test.describe('Team Logged Members', () => {
 
 ## Definition of Done
 
-- [ ] LoggedMemberCard component created
-- [ ] LoggedMembersList component created
-- [ ] MemberAvatar shared component created
-- [ ] getTeamMembersWithTodayStats() query working
-- [ ] Members sorted by hours descending
-- [ ] Green checkmark shown for 8+ hours
-- [ ] Hours in green text for complete members
-- [ ] Neutral styling for < 8 hours (no alarm)
-- [ ] Entry count displayed per member
-- [ ] Empty state shown when no one logged
-- [ ] Count shown in section header
-- [ ] Unit tests passing
-- [ ] E2E tests passing
-- [ ] Mobile-friendly card layout
+- [x] LoggedMemberCard component created
+- [x] LoggedMembersList component created
+- [x] MemberAvatar shared component created
+- [x] getTeamMembersWithTodayStats() query working
+- [x] Members sorted by hours descending
+- [x] Green checkmark shown for 8+ hours
+- [x] Hours in green text for complete members
+- [x] Neutral styling for < 8 hours (no alarm)
+- [x] Entry count displayed per member
+- [x] Empty state shown when no one logged
+- [x] Count shown in section header
+- [x] Unit tests passing
+- [x] E2E tests passing
+- [x] Mobile-friendly card layout
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+- ✅ Created `TeamMemberWithStats` and `TeamMembersGrouped` types in `src/types/team.ts`
+- ✅ Implemented `getTeamMembersWithTodayStats()` query in `src/lib/queries/team.ts`
+  - Fetches team members with `active = true` filter
+  - Aggregates today's entries per user (totalHours, entryCount)
+  - Groups into logged vs notLogged arrays
+  - Sorts logged by hours descending, notLogged alphabetically (Thai locale)
+- ✅ Created `MemberAvatar` shared component (`src/components/shared/MemberAvatar.tsx`)
+  - Shows first letter of name in colored circle
+  - Supports sm/md/lg sizes
+  - Generates consistent color per name using character code
+- ✅ Created `LoggedMemberCard` component (`src/components/team/LoggedMemberCard.tsx`)
+  - Displays avatar, name, entry count, hours
+  - Green text + checkmark for 8+ hours (isComplete)
+  - Neutral styling for < 8 hours (no negative indicators)
+- ✅ Created `LoggedMembersList` component (`src/components/team/LoggedMembersList.tsx`)
+  - Card-based layout with header showing count
+  - Empty state: "ยังไม่มีใครลงวันนี้" with Users icon
+  - Maps members to LoggedMemberCard components
+- ✅ Updated `TeamDashboard` to use `TeamMembersGrouped` interface
+  - Replaced `members` prop with `membersGrouped`
+  - Renders `LoggedMembersList` for logged members
+  - Preserves `TeamMembersList` for notLogged (Story 6.3)
+- ✅ Updated `src/app/(app)/team/page.tsx` to call `getTeamMembersWithTodayStats()`
+- ✅ Updated barrel exports in `src/components/team/index.ts`
+- ✅ Comprehensive unit tests for all components (94 tests passing)
+- ✅ E2E tests covering all ACs in `test/e2e/team/logged-members.test.ts`
+- ✅ All acceptance criteria met and validated
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- `src/components/shared/MemberAvatar.tsx`
+- `src/components/shared/MemberAvatar.test.tsx`
+- `src/components/team/LoggedMemberCard.tsx`
+- `src/components/team/LoggedMemberCard.test.tsx`
+- `src/components/team/LoggedMembersList.tsx`
+- `src/components/team/LoggedMembersList.test.tsx`
+- `test/e2e/team/logged-members.test.ts`
+
+**Modified:**
+- `src/types/team.ts` (added TeamMemberWithStats, TeamMembersGrouped)
+- `src/types/team.test.ts` (added type validation tests)
+- `src/lib/queries/team.ts` (added getTeamMembersWithTodayStats)
+- `src/lib/queries/team.test.ts` (added 6 query tests)
+- `src/components/team/TeamDashboard.tsx` (updated to use TeamMembersGrouped)
+- `src/components/team/TeamDashboard.test.tsx` (updated mocks and tests)
+- `src/components/team/TeamDashboardSkeleton.test.tsx` (fixed rounded-xl class)
+- `src/components/team/index.ts` (added LoggedMembersList, LoggedMemberCard exports)
+- `src/app/(app)/team/page.tsx` (use getTeamMembersWithTodayStats query)

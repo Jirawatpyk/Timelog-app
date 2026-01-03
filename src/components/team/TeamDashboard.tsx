@@ -2,19 +2,22 @@
 import { format } from 'date-fns';
 import { TeamStatsCard } from '@/components/team/TeamStatsCard';
 import { TeamMembersList } from '@/components/team/TeamMembersList';
+import { LoggedMembersList } from '@/components/team/LoggedMembersList';
 import { EmptyTeamState } from '@/components/team/EmptyTeamState';
-import type { ManagerDepartment, TeamMember } from '@/types/team';
+import type { ManagerDepartment, TeamMembersGrouped } from '@/types/team';
 
 interface TeamDashboardProps {
   departments: ManagerDepartment[];
-  members: TeamMember[];
+  membersGrouped: TeamMembersGrouped;
 }
 
-export function TeamDashboard({ departments, members }: TeamDashboardProps) {
+export function TeamDashboard({ departments, membersGrouped }: TeamDashboardProps) {
   const today = new Date();
   const formattedDate = format(today, 'EEEE, MMMM d, yyyy');
 
-  if (members.length === 0) {
+  const totalMembers = membersGrouped.logged.length + membersGrouped.notLogged.length;
+
+  if (totalMembers === 0) {
     return <EmptyTeamState />;
   }
 
@@ -34,10 +37,13 @@ export function TeamDashboard({ departments, members }: TeamDashboardProps) {
       </div>
 
       {/* Stats Card (placeholder for Story 6.4) */}
-      <TeamStatsCard totalMembers={members.length} />
+      <TeamStatsCard totalMembers={totalMembers} />
 
-      {/* Team Members List (placeholder for Stories 6.2, 6.3) */}
-      <TeamMembersList members={members} />
+      {/* Logged Members List - Story 6.2 */}
+      <LoggedMembersList members={membersGrouped.logged} />
+
+      {/* Not Logged Members List (placeholder for Story 6.3) */}
+      <TeamMembersList members={membersGrouped.notLogged} />
     </div>
   );
 }

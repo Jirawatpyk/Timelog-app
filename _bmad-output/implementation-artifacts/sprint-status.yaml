@@ -83,7 +83,7 @@ development_status:
   epic-4-retrospective: done
 
   # Epic 5: Personal Dashboard (8 stories)
-  epic-5: in-progress
+  epic-5: done
   5-1-dashboard-layout-period-selector: done
   5-2-todays-entries-view: done
   5-3-weekly-entries-view: done
@@ -92,12 +92,12 @@ development_status:
   5-6-filter-by-client: done
   5-7-search-entries: done
   5-8-empty-states: done
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
 
   # Epic 6: Team Dashboard (6 stories)
   epic-6: in-progress
-  6-1-team-dashboard-layout: ready-for-dev
-  6-2-team-members-who-logged-today: ready-for-dev
+  6-1-team-dashboard-layout: done
+  6-2-team-members-who-logged-today: review
   6-3-team-members-who-havent-logged-today: ready-for-dev
   6-4-aggregated-team-hours: ready-for-dev
   6-5-multi-department-support: ready-for-dev

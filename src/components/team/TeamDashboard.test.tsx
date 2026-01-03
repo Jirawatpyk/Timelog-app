@@ -10,11 +10,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TeamDashboard } from './TeamDashboard';
-import type { ManagerDepartment, TeamMember } from '@/types/team';
+import type { ManagerDepartment, TeamMembersGrouped } from '@/types/team';
 
 // Mock date-fns
 vi.mock('date-fns', () => ({
-  format: vi.fn((date, formatStr) => 'Friday, January 3, 2026'),
+  format: vi.fn(() => 'Friday, January 3, 2026'),
 }));
 
 const mockDepartments: ManagerDepartment[] = [
@@ -22,24 +22,36 @@ const mockDepartments: ManagerDepartment[] = [
   { id: 'dept-2', name: 'Marketing' },
 ];
 
-const mockMembers: TeamMember[] = [
-  {
-    id: '1',
-    email: 'john@example.com',
-    displayName: 'John Doe',
-    departmentId: 'dept-1',
-    departmentName: 'Engineering',
-    role: 'staff',
-  },
-  {
-    id: '2',
-    email: 'jane@example.com',
-    displayName: 'Jane Smith',
-    departmentId: 'dept-2',
-    departmentName: 'Marketing',
-    role: 'manager',
-  },
-];
+const mockMembersGrouped: TeamMembersGrouped = {
+  logged: [
+    {
+      id: '1',
+      email: 'john@example.com',
+      displayName: 'John Doe',
+      departmentId: 'dept-1',
+      departmentName: 'Engineering',
+      role: 'staff',
+      totalHours: 8.5,
+      entryCount: 3,
+      hasLoggedToday: true,
+      isComplete: true,
+    },
+  ],
+  notLogged: [
+    {
+      id: '2',
+      email: 'jane@example.com',
+      displayName: 'Jane Smith',
+      departmentId: 'dept-2',
+      departmentName: 'Marketing',
+      role: 'manager',
+      totalHours: 0,
+      entryCount: 0,
+      hasLoggedToday: false,
+      isComplete: false,
+    },
+  ],
+};
 
 describe('TeamDashboard', () => {
   beforeEach(() => {
@@ -47,52 +59,71 @@ describe('TeamDashboard', () => {
   });
 
   it('renders Team Dashboard title', () => {
-    render(<TeamDashboard departments={mockDepartments} members={mockMembers} />);
+    render(
+      <TeamDashboard departments={mockDepartments} membersGrouped={mockMembersGrouped} />
+    );
 
     expect(screen.getByText('Team Dashboard')).toBeInTheDocument();
   });
 
   it('renders formatted today date', () => {
-    render(<TeamDashboard departments={mockDepartments} members={mockMembers} />);
+    render(
+      <TeamDashboard departments={mockDepartments} membersGrouped={mockMembersGrouped} />
+    );
 
     expect(screen.getByText('Friday, January 3, 2026')).toBeInTheDocument();
   });
 
   it('renders department names', () => {
-    render(<TeamDashboard departments={mockDepartments} members={mockMembers} />);
+    render(
+      <TeamDashboard departments={mockDepartments} membersGrouped={mockMembersGrouped} />
+    );
 
     expect(screen.getByText('Engineering, Marketing')).toBeInTheDocument();
   });
 
   it('does not render department names when empty', () => {
-    render(<TeamDashboard departments={[]} members={mockMembers} />);
+    render(<TeamDashboard departments={[]} membersGrouped={mockMembersGrouped} />);
 
     expect(screen.queryByText('Engineering, Marketing')).not.toBeInTheDocument();
   });
 
   it('renders TeamStatsCard with member count', () => {
-    render(<TeamDashboard departments={mockDepartments} members={mockMembers} />);
+    render(
+      <TeamDashboard departments={mockDepartments} membersGrouped={mockMembersGrouped} />
+    );
 
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('team members')).toBeInTheDocument();
   });
 
-  it('renders TeamMembersList', () => {
-    render(<TeamDashboard departments={mockDepartments} members={mockMembers} />);
+  it('renders LoggedMembersList with logged members', () => {
+    render(
+      <TeamDashboard departments={mockDepartments} membersGrouped={mockMembersGrouped} />
+    );
 
-    expect(screen.getByText('Logged Today')).toBeInTheDocument();
-    expect(screen.getByText('Not Logged Yet')).toBeInTheDocument();
+    // "Logged Today" appears in both LoggedMembersList and placeholder card
+    const loggedTodayElements = screen.getAllByText('Logged Today');
+    expect(loggedTodayElements.length).toBeGreaterThan(0);
+    expect(screen.getByText('(1 people)')).toBeInTheDocument();
   });
 
   it('shows empty state when no members', () => {
-    render(<TeamDashboard departments={mockDepartments} members={[]} />);
+    render(
+      <TeamDashboard
+        departments={mockDepartments}
+        membersGrouped={{ logged: [], notLogged: [] }}
+      />
+    );
 
     expect(screen.getByText('No Team Members')).toBeInTheDocument();
     expect(screen.queryByText('Team Dashboard')).not.toBeInTheDocument();
   });
 
   it('renders member names in the list', () => {
-    render(<TeamDashboard departments={mockDepartments} members={mockMembers} />);
+    render(
+      <TeamDashboard departments={mockDepartments} membersGrouped={mockMembersGrouped} />
+    );
 
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();
@@ -102,7 +133,7 @@ describe('TeamDashboard', () => {
     render(
       <TeamDashboard
         departments={[{ id: 'dept-1', name: 'Engineering' }]}
-        members={mockMembers}
+        membersGrouped={mockMembersGrouped}
       />
     );
 
@@ -111,7 +142,7 @@ describe('TeamDashboard', () => {
 
   it('uses gap-4 layout', () => {
     const { container } = render(
-      <TeamDashboard departments={mockDepartments} members={mockMembers} />
+      <TeamDashboard departments={mockDepartments} membersGrouped={mockMembersGrouped} />
     );
 
     const layout = container.querySelector('[class*="gap-4"]');

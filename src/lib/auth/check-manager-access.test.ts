@@ -8,8 +8,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { redirect } from 'next/navigation';
 
 // Mock dependencies
+// redirect() in Next.js throws NEXT_REDIRECT error to halt execution
+const REDIRECT_ERROR = new Error('NEXT_REDIRECT');
 vi.mock('next/navigation', () => ({
-  redirect: vi.fn(),
+  redirect: vi.fn(() => {
+    throw REDIRECT_ERROR;
+  }),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -37,10 +41,11 @@ describe('checkManagerAccess', () => {
 
     vi.mocked(createClient).mockResolvedValue({
       auth: { getUser: mockGetUser },
+      from: mockFrom,
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
-    await checkManagerAccess();
-
+    // redirect() throws NEXT_REDIRECT error to halt execution
+    await expect(checkManagerAccess()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirect).toHaveBeenCalledWith('/login');
   });
 

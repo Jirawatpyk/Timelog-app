@@ -1,5 +1,5 @@
 /**
- * Team Components - Stories 6.1, 6.2
+ * Team Components - Stories 6.1, 6.2, 6.3
  *
  * Barrel exports for team dashboard components
  */
@@ -9,6 +9,8 @@ export { TeamStatsCard } from './TeamStatsCard';
 export { TeamMembersList } from './TeamMembersList';
 export { LoggedMembersList } from './LoggedMembersList';
 export { LoggedMemberCard } from './LoggedMemberCard';
+export { NotLoggedMembersList } from './NotLoggedMembersList';
+export { NotLoggedMemberCard } from './NotLoggedMemberCard';
 export { MemberAvatar } from './MemberAvatar';
 export { EmptyTeamState } from './EmptyTeamState';
 export { TeamDashboardSkeleton } from './TeamDashboardSkeleton';

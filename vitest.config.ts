@@ -16,8 +16,9 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30000,
     hookTimeout: 30000,
-    // Include test files in src/ and test/
+    // Include test files in src/ and test/ (excluding e2e which uses Playwright)
     include: ['src/**/*.test.{ts,tsx}', 'test/**/*.test.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/e2e/**', '**/dist/**'],
   },
   resolve: {
     alias: {

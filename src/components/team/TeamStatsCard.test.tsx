@@ -1,8 +1,9 @@
 /**
- * Team Stats Card Tests - Story 6.1
+ * Team Stats Card Tests - Stories 6.1, 6.3
  *
  * Tests for TeamStatsCard component
  * AC2: Summary stats section
+ * Story 6.3: Added loggedCount display
  */
 
 import { describe, it, expect } from 'vitest';
@@ -47,5 +48,44 @@ describe('TeamStatsCard', () => {
     render(<TeamStatsCard totalMembers={999} />);
 
     expect(screen.getByText('999')).toBeInTheDocument();
+  });
+
+  // Story 6.3: loggedCount prop tests
+  describe('loggedCount prop (Story 6.3)', () => {
+    it('displays logged count when provided', () => {
+      render(<TeamStatsCard totalMembers={10} loggedCount={7} />);
+
+      expect(screen.getByText('7')).toBeInTheDocument();
+      expect(screen.getByText('logged')).toBeInTheDocument();
+    });
+
+    it('does not display logged section when loggedCount is undefined', () => {
+      render(<TeamStatsCard totalMembers={10} />);
+
+      expect(screen.queryByText('logged')).not.toBeInTheDocument();
+    });
+
+    it('displays zero logged count', () => {
+      render(<TeamStatsCard totalMembers={10} loggedCount={0} />);
+
+      // Should show 0 logged (0 is a valid value)
+      expect(screen.getByText('logged')).toBeInTheDocument();
+    });
+
+    it('shows logged count with green styling', () => {
+      const { container } = render(<TeamStatsCard totalMembers={10} loggedCount={5} />);
+
+      // Check for green text color on the count
+      const greenElement = container.querySelector('.text-green-600');
+      expect(greenElement).toBeInTheDocument();
+    });
+
+    it('shows UserCheck icon when loggedCount provided', () => {
+      const { container } = render(<TeamStatsCard totalMembers={10} loggedCount={5} />);
+
+      // UserCheck icon should be present
+      const icon = container.querySelector('svg');
+      expect(icon).toBeInTheDocument();
+    });
   });
 });

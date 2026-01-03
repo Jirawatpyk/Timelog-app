@@ -1,5 +1,6 @@
 // src/lib/queries/team.ts
 import { createClient } from '@/lib/supabase/server';
+import { formatLocalDate } from '@/lib/utils';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, isToday } from 'date-fns';
 import type {
   ManagerDepartment,
@@ -124,7 +125,7 @@ export async function getTeamMembersWithTodayStats(
   }
 
   const supabase = await createClient();
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatLocalDate(new Date());
 
   // Get all team members
   // TODO: Epic 7 - Add .eq('active', true) when users.active column is added

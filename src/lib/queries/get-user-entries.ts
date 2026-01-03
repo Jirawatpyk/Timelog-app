@@ -10,6 +10,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import { formatLocalDate } from '@/lib/utils';
 import type { DateRange, DashboardStats, FilterState, ClientOption } from '@/types/dashboard';
 import type { TimeEntryWithDetails } from '@/types/domain';
 
@@ -77,8 +78,8 @@ export async function getUserEntries(
     `
     )
     .eq('user_id', user.id)
-    .gte('entry_date', dateRange.start.toISOString().split('T')[0])
-    .lte('entry_date', dateRange.end.toISOString().split('T')[0])
+    .gte('entry_date', formatLocalDate(dateRange.start))
+    .lte('entry_date', formatLocalDate(dateRange.end))
     .is('deleted_at', null);
 
   // Apply client filter if provided
@@ -188,8 +189,8 @@ export async function getDashboardStats(
     `
     )
     .eq('user_id', user.id)
-    .gte('entry_date', dateRange.start.toISOString().split('T')[0])
-    .lte('entry_date', dateRange.end.toISOString().split('T')[0])
+    .gte('entry_date', formatLocalDate(dateRange.start))
+    .lte('entry_date', formatLocalDate(dateRange.end))
     .is('deleted_at', null);
 
   // Apply client filter if provided

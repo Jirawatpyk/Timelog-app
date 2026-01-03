@@ -93,7 +93,7 @@ describe('NotLoggedMembersList', () => {
 
     it('shows supporting message', () => {
       render(<NotLoggedMembersList members={[]} />);
-      expect(screen.getByText('Great job team!')).toBeInTheDocument();
+      expect(screen.getByText('Great job, team!')).toBeInTheDocument();
     });
 
     it('shows count as 0', () => {

@@ -14,7 +14,7 @@ export function NotLoggedMembersList({ members }: NotLoggedMembersListProps) {
   // All logged - success state!
   if (members.length === 0) {
     return (
-      <Card className="border-green-200 bg-green-50/50">
+      <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <span className="text-green-600">●</span>
@@ -25,14 +25,14 @@ export function NotLoggedMembersList({ members }: NotLoggedMembersListProps) {
 
         <CardContent>
           <div className="flex flex-col items-center py-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
-              <PartyPopper className="h-6 w-6 text-green-600" />
+            <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mb-3">
+              <PartyPopper className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
-            <p className="text-sm font-medium text-green-700">
+            <p className="text-sm font-medium text-green-700 dark:text-green-300">
               Everyone has logged!
             </p>
-            <p className="text-xs text-green-600 mt-1">
-              Great job team!
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+              Great job, team!
             </p>
           </div>
         </CardContent>

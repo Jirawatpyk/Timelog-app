@@ -449,7 +449,11 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ### Change Log
 
 - 2026-01-03: Implemented Story 6.3 - Not Logged Members display with time-based indicators and success state
-- 2026-01-03: Code Review Fixes:
+- 2026-01-03: Code Review Fixes (Round 1):
   - H1: Removed unused `isBeforeNoon()` function (dead code)
   - M1: Added 5 tests for TeamStatsCard `loggedCount` prop
   - M3: Fixed pre-existing bug in `check-manager-access.test.ts` (redirect mock wasn't throwing)
+- 2026-01-03: Code Review Fixes (Round 2 - user requested):
+  - M2: Added proper manager authentication to E2E tests (both 6.2 and 6.3)
+  - L1: Fixed comma in "Great job, team!" message
+  - L2: Added dark mode support for success state (dark:border-green-800, dark:bg-green-950/30, etc.)

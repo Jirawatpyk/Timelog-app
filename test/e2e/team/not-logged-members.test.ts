@@ -8,8 +8,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Team Not Logged Members (Story 6.3)', () => {
   test.beforeEach(async ({ page }) => {
-    // TODO: Login as manager user
-    // This test assumes manager authentication is already set up
+    // Login as manager user
+    await page.goto('/login');
+    await page.fill('input[name="email"]', 'manager@example.com');
+    await page.fill('input[name="password"]', 'password123');
+    await page.click('button[type="submit"]');
+
+    // Navigate to team dashboard
     await page.goto('/team');
   });
 
@@ -104,7 +109,7 @@ test.describe('Team Not Logged Members (Story 6.3)', () => {
     // If success state is visible, verify its content
     if (await successMessage.isVisible()) {
       await expect(successMessage).toBeVisible();
-      await expect(page.getByText('Great job team!')).toBeVisible();
+      await expect(page.getByText('Great job, team!')).toBeVisible();
       await expect(page.getByText('(0 people)')).toBeVisible();
 
       // Should have celebration icon

@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Plus } from 'lucide-react';
 import { createService } from '@/actions/master-data';
 import { serviceSchema, type ServiceInput } from '@/schemas/master-data.schema';
 import { toast } from 'sonner';
@@ -72,7 +73,10 @@ export function AddServiceDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>Add Service</Button>
+        <Button size="icon" className="sm:size-auto sm:px-4">
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline sm:ml-1">Add Service</span>
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

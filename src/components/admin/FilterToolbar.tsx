@@ -38,11 +38,14 @@ interface FilterToolbarProps {
   // Mobile filter controls (rendered in sheet)
   mobileFilters: ReactNode;
 
-  // Add button
+  // Add button (use addButtonSlot OR addButton, not both)
   addButton?: {
     label: string;
     onClick: () => void;
   };
+
+  // Add button as ReactNode (e.g., Dialog with trigger)
+  addButtonSlot?: ReactNode;
 
   className?: string;
 }
@@ -57,6 +60,7 @@ export function FilterToolbar({
   desktopFilters,
   mobileFilters,
   addButton,
+  addButtonSlot,
   className,
 }: FilterToolbarProps) {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -87,7 +91,7 @@ export function FilterToolbar({
             {mobileFilters}
           </FilterSheet>
 
-          {/* Mobile: Add button (icon only) */}
+          {/* Mobile: Add button (icon only) - only when using addButton prop */}
           {addButton && (
             <Button
               onClick={addButton.onClick}
@@ -97,6 +101,11 @@ export function FilterToolbar({
             >
               <Plus className="h-4 w-4" />
             </Button>
+          )}
+
+          {/* Mobile: Add button slot (custom component like Dialog) */}
+          {addButtonSlot && (
+            <div className="sm:hidden">{addButtonSlot}</div>
           )}
         </div>
 
@@ -109,6 +118,7 @@ export function FilterToolbar({
               {addButton.label}
             </Button>
           )}
+          {addButtonSlot}
         </div>
       </div>
 

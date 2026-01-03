@@ -322,10 +322,12 @@ export function ProjectsListClient({ initialProjects, clients }: ProjectsListCli
         onFiltersClear={handleFiltersClear}
         desktopFilters={desktopFilters}
         mobileFilters={mobileFilters}
-        addButton={{
-          label: 'Add Project',
-          onClick: () => setAddDialogOpen(true),
-        }}
+        addButtonSlot={
+          <AddProjectDialog
+            onProjectCreated={handleProjectCreated}
+            clients={clients}
+          />
+        }
       />
 
       {filteredProjects.length === 0 ? (
@@ -339,13 +341,6 @@ export function ProjectsListClient({ initialProjects, clients }: ProjectsListCli
           keyField="id"
         />
       )}
-
-      <AddProjectDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        onProjectCreated={handleProjectCreated}
-        clients={clients}
-      />
 
       {confirmDialog.project && (
         <DeactivateConfirmDialog

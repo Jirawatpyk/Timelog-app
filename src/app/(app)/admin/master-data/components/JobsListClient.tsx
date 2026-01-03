@@ -401,10 +401,13 @@ export function JobsListClient({ initialJobs, clients, projects }: JobsListClien
         onFiltersClear={handleFiltersClear}
         desktopFilters={desktopFilters}
         mobileFilters={mobileFilters}
-        addButton={{
-          label: 'Add Job',
-          onClick: () => setAddDialogOpen(true),
-        }}
+        addButtonSlot={
+          <AddJobDialog
+            onJobCreated={handleJobCreated}
+            clients={clients}
+            projects={projects}
+          />
+        }
       />
 
       {filteredJobs.length === 0 ? (
@@ -414,14 +417,6 @@ export function JobsListClient({ initialJobs, clients, projects }: JobsListClien
       ) : (
         <DataTable data={filteredJobs} columns={columns} keyField="id" />
       )}
-
-      <AddJobDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        onJobCreated={handleJobCreated}
-        clients={clients}
-        projects={projects}
-      />
 
       {confirmDialog.job && (
         <DeactivateConfirmDialog

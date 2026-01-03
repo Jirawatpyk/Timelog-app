@@ -1,20 +1,26 @@
 /**
- * User Entries Queries - Story 5.1
+ * User Entries Queries - Story 5.1, 5.6, 5.7
  *
  * Server-side query functions for fetching user time entries.
  * Used by Dashboard page (Server Components).
+ *
+ * Story 5.7: Added search filtering across multiple fields.
  */
 
 import { createClient } from '@/lib/supabase/server';
-import type { DateRange, DashboardStats } from '@/types/dashboard';
+import type { DateRange, DashboardStats, FilterState, ClientOption } from '@/types/dashboard';
 import type { TimeEntryWithDetails } from '@/types/domain';
 
 /**
  * Fetch user's time entries for a date range
  * Returns entries with all related data (job > project > client, service, task)
+ *
+ * Story 5.6: Added optional filter parameter for client filtering
+ * Story 5.7: Added search filtering with client-side text matching
  */
 export async function getUserEntries(
-  dateRange: DateRange
+  dateRange: DateRange,
+  filter?: FilterState
 ): Promise<TimeEntryWithDetails[]> {
   const supabase = await createClient();
 
@@ -26,16 +32,17 @@ export async function getUserEntries(
     throw new Error('Unauthorized');
   }
 
-  const { data, error } = await supabase
+  // Build base query
+  let query = supabase
     .from('time_entries')
     .select(
       `
       *,
-      job:jobs(
+      job:jobs!inner(
         id, name, job_no,
-        project:projects(
+        project:projects!inner(
           id, name,
-          client:clients(id, name)
+          client:clients!inner(id, name)
         )
       ),
       service:services(id, name),
@@ -45,7 +52,14 @@ export async function getUserEntries(
     .eq('user_id', user.id)
     .gte('entry_date', dateRange.start.toISOString().split('T')[0])
     .lte('entry_date', dateRange.end.toISOString().split('T')[0])
-    .is('deleted_at', null)
+    .is('deleted_at', null);
+
+  // Apply client filter if provided
+  if (filter?.clientId) {
+    query = query.eq('job.project.client.id', filter.clientId);
+  }
+
+  const { data, error } = await query
     .order('entry_date', { ascending: false })
     .order('created_at', { ascending: false });
 
@@ -53,7 +67,49 @@ export async function getUserEntries(
     throw error;
   }
 
-  return (data as unknown as TimeEntryWithDetails[]) || [];
+  let entries = (data as unknown as TimeEntryWithDetails[]) || [];
+
+  // Story 5.7: Apply client-side search filter for complex multi-field matching
+  if (filter?.searchQuery && filter.searchQuery.length >= 2) {
+    entries = filterEntriesBySearch(entries, filter.searchQuery);
+  }
+
+  return entries;
+}
+
+/**
+ * Story 5.7: Filter entries by search query
+ *
+ * Searches across multiple fields (case-insensitive, partial matches):
+ * - Client name
+ * - Project name
+ * - Job name
+ * - Job number (job_no)
+ * - Service name
+ * - Task name
+ * - Notes
+ */
+function filterEntriesBySearch(
+  entries: TimeEntryWithDetails[],
+  searchQuery: string
+): TimeEntryWithDetails[] {
+  const searchLower = searchQuery.toLowerCase();
+
+  return entries.filter((entry) => {
+    const searchableFields = [
+      entry.job?.project?.client?.name,
+      entry.job?.project?.name,
+      entry.job?.name,
+      entry.job?.job_no,
+      entry.service?.name,
+      entry.task?.name,
+      entry.notes,
+    ];
+
+    return searchableFields.some(
+      (field) => field?.toLowerCase().includes(searchLower)
+    );
+  });
 }
 
 /**
@@ -61,10 +117,12 @@ export async function getUserEntries(
  * Returns total hours, entry count, top client, and monthly stats (for month period)
  *
  * Story 5.4: Added period parameter for monthly stats calculation
+ * Story 5.6: Added filter parameter for client filtering
  */
 export async function getDashboardStats(
   dateRange: DateRange,
-  period?: 'today' | 'week' | 'month'
+  period?: 'today' | 'week' | 'month',
+  filter?: FilterState
 ): Promise<DashboardStats> {
   const supabase = await createClient();
 
@@ -76,16 +134,16 @@ export async function getDashboardStats(
     throw new Error('Unauthorized');
   }
 
-  // Get entries for stats calculation
-  const { data: entries, error } = await supabase
+  // Build base query for stats calculation
+  let query = supabase
     .from('time_entries')
     .select(
       `
       duration_minutes,
       entry_date,
-      job:jobs(
-        project:projects(
-          client:clients(id, name)
+      job:jobs!inner(
+        project:projects!inner(
+          client:clients!inner(id, name)
         )
       )
     `
@@ -94,6 +152,13 @@ export async function getDashboardStats(
     .gte('entry_date', dateRange.start.toISOString().split('T')[0])
     .lte('entry_date', dateRange.end.toISOString().split('T')[0])
     .is('deleted_at', null);
+
+  // Apply client filter if provided
+  if (filter?.clientId) {
+    query = query.eq('job.project.client.id', filter.clientId);
+  }
+
+  const { data: entries, error } = await query;
 
   if (error) {
     throw error;
@@ -176,4 +241,69 @@ export async function getDashboardStats(
     weeksInMonth,
     averagePerWeek,
   };
+}
+
+/**
+ * Story 5.6: Get unique clients the user has logged time to
+ * Returns only clients that appear in user's time entries
+ *
+ * Uses RPC function `get_user_clients()` for efficient DISTINCT query.
+ * Falls back to JS deduplication if RPC not available.
+ */
+export async function getUserClients(): Promise<ClientOption[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+
+  // Try optimized RPC first (uses DISTINCT in PostgreSQL)
+  const { data: rpcClients, error: rpcError } = await supabase.rpc('get_user_clients');
+
+  if (!rpcError && rpcClients) {
+    return rpcClients.map((c: { id: string; name: string }) => ({
+      id: c.id,
+      name: c.name,
+    }));
+  }
+
+  // Fallback: Query entries and deduplicate in JS
+  const { data: entries, error } = await supabase
+    .from('time_entries')
+    .select(
+      `
+      job:jobs!inner(
+        project:projects!inner(
+          client:clients!inner(id, name)
+        )
+      )
+    `
+    )
+    .eq('user_id', user.id)
+    .is('deleted_at', null);
+
+  if (error) {
+    throw error;
+  }
+
+  // Extract unique clients using Map for O(1) lookup
+  const clientMap = new Map<string, string>();
+
+  for (const entry of entries || []) {
+    const job = entry.job as { project?: { client?: { id: string; name: string } } } | null;
+    const client = job?.project?.client;
+
+    if (client && !clientMap.has(client.id)) {
+      clientMap.set(client.id, client.name);
+    }
+  }
+
+  // Convert to array and sort alphabetically
+  return Array.from(clientMap.entries())
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'en'));
 }

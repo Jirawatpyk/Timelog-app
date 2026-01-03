@@ -8,10 +8,11 @@
 export type Period = 'today' | 'week' | 'month';
 
 /**
- * Story 5.6: Filter state for dashboard entries
+ * Story 5.6, 5.7: Filter state for dashboard entries
  */
 export interface FilterState {
   clientId?: string;
+  searchQuery?: string; // Story 5.7: Text search query (min 2 chars)
   // Future: serviceId, dateRange, etc.
 }
 
@@ -48,5 +49,5 @@ export interface DashboardStats {
 }
 
 export interface DashboardPageProps {
-  searchParams: Promise<{ period?: string; client?: string }>;
+  searchParams: Promise<{ period?: string; client?: string; q?: string }>;
 }

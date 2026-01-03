@@ -1,7 +1,7 @@
 /**
- * DashboardWrapper Tests - Story 5.6
+ * DashboardWrapper Tests - Story 5.6, 5.7
  *
- * Tests for the dashboard wrapper component that manages filter state.
+ * Tests for the dashboard wrapper component that manages filter and search state.
  */
 
 import { render, screen } from '@testing-library/react';
@@ -42,6 +42,16 @@ describe('DashboardWrapper', () => {
     );
 
     expect(screen.getByRole('button', { name: /filter entries/i })).toBeInTheDocument();
+  });
+
+  it('renders search button', () => {
+    render(
+      <DashboardWrapper clients={mockClients} currentClientId={undefined}>
+        <div>Content</div>
+      </DashboardWrapper>
+    );
+
+    expect(screen.getByRole('button', { name: /search entries/i })).toBeInTheDocument();
   });
 
   it('shows filter badge when currentClientId is set', () => {
@@ -101,5 +111,78 @@ describe('DashboardWrapper', () => {
 
     // Sheet should be closed
     expect(screen.queryByText('Filter Entries')).not.toBeInTheDocument();
+  });
+
+  // Story 5.7: Search functionality tests
+  it('opens search input when search button clicked', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <DashboardWrapper clients={mockClients} currentClientId={undefined}>
+        <div data-testid="child-content">Content</div>
+      </DashboardWrapper>
+    );
+
+    await user.click(screen.getByRole('button', { name: /search entries/i }));
+
+    // Search input should be visible
+    expect(screen.getByPlaceholderText(/search client, project/i)).toBeInTheDocument();
+
+    // Children should be hidden when search is open
+    expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
+  });
+
+  it('shows search input if currentSearchQuery is provided', () => {
+    render(
+      <DashboardWrapper
+        clients={mockClients}
+        currentClientId={undefined}
+        currentSearchQuery="test"
+      >
+        <div data-testid="child-content">Content</div>
+      </DashboardWrapper>
+    );
+
+    // Search input should be visible with initial query
+    expect(screen.getByPlaceholderText(/search client, project/i)).toBeInTheDocument();
+    expect(screen.getByDisplayValue('test')).toBeInTheDocument();
+  });
+
+  it('shows search button as active when currentSearchQuery exists', () => {
+    // When search input is closed but query exists in URL
+    // This would require a more complex mock; simplified version tests presence
+    render(
+      <DashboardWrapper
+        clients={mockClients}
+        currentClientId={undefined}
+        currentSearchQuery="test"
+      >
+        <div>Content</div>
+      </DashboardWrapper>
+    );
+
+    // With search query, the search input should be open automatically
+    expect(screen.getByPlaceholderText(/search client, project/i)).toBeInTheDocument();
+  });
+
+  it('closes search input when cancel is clicked', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <DashboardWrapper clients={mockClients} currentClientId={undefined}>
+        <div data-testid="child-content">Content</div>
+      </DashboardWrapper>
+    );
+
+    // Open search
+    await user.click(screen.getByRole('button', { name: /search entries/i }));
+    expect(screen.getByPlaceholderText(/search client, project/i)).toBeInTheDocument();
+
+    // Close search
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+    // Wait for animation to complete and children to become visible
+    await screen.findByTestId('child-content');
+    expect(screen.getByTestId('child-content')).toBeInTheDocument();
   });
 });

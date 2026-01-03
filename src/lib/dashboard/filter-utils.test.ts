@@ -12,7 +12,6 @@ import {
   hasActiveSearch,
   MIN_SEARCH_LENGTH,
 } from './filter-utils';
-import type { FilterState } from '@/types/dashboard';
 
 describe('getFilterFromSearchParams', () => {
   it('returns empty filter when no params', () => {

@@ -1,8 +1,8 @@
 /**
- * Dashboard Types - Story 5.1, 5.6
+ * Dashboard Types - Story 5.1, 5.6, 5.7
  *
  * Types for the Personal Dashboard feature including
- * period selection, statistics display, and filtering.
+ * period selection, statistics display, filtering, and search.
  */
 
 export type Period = 'today' | 'week' | 'month';

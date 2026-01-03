@@ -171,7 +171,6 @@ describe('getUserClients', () => {
  */
 describe('getUserEntries search filtering', () => {
   const mockGetUser = vi.fn();
-  const mockOrder = vi.fn();
 
   // Sample entries for search testing
   const sampleEntries: TimeEntryWithDetails[] = [

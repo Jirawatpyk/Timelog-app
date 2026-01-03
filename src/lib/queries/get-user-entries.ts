@@ -118,6 +118,7 @@ function filterEntriesBySearch(
  *
  * Story 5.4: Added period parameter for monthly stats calculation
  * Story 5.6: Added filter parameter for client filtering
+ * Story 5.7: Added search filter support for stats to reflect search results
  */
 export async function getDashboardStats(
   dateRange: DateRange,
@@ -135,17 +136,24 @@ export async function getDashboardStats(
   }
 
   // Build base query for stats calculation
+  // Story 5.7: Include all searchable fields for client-side search filtering
   let query = supabase
     .from('time_entries')
     .select(
       `
       duration_minutes,
       entry_date,
+      notes,
       job:jobs!inner(
+        name,
+        job_no,
         project:projects!inner(
+          name,
           client:clients!inner(id, name)
         )
-      )
+      ),
+      service:services(name),
+      task:tasks(name)
     `
     )
     .eq('user_id', user.id)
@@ -158,21 +166,45 @@ export async function getDashboardStats(
     query = query.eq('job.project.client.id', filter.clientId);
   }
 
-  const { data: entries, error } = await query;
+  const { data: rawEntries, error } = await query;
 
   if (error) {
     throw error;
   }
 
+  // Story 5.7: Apply client-side search filter for stats consistency
+  let entries = rawEntries || [];
+  if (filter?.searchQuery && filter.searchQuery.length >= 2) {
+    const searchLower = filter.searchQuery.toLowerCase();
+    entries = entries.filter((entry) => {
+      const job = entry.job as { name?: string; job_no?: string; project?: { name?: string; client?: { name?: string } } } | null;
+      const service = entry.service as { name?: string } | null;
+      const task = entry.task as { name?: string } | null;
+
+      const searchableFields = [
+        job?.project?.client?.name,
+        job?.project?.name,
+        job?.name,
+        job?.job_no,
+        service?.name,
+        task?.name,
+        entry.notes,
+      ];
+      return searchableFields.some(
+        (field) => field?.toLowerCase().includes(searchLower)
+      );
+    });
+  }
+
   // Calculate total hours
   const totalMinutes =
-    entries?.reduce((sum, e) => sum + (e.duration_minutes || 0), 0) || 0;
+    entries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0) || 0;
   const totalHours = totalMinutes / 60;
 
   // Calculate top client
   const clientHours: Record<string, { name: string; hours: number }> = {};
 
-  entries?.forEach((entry) => {
+  entries.forEach((entry) => {
     // Type assertion for nested query result
     const job = entry.job as { project?: { client?: { id: string; name: string } } } | null;
     const client = job?.project?.client;
@@ -198,7 +230,7 @@ export async function getDashboardStats(
   // Calculate days with entries for week and month periods
   if (period === 'week' || period === 'month') {
     const uniqueDates = new Set(
-      entries?.map((e) => (e as { entry_date: string }).entry_date) || []
+      entries.map((e) => (e as { entry_date: string }).entry_date)
     );
     daysWithEntries = uniqueDates.size;
 
@@ -234,7 +266,7 @@ export async function getDashboardStats(
 
   return {
     totalHours,
-    entryCount: entries?.length || 0,
+    entryCount: entries.length,
     topClient,
     daysWithEntries,
     averagePerDay,

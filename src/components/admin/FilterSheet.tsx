@@ -7,15 +7,15 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetFooter,
   SheetTrigger,
+  SheetClose,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
@@ -62,13 +62,18 @@ export function FilterSheet({
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-xl px-6 pt-2 pb-6">
-        <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-muted" />
-        <SheetHeader className="p-0 mb-2">
+      <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-xl px-6 pt-3 pb-6 [&>button]:hidden">
+        <div className="flex items-center justify-between mb-3">
           <SheetTitle>{title}</SheetTitle>
-        </SheetHeader>
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </SheetClose>
+        </div>
         <div className="flex flex-col gap-4 py-2">{children}</div>
-        <SheetFooter className="flex-row gap-2">
+        <SheetFooter className="flex-row gap-2 p-0">
           <Button variant="outline" onClick={onClear} className="flex-1">
             Clear All
           </Button>
@@ -76,6 +81,8 @@ export function FilterSheet({
             Apply{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </Button>
         </SheetFooter>
+        {/* Bottom safe area spacer for iOS home indicator */}
+        <div className="h-4 shrink-0" />
       </SheetContent>
     </Sheet>
   );

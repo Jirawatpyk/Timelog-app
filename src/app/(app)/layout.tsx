@@ -3,6 +3,7 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import { AuthStateListener } from '@/components/shared/auth-state-listener';
 import { UserProfileDropdown } from '@/components/shared/user-profile-dropdown';
 import { DraftCleanup } from '@/components/shared/draft-cleanup';
+import { InstallPrompt } from '@/components/shared/InstallPrompt';
 import { BottomNav, Sidebar } from '@/components/navigation';
 import { hasEnvVars } from '@/lib/utils';
 import { CalendarClock } from 'lucide-react';
@@ -77,6 +78,9 @@ export default function ProtectedLayout({
 
       {/* Bottom Navigation - Story 4.1 (mobile only) */}
       <BottomNav />
+
+      {/* PWA Install Prompt - Story 8.1 */}
+      <InstallPrompt />
     </AuthStateListener>
   );
 }

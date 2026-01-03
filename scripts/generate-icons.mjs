@@ -6,7 +6,8 @@
  */
 
 import sharp from 'sharp';
-import { mkdir } from 'fs/promises';
+import pngToIco from 'png-to-ico';
+import { mkdir, writeFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -107,19 +108,26 @@ async function generateIcons() {
     console.log(`✓ Generated ${splash.name} (${splash.width}x${splash.height})`);
   }
 
-  // Generate favicon.ico (using 32x32 size)
+  // Generate favicon.ico with multiple sizes (proper ICO format)
   console.log('\nGenerating favicon.ico...');
+  const favicon16 = await sharp(Buffer.from(createIconSvg(16)))
+    .resize(16, 16)
+    .png()
+    .toBuffer();
   const favicon32 = await sharp(Buffer.from(createIconSvg(32)))
     .resize(32, 32)
     .png()
     .toBuffer();
+  const favicon48 = await sharp(Buffer.from(createIconSvg(48)))
+    .resize(48, 48)
+    .png()
+    .toBuffer();
 
-  // For favicon.ico, we'll just use the 32x32 as a simple ico
-  // (proper .ico generation requires additional libraries)
-  await sharp(favicon32)
-    .toFile(join(projectRoot, 'public', 'favicon.ico'));
+  // Create proper multi-resolution ICO file
+  const icoBuffer = await pngToIco([favicon16, favicon32, favicon48]);
+  await writeFile(join(projectRoot, 'public', 'favicon.ico'), icoBuffer);
 
-  console.log('✓ Generated favicon.ico');
+  console.log('✓ Generated favicon.ico (16x16, 32x32, 48x48)');
 
   console.log('\n✅ All PWA assets generated successfully!');
   console.log('\nFiles created:');

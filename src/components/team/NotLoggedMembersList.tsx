@@ -8,9 +8,13 @@ import type { TeamMemberWithStats } from '@/types/team';
 
 interface NotLoggedMembersListProps {
   members: TeamMemberWithStats[];
+  showDepartmentName?: boolean;
 }
 
-export function NotLoggedMembersList({ members }: NotLoggedMembersListProps) {
+export function NotLoggedMembersList({
+  members,
+  showDepartmentName = false,
+}: NotLoggedMembersListProps) {
   // All logged - success state!
   if (members.length === 0) {
     return (
@@ -55,7 +59,11 @@ export function NotLoggedMembersList({ members }: NotLoggedMembersListProps) {
       <CardContent>
         <div className="space-y-2">
           {members.map((member) => (
-            <NotLoggedMemberCard key={member.id} member={member} />
+            <NotLoggedMemberCard
+              key={member.id}
+              member={member}
+              showDepartmentName={showDepartmentName}
+            />
           ))}
         </div>
       </CardContent>

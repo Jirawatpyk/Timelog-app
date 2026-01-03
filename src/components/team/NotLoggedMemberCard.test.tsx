@@ -147,4 +147,45 @@ describe('NotLoggedMemberCard', () => {
     const card = container.firstChild as HTMLElement;
     expect(card.className).toContain('p-3');
   });
+
+  // Story 6.5: Department name display tests
+  describe('showDepartmentName prop', () => {
+    it('does not show department name by default', () => {
+      vi.setSystemTime(new Date('2025-01-01T10:00:00'));
+      render(<NotLoggedMemberCard member={baseMember} />);
+
+      expect(screen.queryByText('Department A')).not.toBeInTheDocument();
+    });
+
+    it('shows department name when showDepartmentName is true', () => {
+      vi.setSystemTime(new Date('2025-01-01T10:00:00'));
+      render(
+        <NotLoggedMemberCard member={baseMember} showDepartmentName={true} />
+      );
+
+      expect(screen.getByText('Department A')).toBeInTheDocument();
+    });
+
+    it('does not show department name when showDepartmentName is false', () => {
+      vi.setSystemTime(new Date('2025-01-01T10:00:00'));
+      render(
+        <NotLoggedMemberCard member={baseMember} showDepartmentName={false} />
+      );
+
+      expect(screen.queryByText('Department A')).not.toBeInTheDocument();
+    });
+
+    it('renders department badge with correct styling', () => {
+      vi.setSystemTime(new Date('2025-01-01T10:00:00'));
+      render(
+        <NotLoggedMemberCard member={baseMember} showDepartmentName={true} />
+      );
+
+      const badge = screen.getByText('Department A');
+      expect(badge.className).toContain('text-xs');
+      expect(badge.className).toContain('text-muted-foreground');
+      expect(badge.className).toContain('bg-muted');
+      expect(badge.className).toContain('rounded');
+    });
+  });
 });

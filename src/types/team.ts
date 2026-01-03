@@ -1,5 +1,7 @@
 // src/types/team.ts
 
+import type { DepartmentOption } from './domain';
+
 export interface TeamMember {
   id: string;
   email: string;
@@ -9,13 +11,11 @@ export interface TeamMember {
   role: 'staff' | 'manager' | 'admin' | 'super_admin';
 }
 
-export interface ManagerDepartment {
-  id: string;
-  name: string;
-}
+// Note: ManagerDepartment removed in favor of DepartmentOption from domain.ts
+// to avoid naming confusion with ManagerDepartment DB row type
 
 export interface TeamDashboardData {
-  departments: ManagerDepartment[];
+  departments: DepartmentOption[];
   members: TeamMember[];
   // Stats will be added in Story 6.4
 }

@@ -1,10 +1,13 @@
 /**
- * Team Components - Stories 6.1, 6.2, 6.3, 6.4, 6.5
+ * Team Components - Stories 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
  *
  * Barrel exports for team dashboard components
  */
 
 export { TeamDashboard } from './TeamDashboard';
+export type { TeamDashboardProps } from './TeamDashboard';
+export { TeamDashboardClient } from './TeamDashboardClient';
+export { TeamHeader } from './TeamHeader';
 export { TeamStatsCard } from './TeamStatsCard';
 export { TeamPeriodSelector } from './TeamPeriodSelector';
 export { WeeklyBreakdown } from './WeeklyBreakdown';

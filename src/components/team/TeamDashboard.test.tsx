@@ -10,7 +10,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TeamDashboard } from './TeamDashboard';
-import type { ManagerDepartment, TeamMembersGrouped } from '@/types/team';
+import type { DepartmentOption } from '@/types/domain';
+import type { TeamMembersGrouped } from '@/types/team';
 
 // Mock date-fns
 vi.mock('date-fns', () => ({
@@ -28,7 +29,7 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/team',
 }));
 
-const mockDepartments: ManagerDepartment[] = [
+const mockDepartments: DepartmentOption[] = [
   { id: 'dept-1', name: 'Engineering' },
   { id: 'dept-2', name: 'Marketing' },
 ];

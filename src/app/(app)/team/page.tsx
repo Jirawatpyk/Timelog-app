@@ -8,8 +8,9 @@ import {
   getTeamStats,
   getWeeklyBreakdown,
 } from '@/lib/queries/team';
-import { TeamDashboard } from '@/components/team/TeamDashboard';
+import { TeamDashboardClient } from '@/components/team/TeamDashboardClient';
 import { TeamDashboardSkeleton } from '@/components/team/TeamDashboardSkeleton';
+import { TeamDataProvider } from '@/app/(app)/team/components/TeamDataProvider';
 import type { TeamStatsPeriod } from '@/types/team';
 
 interface TeamPageProps {
@@ -30,16 +31,18 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
   const departmentFilter = params.dept || 'all';
 
   return (
-    <div className="flex flex-col h-full">
-      <Suspense fallback={<TeamDashboardSkeleton />}>
-        <TeamDashboardContent
-          userId={userId}
-          isAdmin={isAdmin}
-          period={period}
-          departmentFilter={departmentFilter}
-        />
-      </Suspense>
-    </div>
+    <TeamDataProvider>
+      <div className="flex flex-col h-full">
+        <Suspense fallback={<TeamDashboardSkeleton />}>
+          <TeamDashboardContent
+            userId={userId}
+            isAdmin={isAdmin}
+            period={period}
+            departmentFilter={departmentFilter}
+          />
+        </Suspense>
+      </div>
+    </TeamDataProvider>
   );
 }
 
@@ -93,7 +96,7 @@ async function TeamDashboardContent({
   const showDepartmentFilter = departments.length > 1;
 
   return (
-    <TeamDashboard
+    <TeamDashboardClient
       departments={departments}
       membersGrouped={membersGrouped}
       period={period}

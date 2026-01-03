@@ -100,8 +100,8 @@ development_status:
   6-2-team-members-who-logged-today: done
   6-3-team-members-who-havent-logged-today: done
   6-4-aggregated-team-hours: done
-  6-5-multi-department-support: in-progress
-  6-6-near-real-time-updates: ready-for-dev
+  6-5-multi-department-support: done
+  6-6-near-real-time-updates: in-progress
   epic-6-retrospective: optional
 
   # Epic 7: User Administration (7 stories)

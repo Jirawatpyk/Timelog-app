@@ -215,8 +215,8 @@ export async function getTeamMembersWithTodayStats(
   // Sort logged by hours descending
   logged.sort((a, b) => b.totalHours - a.totalHours);
 
-  // Sort notLogged alphabetically
-  notLogged.sort((a, b) => a.displayName.localeCompare(b.displayName, 'th'));
+  // Sort notLogged alphabetically (English locale per project-context.md)
+  notLogged.sort((a, b) => a.displayName.localeCompare(b.displayName, 'en'));
 
   return { logged, notLogged };
 }

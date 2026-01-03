@@ -184,4 +184,54 @@ describe('LoggedMemberCard', () => {
 
     expect(screen.getByText('1 entry')).toBeInTheDocument();
   });
+
+  // Story 6.5: Department name display tests
+  describe('showDepartmentName prop', () => {
+    it('does not show department name by default', () => {
+      render(
+        <LoggedMemberCard
+          member={{ ...baseMember, totalHours: 5.0, entryCount: 2 }}
+        />
+      );
+
+      expect(screen.queryByText('Department A')).not.toBeInTheDocument();
+    });
+
+    it('shows department name when showDepartmentName is true', () => {
+      render(
+        <LoggedMemberCard
+          member={{ ...baseMember, totalHours: 5.0, entryCount: 2 }}
+          showDepartmentName={true}
+        />
+      );
+
+      expect(screen.getByText('Department A')).toBeInTheDocument();
+    });
+
+    it('does not show department name when showDepartmentName is false', () => {
+      render(
+        <LoggedMemberCard
+          member={{ ...baseMember, totalHours: 5.0, entryCount: 2 }}
+          showDepartmentName={false}
+        />
+      );
+
+      expect(screen.queryByText('Department A')).not.toBeInTheDocument();
+    });
+
+    it('renders department badge with correct styling', () => {
+      const { container } = render(
+        <LoggedMemberCard
+          member={{ ...baseMember, totalHours: 5.0, entryCount: 2 }}
+          showDepartmentName={true}
+        />
+      );
+
+      const badge = screen.getByText('Department A');
+      expect(badge.className).toContain('text-xs');
+      expect(badge.className).toContain('text-muted-foreground');
+      expect(badge.className).toContain('bg-muted');
+      expect(badge.className).toContain('rounded');
+    });
+  });
 });

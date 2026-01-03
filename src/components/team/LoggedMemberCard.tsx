@@ -6,10 +6,14 @@ import type { TeamMemberWithStats } from '@/types/team';
 
 interface LoggedMemberCardProps {
   member: TeamMemberWithStats;
+  showDepartmentName?: boolean;
 }
 
-export function LoggedMemberCard({ member }: LoggedMemberCardProps) {
-  const { displayName, totalHours, entryCount, isComplete } = member;
+export function LoggedMemberCard({
+  member,
+  showDepartmentName = false,
+}: LoggedMemberCardProps) {
+  const { displayName, totalHours, entryCount, isComplete, departmentName } = member;
 
   return (
     <div className="flex items-center gap-3 p-3 rounded-lg bg-card border">
@@ -18,7 +22,14 @@ export function LoggedMemberCard({ member }: LoggedMemberCardProps) {
 
       {/* Name and entries */}
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm truncate">{displayName}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm truncate">{displayName}</p>
+          {showDepartmentName && (
+            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              {departmentName}
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
           {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
         </p>

@@ -110,7 +110,7 @@ export function AddJobDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="icon" className="sm:size-auto sm:px-4">
+        <Button size="icon" className="sm:w-auto sm:px-4">
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline sm:ml-1">Add Job</span>
         </Button>

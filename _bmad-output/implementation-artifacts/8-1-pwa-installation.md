@@ -1,6 +1,6 @@
 # Story 8.1: PWA Installation
 
-## Status: review
+## Status: done
 
 ## Story
 

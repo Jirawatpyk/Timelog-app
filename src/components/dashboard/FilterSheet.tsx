@@ -75,15 +75,15 @@ export function FilterSheet({
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[300px]">
-        <SheetHeader>
+      <SheetContent side="bottom" className="h-auto max-h-[400px]">
+        <SheetHeader className="px-6">
           <SheetTitle>Filter Entries</SheetTitle>
         </SheetHeader>
 
-        <div className="py-6">
+        <div className="px-6 py-6">
           <label className="text-sm font-medium mb-2 block">Client</label>
           <Select value={selectedClient} onValueChange={setSelectedClient}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Client" />
             </SelectTrigger>
             <SelectContent>
@@ -96,12 +96,14 @@ export function FilterSheet({
           </Select>
         </div>
 
-        <SheetFooter className="flex gap-2">
+        <SheetFooter className="flex gap-2 px-6">
           <Button variant="outline" onClick={handleClear}>
             Clear
           </Button>
           <Button onClick={handleApply}>Apply Filter</Button>
         </SheetFooter>
+        {/* Bottom safe area spacer for iOS home indicator */}
+        <div className="h-4 shrink-0" />
       </SheetContent>
     </Sheet>
   );

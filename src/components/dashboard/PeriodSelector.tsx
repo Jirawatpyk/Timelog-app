@@ -74,7 +74,7 @@ export function PeriodSelector({ currentPeriod }: PeriodSelectorProps) {
           aria-controls={`panel-${period.value}`}
           tabIndex={currentPeriod === period.value ? 0 : -1}
           className={cn(
-            'flex-1 min-h-[44px] px-4 py-2 rounded-md',
+            'flex-1 min-h-[44px] px-3 py-2 rounded-md whitespace-nowrap',
             'text-sm font-medium transition-all duration-200',
             'touch-manipulation focus-visible:outline-none',
             'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',

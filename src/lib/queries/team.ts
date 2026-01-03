@@ -87,14 +87,17 @@ export async function getTeamMembers(
     } | null;
   };
 
-  return (data || []).map((user: UserRow) => ({
-    id: user.id,
-    email: user.email,
-    displayName: user.display_name || user.email.split('@')[0],
-    departmentId: user.department_id,
-    departmentName: user.department?.name || '',
-    role: user.role as 'staff' | 'manager' | 'admin' | 'super_admin',
-  }));
+  // Filter and map (skip any without department_id for data integrity)
+  return (data || [])
+    .filter((user: UserRow) => user.department_id && user.department)
+    .map((user: UserRow) => ({
+      id: user.id,
+      email: user.email,
+      displayName: user.display_name || user.email.split('@')[0],
+      departmentId: user.department_id!,
+      departmentName: user.department!.name,
+      role: user.role as 'staff' | 'manager' | 'admin' | 'super_admin',
+    }));
 }
 
 export async function getTeamMembersWithTodayStats(
@@ -161,30 +164,33 @@ export async function getTeamMembersWithTodayStats(
     } | null;
   };
 
-  (members || []).forEach((member: UserRow) => {
-    const stats = statsMap.get(member.id);
-    const totalHours = stats ? stats.totalMinutes / 60 : 0;
-    const entryCount = stats?.count || 0;
+  // Filter and map members (skip any without department_id for data integrity)
+  (members || [])
+    .filter((member: UserRow) => member.department_id && member.department)
+    .forEach((member: UserRow) => {
+      const stats = statsMap.get(member.id);
+      const totalHours = stats ? stats.totalMinutes / 60 : 0;
+      const entryCount = stats?.count || 0;
 
-    const memberWithStats: TeamMemberWithStats = {
-      id: member.id,
-      email: member.email,
-      displayName: member.display_name || member.email.split('@')[0],
-      departmentId: member.department_id || '',
-      departmentName: member.department?.name || '',
-      role: member.role as 'staff' | 'manager' | 'admin' | 'super_admin',
-      totalHours,
-      entryCount,
-      hasLoggedToday: entryCount > 0,
-      isComplete: totalHours >= 8,
-    };
+      const memberWithStats: TeamMemberWithStats = {
+        id: member.id,
+        email: member.email,
+        displayName: member.display_name || member.email.split('@')[0],
+        departmentId: member.department_id!,
+        departmentName: member.department!.name,
+        role: member.role as 'staff' | 'manager' | 'admin' | 'super_admin',
+        totalHours,
+        entryCount,
+        hasLoggedToday: entryCount > 0,
+        isComplete: totalHours >= 8,
+      };
 
-    if (entryCount > 0) {
-      logged.push(memberWithStats);
-    } else {
-      notLogged.push(memberWithStats);
-    }
-  });
+      if (entryCount > 0) {
+        logged.push(memberWithStats);
+      } else {
+        notLogged.push(memberWithStats);
+      }
+    });
 
   // Sort logged by hours descending
   logged.sort((a, b) => b.totalHours - a.totalHours);

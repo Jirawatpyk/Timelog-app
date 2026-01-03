@@ -1,6 +1,6 @@
 // src/components/team/LoggedMemberCard.tsx
 import { Check } from 'lucide-react';
-import { MemberAvatar } from '@/components/shared/MemberAvatar';
+import { MemberAvatar } from '@/components/team/MemberAvatar';
 import { cn } from '@/lib/utils';
 import type { TeamMemberWithStats } from '@/types/team';
 
@@ -19,7 +19,9 @@ export function LoggedMemberCard({ member }: LoggedMemberCardProps) {
       {/* Name and entries */}
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{displayName}</p>
-        <p className="text-xs text-muted-foreground">{entryCount} entries</p>
+        <p className="text-xs text-muted-foreground">
+          {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
+        </p>
       </div>
 
       {/* Hours and indicator */}

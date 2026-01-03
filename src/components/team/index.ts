@@ -9,5 +9,6 @@ export { TeamStatsCard } from './TeamStatsCard';
 export { TeamMembersList } from './TeamMembersList';
 export { LoggedMembersList } from './LoggedMembersList';
 export { LoggedMemberCard } from './LoggedMemberCard';
+export { MemberAvatar } from './MemberAvatar';
 export { EmptyTeamState } from './EmptyTeamState';
 export { TeamDashboardSkeleton } from './TeamDashboardSkeleton';

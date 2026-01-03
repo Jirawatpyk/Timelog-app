@@ -15,15 +15,15 @@ test.describe('Team Logged Members (Story 6.2)', () => {
 
   test('AC1: Displays logged section with member count', async ({ page }) => {
     // Check section header
-    await expect(page.getByText('ลงแล้ว')).toBeVisible();
+    await expect(page.getByText('Logged Today')).toBeVisible();
 
-    // Check count format (X คน)
-    await expect(page.locator('text=/\\(\\d+ คน\\)/')).toBeVisible();
+    // Check count format (X people)
+    await expect(page.locator('text=/\\(\\d+ people\\)/')).toBeVisible();
   });
 
   test('AC2: Shows member row with name, hours, and entry count', async ({ page }) => {
     // Wait for logged members section to load
-    const loggedSection = page.locator('text=ลงแล้ว').locator('..');
+    const loggedSection = page.locator('text=Logged Today').locator('..');
 
     // Check that at least one member card exists (if there's data)
     const memberCards = loggedSection.locator('.border.rounded-lg');
@@ -35,17 +35,17 @@ test.describe('Team Logged Members (Story 6.2)', () => {
       // Check for member name (any text that looks like a name)
       await expect(firstCard.locator('.font-medium.text-sm')).toBeVisible();
 
-      // Check for hours display (format: X.X ชม.)
-      await expect(firstCard.locator('text=/\\d+\\.\\d+ ชม\\./')).toBeVisible();
+      // Check for hours display (format: X.X hrs)
+      await expect(firstCard.locator('text=/\\d+\\.\\d+ hrs/')).toBeVisible();
 
-      // Check for entry count (format: Y รายการ)
-      await expect(firstCard.locator('text=/\\d+ รายการ/')).toBeVisible();
+      // Check for entry count (format: Y entries)
+      await expect(firstCard.locator('text=/\\d+ entr(y|ies)/')).toBeVisible();
     }
   });
 
   test('AC3: Members sorted by total hours descending', async ({ page }) => {
-    const loggedSection = page.locator('text=ลงแล้ว').locator('..');
-    const hourElements = loggedSection.locator('text=/\\d+\\.\\d+ ชม\\./');
+    const loggedSection = page.locator('text=Logged Today').locator('..');
+    const hourElements = loggedSection.locator('text=/\\d+\\.\\d+ hrs/');
 
     const count = await hourElements.count();
 
@@ -68,14 +68,14 @@ test.describe('Team Logged Members (Story 6.2)', () => {
   });
 
   test('AC4: Shows green checkmark for 8+ hours', async ({ page }) => {
-    const loggedSection = page.locator('text=ลงแล้ว').locator('..');
+    const loggedSection = page.locator('text=Logged Today').locator('..');
     const memberCards = loggedSection.locator('.border.rounded-lg');
 
     const count = await memberCards.count();
 
     for (let i = 0; i < count; i++) {
       const card = memberCards.nth(i);
-      const hoursText = await card.locator('text=/\\d+\\.\\d+ ชม\\./').textContent();
+      const hoursText = await card.locator('text=/\\d+\\.\\d+ hrs/').textContent();
       const hoursMatch = hoursText?.match(/(\d+\.\d+)/);
 
       if (hoursMatch) {
@@ -83,7 +83,7 @@ test.describe('Team Logged Members (Story 6.2)', () => {
 
         if (hours >= 8) {
           // Should have green text
-          const hoursElement = card.locator('text=/\\d+\\.\\d+ ชม\\./');
+          const hoursElement = card.locator('text=/\\d+\\.\\d+ hrs/');
           await expect(hoursElement).toHaveClass(/text-green-600/);
 
           // Should have checkmark icon
@@ -96,14 +96,14 @@ test.describe('Team Logged Members (Story 6.2)', () => {
   test('AC5: Partial day displays neutral color without negative indicators', async ({
     page,
   }) => {
-    const loggedSection = page.locator('text=ลงแล้ว').locator('..');
+    const loggedSection = page.locator('text=Logged Today').locator('..');
     const memberCards = loggedSection.locator('.border.rounded-lg');
 
     const count = await memberCards.count();
 
     for (let i = 0; i < count; i++) {
       const card = memberCards.nth(i);
-      const hoursText = await card.locator('text=/\\d+\\.\\d+ ชม\\./').textContent();
+      const hoursText = await card.locator('text=/\\d+\\.\\d+ hrs/').textContent();
       const hoursMatch = hoursText?.match(/(\d+\.\d+)/);
 
       if (hoursMatch) {
@@ -111,7 +111,7 @@ test.describe('Team Logged Members (Story 6.2)', () => {
 
         if (hours < 8) {
           // Should NOT have red or warning colors
-          const hoursElement = card.locator('text=/\\d+\\.\\d+ ชม\\./');
+          const hoursElement = card.locator('text=/\\d+\\.\\d+ hrs/');
           const className = await hoursElement.getAttribute('class');
 
           expect(className).not.toContain('text-red');
@@ -129,10 +129,10 @@ test.describe('Team Logged Members (Story 6.2)', () => {
   test('AC6: Shows empty state when no one logged', async ({ page }) => {
     // This test is difficult without the ability to control data
     // Checking if empty state exists and has correct text
-    const emptyText = page.getByText('ยังไม่มีใครลงวันนี้');
+    const emptyText = page.getByText('No one logged today');
 
     // Section should exist even when empty
-    await expect(page.getByText('ลงแล้ว')).toBeVisible();
+    await expect(page.getByText('Logged Today')).toBeVisible();
 
     // If empty state is visible, verify its content
     if (await emptyText.isVisible()) {
@@ -142,7 +142,7 @@ test.describe('Team Logged Members (Story 6.2)', () => {
   });
 
   test('AC7: Member avatar displays first letter of name', async ({ page }) => {
-    const loggedSection = page.locator('text=ลงแล้ว').locator('..');
+    const loggedSection = page.locator('text=Logged Today').locator('..');
     const memberCards = loggedSection.locator('.border.rounded-lg');
 
     const count = await memberCards.count();
@@ -162,7 +162,7 @@ test.describe('Team Logged Members (Story 6.2)', () => {
   });
 
   test('AC8: Tap does nothing for now (placeholder)', async ({ page }) => {
-    const loggedSection = page.locator('text=ลงแล้ว').locator('..');
+    const loggedSection = page.locator('text=Logged Today').locator('..');
     const memberCards = loggedSection.locator('.border.rounded-lg');
 
     const count = await memberCards.count();
@@ -183,17 +183,17 @@ test.describe('Team Logged Members (Story 6.2)', () => {
 
   test('Logged section shows correct visual hierarchy', async ({ page }) => {
     // Green dot indicator
-    const header = page.locator('text=ลงแล้ว').locator('..');
+    const header = page.locator('text=Logged Today').locator('..');
     await expect(header.locator('.text-green-600')).toBeVisible();
 
     // Section is a Card component
-    const card = page.locator('text=ลงแล้ว').locator('..').locator('..').locator('..');
+    const card = page.locator('text=Logged Today').locator('..').locator('..').locator('..');
     await expect(card).toHaveClass(/border/);
     await expect(card).toHaveClass(/rounded-xl/);
   });
 
   test('Member cards have proper spacing and layout', async ({ page }) => {
-    const loggedSection = page.locator('text=ลงแล้ว').locator('..');
+    const loggedSection = page.locator('text=Logged Today').locator('..');
     const memberCards = loggedSection.locator('.border.rounded-lg');
 
     const count = await memberCards.count();

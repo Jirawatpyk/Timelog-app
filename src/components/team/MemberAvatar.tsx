@@ -1,4 +1,4 @@
-// src/components/shared/MemberAvatar.tsx
+// src/components/team/MemberAvatar.tsx
 import { cn } from '@/lib/utils';
 
 interface MemberAvatarProps {

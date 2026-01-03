@@ -1,7 +1,7 @@
 /**
- * Team Queries Tests - Story 6.1
+ * Team Queries Tests - Story 6.1, 6.2
  *
- * Tests for getManagerDepartments and getTeamMembers functions.
+ * Tests for getManagerDepartments, getTeamMembers, and getTeamMembersWithTodayStats functions.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -168,7 +168,7 @@ describe('getTeamMembers', () => {
     expect(mockIn).toHaveBeenCalledWith('department_id', ['dept-1']);
   });
 
-  it('handles null department gracefully', async () => {
+  it('filters out members with null department', async () => {
     const mockData = [
       {
         id: 'user-1',
@@ -176,7 +176,15 @@ describe('getTeamMembers', () => {
         display_name: 'John Doe',
         role: 'staff',
         department_id: 'dept-1',
-        department: null, // No department data
+        department: null, // No department data - should be filtered out
+      },
+      {
+        id: 'user-2',
+        email: 'jane@example.com',
+        display_name: 'Jane Doe',
+        role: 'staff',
+        department_id: 'dept-1',
+        department: { name: 'Engineering' }, // Valid department
       },
     ];
 
@@ -194,7 +202,10 @@ describe('getTeamMembers', () => {
 
     const result = await getTeamMembers(['dept-1']);
 
-    expect(result[0].departmentName).toBe('');
+    // Only user-2 should be returned (user-1 filtered out due to null department)
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('user-2');
+    expect(result[0].departmentName).toBe('Engineering');
   });
 
   it('throws error when query fails', async () => {

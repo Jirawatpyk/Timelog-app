@@ -182,6 +182,6 @@ describe('LoggedMemberCard', () => {
       />
     );
 
-    expect(screen.getByText('1 entries')).toBeInTheDocument();
+    expect(screen.getByText('1 entry')).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 # Story 6.2: Team Members Who Logged Today
 
-Status: review
+Status: done
 
 ## Story
 
@@ -12,16 +12,16 @@ So that **I can track daily compliance**.
 
 1. **AC1: Logged Section Display**
    - Given I am on the team dashboard
-   - When viewing the "ลงแล้ว" (Logged) section
+   - When viewing the "Logged Today" section
    - Then I see a list of team members who have at least 1 entry today
-   - And the section header shows count: "ลงแล้ว (X คน)"
+   - And the section header shows count: "Logged Today (X people)"
 
 2. **AC2: Member Row Information**
    - Given a team member has logged time today
    - When viewing their row in the list
    - Then I see: Member name (display_name)
-   - And I see: Total hours today
-   - And I see: Number of entries "(Y รายการ)"
+   - And I see: Total hours today (e.g., "8.5 hrs")
+   - And I see: Number of entries "(Y entries)"
 
 3. **AC3: List Sorting**
    - Given multiple members have logged today
@@ -45,8 +45,8 @@ So that **I can track daily compliance**.
 
 6. **AC6: Empty Logged State**
    - Given no team members have logged today
-   - When viewing the "ลงแล้ว" section
-   - Then I see: "ยังไม่มีใครลงวันนี้"
+   - When viewing the "Logged Today" section
+   - Then I see: "No one logged today"
    - And the section is not hidden (shows empty state)
 
 7. **AC7: Member Avatar/Initial**
@@ -305,7 +305,7 @@ export function LoggedMemberCard({ member }: LoggedMemberCardProps) {
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{displayName}</p>
         <p className="text-xs text-muted-foreground">
-          {entryCount} รายการ
+          {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
         </p>
       </div>
 
@@ -317,7 +317,7 @@ export function LoggedMemberCard({ member }: LoggedMemberCardProps) {
             isComplete ? 'text-green-600' : 'text-foreground'
           )}
         >
-          {totalHours.toFixed(1)} ชม.
+          {totalHours.toFixed(1)} hrs
         </span>
 
         {isComplete && (
@@ -350,9 +350,9 @@ export function LoggedMembersList({ members }: LoggedMembersListProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <span className="text-green-600">●</span>
-          ลงแล้ว
+          Logged Today
           <span className="text-muted-foreground font-normal">
-            ({members.length} คน)
+            ({members.length} people)
           </span>
         </CardTitle>
       </CardHeader>
@@ -362,7 +362,7 @@ export function LoggedMembersList({ members }: LoggedMembersListProps) {
           <div className="flex flex-col items-center py-6 text-center">
             <Users className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">
-              ยังไม่มีใครลงวันนี้
+              No one logged today
             </p>
           </div>
         ) : (
@@ -512,7 +512,7 @@ describe('LoggedMemberCard', () => {
       />
     );
 
-    expect(screen.getByText('8.5 ชม.')).toHaveClass('text-green-600');
+    expect(screen.getByText('8.5 hrs')).toHaveClass('text-green-600');
     expect(screen.getByRole('img', { hidden: true })).toBeInTheDocument(); // Check icon
   });
 
@@ -523,7 +523,7 @@ describe('LoggedMemberCard', () => {
       />
     );
 
-    expect(screen.getByText('5.0 ชม.')).not.toHaveClass('text-green-600');
+    expect(screen.getByText('5.0 hrs')).not.toHaveClass('text-green-600');
   });
 
   it('displays entry count', () => {
@@ -533,7 +533,7 @@ describe('LoggedMemberCard', () => {
       />
     );
 
-    expect(screen.getByText('4 รายการ')).toBeInTheDocument();
+    expect(screen.getByText('4 entries')).toBeInTheDocument();
   });
 });
 ```
@@ -549,11 +549,11 @@ test.describe('Team Logged Members', () => {
   });
 
   test('displays logged members section', async ({ page }) => {
-    await expect(page.getByText('ลงแล้ว')).toBeVisible();
+    await expect(page.getByText('Logged Today')).toBeVisible();
   });
 
   test('shows member count in header', async ({ page }) => {
-    await expect(page.getByText(/\(\d+ คน\)/)).toBeVisible();
+    await expect(page.getByText(/\(\d+ people\)/)).toBeVisible();
   });
 
   test('sorts members by hours descending', async ({ page }) => {
@@ -580,7 +580,7 @@ test.describe('Team Logged Members', () => {
 
   test('shows empty state when no one logged', async ({ page }) => {
     // Test with user who has no team entries today
-    await expect(page.getByText('ยังไม่มีใครลงวันนี้')).toBeVisible();
+    await expect(page.getByText('No one logged today')).toBeVisible();
   });
 });
 ```
@@ -623,17 +623,18 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
   - Aggregates today's entries per user (totalHours, entryCount)
   - Groups into logged vs notLogged arrays
   - Sorts logged by hours descending, notLogged alphabetically (Thai locale)
-- ✅ Created `MemberAvatar` shared component (`src/components/shared/MemberAvatar.tsx`)
+- ✅ Created `MemberAvatar` component (`src/components/team/MemberAvatar.tsx`)
   - Shows first letter of name in colored circle
   - Supports sm/md/lg sizes
   - Generates consistent color per name using character code
+  - Moved from shared/ to team/ during code review
 - ✅ Created `LoggedMemberCard` component (`src/components/team/LoggedMemberCard.tsx`)
   - Displays avatar, name, entry count, hours
   - Green text + checkmark for 8+ hours (isComplete)
   - Neutral styling for < 8 hours (no negative indicators)
 - ✅ Created `LoggedMembersList` component (`src/components/team/LoggedMembersList.tsx`)
   - Card-based layout with header showing count
-  - Empty state: "ยังไม่มีใครลงวันนี้" with Users icon
+  - Empty state: "No one logged today" with Users icon
   - Maps members to LoggedMemberCard components
 - ✅ Updated `TeamDashboard` to use `TeamMembersGrouped` interface
   - Replaced `members` prop with `membersGrouped`
@@ -648,8 +649,8 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 ### File List
 
 **Created:**
-- `src/components/shared/MemberAvatar.tsx`
-- `src/components/shared/MemberAvatar.test.tsx`
+- `src/components/team/MemberAvatar.tsx`
+- `src/components/team/MemberAvatar.test.tsx`
 - `src/components/team/LoggedMemberCard.tsx`
 - `src/components/team/LoggedMemberCard.test.tsx`
 - `src/components/team/LoggedMembersList.tsx`
@@ -659,10 +660,19 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 **Modified:**
 - `src/types/team.ts` (added TeamMemberWithStats, TeamMembersGrouped)
 - `src/types/team.test.ts` (added type validation tests)
-- `src/lib/queries/team.ts` (added getTeamMembersWithTodayStats)
-- `src/lib/queries/team.test.ts` (added 6 query tests)
+- `src/lib/queries/team.ts` (added getTeamMembersWithTodayStats, data integrity filter)
+- `src/lib/queries/team.test.ts` (added 6 query tests, updated null handling test)
 - `src/components/team/TeamDashboard.tsx` (updated to use TeamMembersGrouped)
 - `src/components/team/TeamDashboard.test.tsx` (updated mocks and tests)
 - `src/components/team/TeamDashboardSkeleton.test.tsx` (fixed rounded-xl class)
-- `src/components/team/index.ts` (added LoggedMembersList, LoggedMemberCard exports)
+- `src/components/team/index.ts` (added LoggedMembersList, LoggedMemberCard, MemberAvatar exports)
 - `src/app/(app)/team/page.tsx` (use getTeamMembersWithTodayStats query)
+
+### Code Review Fixes
+
+- ✅ Updated ACs from Thai to English (per project-context.md)
+- ✅ Updated E2E tests to use English text patterns
+- ✅ Added entry/entries pluralization in LoggedMemberCard
+- ✅ Fixed test comment to include Story 6.2
+- ✅ Added data integrity filter (skip members without department_id)
+- ✅ Moved MemberAvatar from shared/ to team/ folder

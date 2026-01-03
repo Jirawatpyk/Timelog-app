@@ -1,4 +1,4 @@
-// src/components/shared/MemberAvatar.test.tsx
+// src/components/team/MemberAvatar.test.tsx
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemberAvatar } from './MemberAvatar';

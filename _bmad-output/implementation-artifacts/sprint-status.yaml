@@ -97,7 +97,7 @@ development_status:
   # Epic 6: Team Dashboard (6 stories)
   epic-6: in-progress
   6-1-team-dashboard-layout: done
-  6-2-team-members-who-logged-today: review
+  6-2-team-members-who-logged-today: done
   6-3-team-members-who-havent-logged-today: ready-for-dev
   6-4-aggregated-team-hours: ready-for-dev
   6-5-multi-department-support: ready-for-dev

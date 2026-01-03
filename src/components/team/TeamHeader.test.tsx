@@ -1,5 +1,5 @@
 // src/components/team/TeamHeader.test.tsx
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TeamHeader } from './TeamHeader';
 import type { DepartmentOption } from '@/types/domain';

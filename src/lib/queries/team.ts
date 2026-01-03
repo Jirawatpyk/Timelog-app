@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server';
 import { formatLocalDate } from '@/lib/utils';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, isToday } from 'date-fns';
 import type {
-  ManagerDepartment,
   TeamMember,
   TeamMemberWithStats,
   TeamMembersGrouped,

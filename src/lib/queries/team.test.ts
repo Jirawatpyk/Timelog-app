@@ -765,7 +765,9 @@ describe('getWeeklyBreakdown', () => {
   });
 
   it('marks today correctly', async () => {
-    const today = new Date().toISOString().split('T')[0];
+    // Use format from date-fns to match production code (local timezone)
+    const { format } = await import('date-fns');
+    const today = format(new Date(), 'yyyy-MM-dd');
 
     // Mock time_entries query with empty data
     mockFrom.mockImplementation(() => {

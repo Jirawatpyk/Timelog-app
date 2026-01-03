@@ -95,18 +95,18 @@ development_status:
   epic-5-retrospective: done
 
   # Epic 6: Team Dashboard (6 stories)
-  epic-6: in-progress
+  epic-6: done
   6-1-team-dashboard-layout: done
   6-2-team-members-who-logged-today: done
   6-3-team-members-who-havent-logged-today: done
   6-4-aggregated-team-hours: done
   6-5-multi-department-support: done
-  6-6-near-real-time-updates: in-progress
+  6-6-near-real-time-updates: done
   epic-6-retrospective: optional
 
   # Epic 7: User Administration (7 stories)
   epic-7: in-progress
-  7-1-user-list-view: ready-for-dev
+  7-1-user-list-view: done
   7-2-create-new-user: ready-for-dev
   7-3-edit-user-information: ready-for-dev
   7-4-deactivate-user: ready-for-dev
@@ -117,7 +117,7 @@ development_status:
 
   # Epic 8: PWA & UX Polish (9 stories)
   epic-8: in-progress
-  8-1-pwa-installation: ready-for-dev
+  8-1-pwa-installation: in-progress
   8-2-service-worker-caching: ready-for-dev
   8-3-offline-message-display: ready-for-dev
   8-4-touch-optimized-ui: ready-for-dev

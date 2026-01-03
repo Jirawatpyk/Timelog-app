@@ -1,6 +1,6 @@
 # Story 5.8: Empty States
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -66,56 +66,56 @@ So that **I understand why the list is empty and what to do**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create EmptyState Base Component** (AC: 7)
-  - [ ] 1.1 Create `src/components/dashboard/EmptyState.tsx`
-  - [ ] 1.2 Props: icon, message, description, action
-  - [ ] 1.3 Center layout with proper spacing
-  - [ ] 1.4 Muted color scheme
+- [x] **Task 1: Create EmptyState Base Component** (AC: 7)
+  - [x] 1.1 Create `src/components/dashboard/EmptyStateBase.tsx`
+  - [x] 1.2 Props: icon, title, description (ReactNode), action, secondaryAction
+  - [x] 1.3 Center layout with proper spacing
+  - [x] 1.4 Muted color scheme (bg-muted, text-muted-foreground)
 
-- [ ] **Task 2: Create Empty Period States** (AC: 1, 2, 3)
-  - [ ] 2.1 Create `EmptyTodayState` variant
-  - [ ] 2.2 Create `EmptyWeekState` variant
-  - [ ] 2.3 Create `EmptyMonthState` variant
-  - [ ] 2.4 Add "เพิ่ม Entry" CTA linking to /entry
+- [x] **Task 2: Create Empty Period States** (AC: 1, 2, 3)
+  - [x] 2.1 Create `EmptyPeriodState` with period prop (today/week/month)
+  - [x] 2.2 Uses periodConfig record for period-specific titles/icons
+  - [x] 2.3 Calendar/CalendarDays/CalendarRange icons from lucide-react
+  - [x] 2.4 Add "Add Entry" CTA linking to /entry
 
-- [ ] **Task 3: Create Empty Filter State** (AC: 4)
-  - [ ] 3.1 Create `EmptyFilterState` component (or extend base)
-  - [ ] 3.2 Accept clientName prop for message
-  - [ ] 3.3 Add "Clear Filter" action
-  - [ ] 3.4 No "Add Entry" CTA (filter context)
+- [x] **Task 3: Create Empty Filter State** (AC: 4)
+  - [x] 3.1 Refactored `EmptyFilterState` to use EmptyStateBase
+  - [x] 3.2 Accept clientName prop for message
+  - [x] 3.3 Add "Clear Filter" action
+  - [x] 3.4 No "Add Entry" CTA (filter context)
 
-- [ ] **Task 4: Update Empty Search State** (AC: 5)
-  - [ ] 4.1 Verify `EmptySearchState` from 5-7 meets requirements
-  - [ ] 4.2 Ensure consistent styling with other empty states
-  - [ ] 4.3 Display search query in message
+- [x] **Task 4: Update Empty Search State** (AC: 5)
+  - [x] 4.1 Refactored `EmptySearchState` to use EmptyStateBase
+  - [x] 4.2 Consistent styling with other empty states
+  - [x] 4.3 Display search query in message with font-medium
 
-- [ ] **Task 5: Create Combined Empty State** (AC: 6)
-  - [ ] 5.1 Determine priority: search > filter
-  - [ ] 5.2 Show appropriate message
-  - [ ] 5.3 Provide clear actions for both
+- [x] **Task 5: Create Combined Empty State** (AC: 6)
+  - [x] 5.1 Priority: search message prioritized over filter
+  - [x] 5.2 Shows both search query and client name
+  - [x] 5.3 Provides Clear Search and Clear Filter buttons
 
-- [ ] **Task 6: Create First-Time User State** (AC: 8)
-  - [ ] 6.1 Create `EmptyFirstTimeState` component
-  - [ ] 6.2 Detect first-time user (zero total entries)
-  - [ ] 6.3 Extra welcoming message and prominent CTA
+- [x] **Task 6: Create First-Time User State** (AC: 8)
+  - [x] 6.1 Create `EmptyFirstTimeState` component
+  - [x] 6.2 Detect first-time user via checkIsFirstTimeUser() query
+  - [x] 6.3 "Welcome!" title, Sparkles icon, "Add First Entry" CTA
 
-- [ ] **Task 7: Create Empty State Icons/Illustrations** (AC: 7)
-  - [ ] 7.1 Select or create simple icons (lucide-react)
-  - [ ] 7.2 Calendar icon for period empty states
-  - [ ] 7.3 Filter icon for filter empty state
-  - [ ] 7.4 Search icon for search empty state
-  - [ ] 7.5 Sparkles/star for first-time state
+- [x] **Task 7: Create Empty State Icons/Illustrations** (AC: 7)
+  - [x] 7.1 All icons from lucide-react
+  - [x] 7.2 Calendar/CalendarDays/CalendarRange for period states
+  - [x] 7.3 Filter icon for filter empty state
+  - [x] 7.4 Search icon for search empty state
+  - [x] 7.5 Sparkles for first-time state
 
-- [ ] **Task 8: Integrate Empty States in Dashboard** (AC: All)
-  - [ ] 8.1 Add logic to DashboardContent to detect empty scenarios
-  - [ ] 8.2 Pass appropriate props to empty state components
-  - [ ] 8.3 Handle priority when multiple conditions apply
+- [x] **Task 8: Integrate Empty States in Dashboard** (AC: All)
+  - [x] 8.1 Updated DashboardContent with getEmptyStateType() logic
+  - [x] 8.2 Fetches isFirstTimeUser in parallel with entries/stats
+  - [x] 8.3 Priority: Combined > Search > Filter > First-Time > Period
 
-- [ ] **Task 9: Unit & E2E Tests** (AC: All)
-  - [ ] 9.1 Test each empty state renders correctly
-  - [ ] 9.2 Test CTA navigation
-  - [ ] 9.3 Test clear filter/search actions
-  - [ ] 9.4 Test first-time user detection
+- [x] **Task 9: Unit & E2E Tests** (AC: All)
+  - [x] 9.1 47 unit tests for all empty state components
+  - [x] 9.2 CTA navigation tests (href to /entry)
+  - [x] 9.3 Clear filter/search action tests with URL param handling
+  - [x] 9.4 checkIsFirstTimeUser() query tests (6 tests)
 
 ## Dev Notes
 
@@ -633,32 +633,90 @@ test.describe('Dashboard Empty States', () => {
 
 ## Definition of Done
 
-- [ ] EmptyState base component created
-- [ ] EmptyPeriodState for today/week/month
-- [ ] EmptyFilterState with client name
-- [ ] EmptySearchState with query display
-- [ ] EmptyFirstTimeState for new users
-- [ ] All empty states use consistent styling
-- [ ] Icons from lucide-react (Calendar, Filter, Search, Sparkles)
-- [ ] "เพิ่ม Entry" CTA links to /entry
-- [ ] Clear Filter/Search actions work
-- [ ] First-time user detection working
-- [ ] Priority logic: Search > Filter > First-Time > Period
-- [ ] Warm Thai copy per UX spec
-- [ ] Unit tests for base component
-- [ ] E2E tests for all empty states
-- [ ] Mobile-friendly centered layout
+- [x] EmptyState base component created (EmptyStateBase.tsx)
+- [x] EmptyPeriodState for today/week/month
+- [x] EmptyFilterState with client name (refactored to use base)
+- [x] EmptySearchState with query display (refactored to use base)
+- [x] EmptyFirstTimeState for new users
+- [x] All empty states use consistent styling (muted colors, centered layout)
+- [x] Icons from lucide-react (Calendar, Filter, Search, Sparkles)
+- [x] "Add Entry" CTA links to /entry (English per project-context.md)
+- [x] Clear Filter/Search actions work (URL param handling)
+- [x] First-time user detection working (checkIsFirstTimeUser query)
+- [x] Priority logic: Combined > Search > Filter > First-Time > Period
+- [x] English copy per project-context.md UI standards
+- [x] Unit tests for all components (47 tests)
+- [x] Query tests for checkIsFirstTimeUser (6 tests)
+- [x] E2E tests for all empty states (12 tests)
+- [x] Mobile-friendly centered layout (py-12 px-4 text-center)
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Task 1** - Created EmptyStateBase.tsx as the reusable base component with flexible props (icon, title, description as ReactNode, action with href/onClick, secondaryAction). 9 unit tests.
+
+2. **Task 2** - Created EmptyPeriodState.tsx with periodConfig record containing today/week/month variants. Uses Calendar/CalendarDays/CalendarRange icons. 8 unit tests.
+
+3. **Task 3** - Refactored existing EmptyFilterState.tsx to use EmptyStateBase. Maintains same functionality with cleaner code. 5 unit tests preserved.
+
+4. **Task 4** - Refactored existing EmptySearchState.tsx to use EmptyStateBase. Updated description prop to accept ReactNode for styled query display. 7 unit tests preserved.
+
+5. **Task 5** - Created EmptyCombinedState.tsx for when both search AND filter are active. Shows search query prioritized, client name secondary. Dual clear buttons. 7 unit tests.
+
+6. **Task 6** - Created EmptyFirstTimeState.tsx with welcoming "Welcome!" message and Sparkles icon. Created checkIsFirstTimeUser() query function with 6 unit tests.
+
+7. **Task 7** - Icons integrated via lucide-react: Calendar (today), CalendarDays (week), CalendarRange (month), Filter, Search, Sparkles.
+
+8. **Task 8** - Updated DashboardContent.tsx with getEmptyStateType() logic. Fetches isFirstTimeUser in parallel. Priority: Combined > Search > Filter > First-Time > Period.
+
+9. **Task 9** - All 47 empty state unit tests pass. All 1380 project tests pass. No regressions.
+
+**Architecture Decision**: Used English UI copy per project-context.md ("UI Language: English only") instead of Thai copy in story spec. The story spec contained Thai text but project standards require English.
+
+**Code Review & E2E Tests**: After initial implementation, conducted adversarial code review which identified 6 issues:
+1. Language mismatch - CONFIRMED: English is correct per project-context.md
+2. EmptyCombinedState code duplication - FIXED: Refactored to use EmptyStateBase (70→60 lines)
+3. Missing E2E tests - FIXED: Created comprehensive E2E test suite (12 tests, all passing)
+4. Performance issue with checkIsFirstTimeUser - FIXED: Changed from parallel fetch to conditional fetch (only when isEmpty=true)
+5. Missing aria-label accessibility - FIXED: Added aria-label to all buttons in EmptyStateBase
+6. Redundant wrapper divs - FIXED: Removed wrapper divs from EmptyPeriodState and EmptyFirstTimeState
+
+E2E tests cover all 8 Acceptance Criteria: First-Time User State, Today/Week/Month Empty States, Filter State, Search State, Combined State, Visual Design verification, Navigation/Actions, and Priority Logic.
 
 ### File List
 
-_To be filled with all created/modified files_
+**Created:**
+- src/components/dashboard/EmptyStateBase.tsx
+- src/components/dashboard/EmptyStateBase.test.tsx
+- src/components/dashboard/EmptyPeriodState.tsx
+- src/components/dashboard/EmptyPeriodState.test.tsx
+- src/components/dashboard/EmptyCombinedState.tsx
+- src/components/dashboard/EmptyCombinedState.test.tsx
+- src/components/dashboard/EmptyFirstTimeState.tsx
+- src/components/dashboard/EmptyFirstTimeState.test.tsx
+- test/e2e/dashboard/empty-states.test.ts
+
+**Modified:**
+- src/components/dashboard/EmptyFilterState.tsx (refactored to use EmptyStateBase)
+- src/components/dashboard/EmptyFilterState.test.tsx (added beforeEach import)
+- src/components/dashboard/EmptySearchState.tsx (refactored to use EmptyStateBase)
+- src/components/dashboard/EmptyStateBase.tsx (added aria-label for accessibility)
+- src/components/dashboard/EmptyCombinedState.tsx (refactored to use EmptyStateBase)
+- src/components/dashboard/EmptyPeriodState.tsx (removed wrapper div, passed data-testid to base)
+- src/components/dashboard/EmptyFirstTimeState.tsx (removed wrapper div, passed data-testid to base)
+- src/components/dashboard/DashboardContent.tsx (integrated all empty states with priority logic + optimized checkIsFirstTimeUser)
+- src/components/dashboard/index.ts (added new component exports)
+- src/lib/queries/get-user-entries.ts (added checkIsFirstTimeUser function)
+- src/lib/queries/get-user-entries.test.ts (added checkIsFirstTimeUser tests)
+
+### Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-01-03 | Story 5.8 implementation completed - all 9 tasks done |
+| 2026-01-03 | Code review completed - 6 issues identified and fixed, E2E tests added (12 tests) |

@@ -91,7 +91,7 @@ development_status:
   5-5-total-hours-statistics: done
   5-6-filter-by-client: done
   5-7-search-entries: done
-  5-8-empty-states: ready-for-dev
+  5-8-empty-states: done
   epic-5-retrospective: optional
 
   # Epic 6: Team Dashboard (6 stories)

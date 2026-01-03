@@ -62,9 +62,9 @@ export function FilterSheet({
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-xl px-6 pt-3 pb-6">
+      <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-xl px-6 pt-2 pb-6">
         <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-muted" />
-        <SheetHeader className="pb-2">
+        <SheetHeader className="p-0 mb-2">
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-4 py-2">{children}</div>

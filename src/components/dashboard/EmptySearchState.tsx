@@ -1,15 +1,16 @@
 /**
- * EmptySearchState Component - Story 5.7
+ * EmptySearchState Component - Story 5.7, 5.8
  *
  * Displays when a search returns no results.
  * Shows the search query and provides option to clear search.
+ * AC5: Show search query in message, provide clear option
  */
 
 'use client';
 
 import { Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { EmptyStateBase } from '@/components/dashboard/EmptyStateBase';
 
 interface EmptySearchStateProps {
   query: string;
@@ -34,22 +35,18 @@ export function EmptySearchState({ query, onClear }: EmptySearchStateProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="rounded-full bg-muted p-4 mb-4">
-        <Search className="h-8 w-8 text-muted-foreground" />
-      </div>
-
-      <h3 className="text-lg font-medium mb-2">
-        No entries found
-      </h3>
-
-      <p className="text-muted-foreground mb-4">
-        No results for &quot;<span className="font-medium">{query}</span>&quot;
-      </p>
-
-      <Button variant="outline" onClick={handleClearSearch}>
-        Clear Search
-      </Button>
-    </div>
+    <EmptyStateBase
+      icon={Search}
+      title="No entries found"
+      description={
+        <>
+          No results for &quot;<span className="font-medium">{query}</span>&quot;
+        </>
+      }
+      action={{
+        label: 'Clear Search',
+        onClick: handleClearSearch,
+      }}
+    />
   );
 }

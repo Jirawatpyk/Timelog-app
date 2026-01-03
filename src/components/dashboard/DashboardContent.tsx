@@ -1,5 +1,5 @@
 /**
- * Dashboard Content - Story 5.1, 5.3, 5.4, 5.6, 5.7
+ * Dashboard Content - Story 5.1, 5.3, 5.4, 5.6, 5.7, 5.8
  *
  * Server Component that fetches and displays entries + stats for a period.
  * Uses Supabase server client (no TanStack Query per architecture).
@@ -8,16 +8,20 @@
  * Story 5.4: Uses MonthlyEntryList for month period with week grouping
  * Story 5.6: Supports client filtering with empty filter state
  * Story 5.7: Supports search with search results count and empty search state
+ * Story 5.8: Empty states with priority: Search > Combined > Filter > First-Time > Period
  */
 
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { EntryList } from '@/components/dashboard/EntryList';
 import { GroupedEntryList } from '@/components/dashboard/GroupedEntryList';
 import { MonthlyEntryList } from '@/components/dashboard/MonthlyEntryList';
+import { EmptyPeriodState } from '@/components/dashboard/EmptyPeriodState';
 import { EmptyFilterState } from '@/components/dashboard/EmptyFilterState';
 import { EmptySearchState } from '@/components/dashboard/EmptySearchState';
+import { EmptyCombinedState } from '@/components/dashboard/EmptyCombinedState';
+import { EmptyFirstTimeState } from '@/components/dashboard/EmptyFirstTimeState';
 import { SearchResultsCount } from '@/components/dashboard/SearchResultsCount';
-import { getUserEntries, getDashboardStats } from '@/lib/queries/get-user-entries';
+import { getUserEntries, getDashboardStats, checkIsFirstTimeUser } from '@/lib/queries/get-user-entries';
 import { getDateRangeForPeriod } from '@/lib/dashboard/period-utils';
 import type { Period, FilterState } from '@/types/dashboard';
 
@@ -30,18 +34,49 @@ interface DashboardContentProps {
 export async function DashboardContent({ period, filter, clientName }: DashboardContentProps) {
   const dateRange = getDateRangeForPeriod(period);
 
+  // Story 5.8: Fetch entries and stats first
   const [entries, stats] = await Promise.all([
     getUserEntries(dateRange, filter),
     getDashboardStats(dateRange, period, filter),
   ]);
 
-  // Story 5.6 AC7: Show empty filter state when filter is active but no entries
   const hasActiveFilter = !!filter?.clientId;
-  const showEmptyFilterState = hasActiveFilter && entries.length === 0 && clientName && !filter?.searchQuery;
-
-  // Story 5.7: Show empty search state when search is active but no entries
   const hasActiveSearch = !!filter?.searchQuery;
-  const showEmptySearchState = hasActiveSearch && entries.length === 0;
+  const isEmpty = entries.length === 0;
+
+  // Only check first-time user when empty (performance optimization)
+  const isFirstTimeUser = isEmpty ? await checkIsFirstTimeUser() : false;
+
+  // Story 5.8: Determine empty state type with priority
+  // Priority: Search > Combined (Search + Filter) > Filter > First-Time > Period
+  const getEmptyStateType = () => {
+    if (!isEmpty) return null;
+
+    // Combined: both search and filter active
+    if (hasActiveSearch && hasActiveFilter && clientName) {
+      return 'combined';
+    }
+
+    // Search only
+    if (hasActiveSearch) {
+      return 'search';
+    }
+
+    // Filter only
+    if (hasActiveFilter && clientName) {
+      return 'filter';
+    }
+
+    // First-time user (no entries ever)
+    if (isFirstTimeUser) {
+      return 'first-time';
+    }
+
+    // Period (no entries for this period but user has entries elsewhere)
+    return 'period';
+  };
+
+  const emptyStateType = getEmptyStateType();
 
   return (
     <div
@@ -57,15 +92,30 @@ export async function DashboardContent({ period, filter, clientName }: Dashboard
 
       <StatsCard stats={stats} period={period} />
 
-      {/* Story 5.7 AC5: Empty search state */}
-      {showEmptySearchState ? (
-        <EmptySearchState query={filter.searchQuery!} />
-      ) : showEmptyFilterState ? (
-        /* Story 5.6 AC7: Empty filter state */
-        <EmptyFilterState clientName={clientName} />
-      ) : (
+      {/* Story 5.8: Render appropriate empty state based on type */}
+      {emptyStateType === 'combined' && (
+        <EmptyCombinedState query={filter!.searchQuery!} clientName={clientName!} />
+      )}
+
+      {emptyStateType === 'search' && (
+        <EmptySearchState query={filter!.searchQuery!} />
+      )}
+
+      {emptyStateType === 'filter' && (
+        <EmptyFilterState clientName={clientName!} />
+      )}
+
+      {emptyStateType === 'first-time' && (
+        <EmptyFirstTimeState />
+      )}
+
+      {emptyStateType === 'period' && (
+        <EmptyPeriodState period={period} />
+      )}
+
+      {/* Render entry lists when not empty */}
+      {!emptyStateType && (
         <>
-          {/* Use different list component based on period */}
           {period === 'today' && <EntryList entries={entries} />}
 
           {period === 'week' && (

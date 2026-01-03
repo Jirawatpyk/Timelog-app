@@ -1,5 +1,5 @@
 /**
- * Dashboard Components - Story 5.1, 5.2, 5.3, 5.6, 5.7
+ * Dashboard Components - Story 5.1, 5.2, 5.3, 5.6, 5.7, 5.8
  *
  * Barrel export for dashboard components.
  */
@@ -34,6 +34,12 @@ export { SearchButton } from './SearchButton';
 export { SearchInput } from './SearchInput';
 export { SearchResultsCount } from './SearchResultsCount';
 export { EmptySearchState } from './EmptySearchState';
+
+// Story 5.8 - Empty state components
+export { EmptyStateBase } from './EmptyStateBase';
+export { EmptyPeriodState } from './EmptyPeriodState';
+export { EmptyCombinedState } from './EmptyCombinedState';
+export { EmptyFirstTimeState } from './EmptyFirstTimeState';
 
 // Legacy skeleton exports (Story 4.9)
 export { EntryListSkeleton, EntryCardSkeleton } from './EntryListSkeleton';

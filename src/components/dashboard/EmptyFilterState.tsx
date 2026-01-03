@@ -1,15 +1,16 @@
 /**
- * EmptyFilterState Component - Story 5.6
+ * EmptyFilterState Component - Story 5.6, 5.8
  *
  * Displays when a filter returns no results.
  * Shows the client name and provides option to clear filter.
+ * AC4: No "Add Entry" CTA (filter context, not data absence issue)
  */
 
 'use client';
 
 import { Filter } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { EmptyStateBase } from '@/components/dashboard/EmptyStateBase';
 
 interface EmptyFilterStateProps {
   clientName: string;
@@ -27,22 +28,14 @@ export function EmptyFilterState({ clientName }: EmptyFilterStateProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="rounded-full bg-muted p-4 mb-4">
-        <Filter className="h-8 w-8 text-muted-foreground" />
-      </div>
-
-      <h3 className="text-lg font-medium mb-2">
-        No entries found for {clientName}
-      </h3>
-
-      <p className="text-muted-foreground mb-4">
-        Try a different client or view all entries
-      </p>
-
-      <Button variant="outline" onClick={handleClearFilter}>
-        Clear Filter
-      </Button>
-    </div>
+    <EmptyStateBase
+      icon={Filter}
+      title={`No entries found for ${clientName}`}
+      description="Try a different client or view all entries"
+      action={{
+        label: 'Clear Filter',
+        onClick: handleClearFilter,
+      }}
+    />
   );
 }

@@ -1,10 +1,11 @@
 /**
- * User Entries Queries - Story 5.1, 5.6, 5.7
+ * User Entries Queries - Story 5.1, 5.6, 5.7, 5.8
  *
  * Server-side query functions for fetching user time entries.
  * Used by Dashboard page (Server Components).
  *
  * Story 5.7: Added search filtering across multiple fields.
+ * Story 5.8: Added first-time user detection.
  */
 
 import { createClient } from '@/lib/supabase/server';
@@ -338,4 +339,34 @@ export async function getUserClients(): Promise<ClientOption[]> {
   return Array.from(clientMap.entries())
     .map(([id, name]) => ({ id, name }))
     .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+}
+
+/**
+ * Story 5.8: Check if user is a first-time user (has zero entries ever)
+ *
+ * Used to show a welcoming empty state for new users.
+ */
+export async function checkIsFirstTimeUser(): Promise<boolean> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return false; // Not authenticated = not first-time user (will redirect to login)
+  }
+
+  const { count, error } = await supabase
+    .from('time_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .is('deleted_at', null);
+
+  if (error) {
+    // On error, assume not first-time to avoid showing wrong state
+    return false;
+  }
+
+  return count === 0;
 }

@@ -11,7 +11,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
 }));
 
-import { getUserClients, getUserEntries } from './get-user-entries';
+import { getUserClients, getUserEntries, checkIsFirstTimeUser } from './get-user-entries';
 import { createClient } from '@/lib/supabase/server';
 import type { TimeEntryWithDetails } from '@/types/domain';
 
@@ -442,5 +442,81 @@ describe('getUserEntries search filtering', () => {
 
     // The mock doesn't actually filter by clientId, but search should work
     expect(entries.every((e) => e.job.name.includes('Mobile'))).toBe(true);
+  });
+});
+
+/**
+ * Story 5.8: Tests for checkIsFirstTimeUser
+ */
+describe('checkIsFirstTimeUser', () => {
+  const mockGetUser = vi.fn();
+  const mockSelect = vi.fn();
+  const mockEq = vi.fn();
+  const mockIs = vi.fn();
+  const mockFrom = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'test-user-id' } },
+    });
+
+    // Default: user has entries (count > 0)
+    mockIs.mockResolvedValue({ count: 5, error: null });
+    mockEq.mockReturnValue({ is: mockIs });
+    mockSelect.mockReturnValue({ eq: mockEq });
+    mockFrom.mockReturnValue({ select: mockSelect });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+      auth: {
+        getUser: mockGetUser,
+      },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+  });
+
+  it('returns true when user has zero entries', async () => {
+    mockIs.mockResolvedValue({ count: 0, error: null });
+
+    const isFirstTime = await checkIsFirstTimeUser();
+
+    expect(isFirstTime).toBe(true);
+  });
+
+  it('returns false when user has entries', async () => {
+    mockIs.mockResolvedValue({ count: 10, error: null });
+
+    const isFirstTime = await checkIsFirstTimeUser();
+
+    expect(isFirstTime).toBe(false);
+  });
+
+  it('returns false when user is not authenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } });
+
+    const isFirstTime = await checkIsFirstTimeUser();
+
+    expect(isFirstTime).toBe(false);
+  });
+
+  it('returns false on database error', async () => {
+    mockIs.mockResolvedValue({ count: null, error: { message: 'DB Error' } });
+
+    const isFirstTime = await checkIsFirstTimeUser();
+
+    expect(isFirstTime).toBe(false);
+  });
+
+  it('filters out deleted entries', async () => {
+    await checkIsFirstTimeUser();
+
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null);
+  });
+
+  it('uses count query with head:true for efficiency', async () => {
+    await checkIsFirstTimeUser();
+
+    expect(mockSelect).toHaveBeenCalledWith('*', { count: 'exact', head: true });
   });
 });

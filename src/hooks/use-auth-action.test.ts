@@ -147,7 +147,7 @@ describe('handleAuthError', () => {
       authError: true as const,
     };
 
-    const result = handleAuthError(actionResult, mockRouter as ReturnType<typeof import('next/navigation').useRouter>);
+    const result = handleAuthError(actionResult, mockRouter as unknown as ReturnType<typeof import('next/navigation').useRouter>);
 
     expect(result).toBe(true);
     expect(toast.error).toHaveBeenCalledWith('Session Expired', {
@@ -163,7 +163,7 @@ describe('handleAuthError', () => {
       error: 'Validation failed',
     };
 
-    const result = handleAuthError(actionResult, mockRouter as ReturnType<typeof import('next/navigation').useRouter>);
+    const result = handleAuthError(actionResult, mockRouter as unknown as ReturnType<typeof import('next/navigation').useRouter>);
 
     expect(result).toBe(false);
     expect(toast.error).not.toHaveBeenCalled();
@@ -177,7 +177,7 @@ describe('handleAuthError', () => {
       data: { id: '123' },
     };
 
-    const result = handleAuthError(actionResult, mockRouter as ReturnType<typeof import('next/navigation').useRouter>);
+    const result = handleAuthError(actionResult, mockRouter as unknown as ReturnType<typeof import('next/navigation').useRouter>);
 
     expect(result).toBe(false);
     expect(mockPush).not.toHaveBeenCalled();

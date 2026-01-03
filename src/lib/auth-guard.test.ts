@@ -145,17 +145,17 @@ describe('auth-guard', () => {
 
   describe('isAuthError', () => {
     it('should return true for auth errors', () => {
-      const result = { success: false, error: 'Session expired', authError: true };
+      const result = { success: false as const, error: 'Session expired', authError: true };
       expect(isAuthError(result)).toBe(true);
     });
 
     it('should return false for non-auth errors', () => {
-      const result = { success: false, error: 'Validation failed' };
+      const result = { success: false as const, error: 'Validation failed' };
       expect(isAuthError(result)).toBe(false);
     });
 
     it('should return false for success results', () => {
-      const result = { success: true, data: { user: { id: '123' } } };
+      const result = { success: true as const, data: { user: { id: '123' } } };
       expect(isAuthError(result)).toBe(false);
     });
   });

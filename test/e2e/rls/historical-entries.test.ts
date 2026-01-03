@@ -146,11 +146,11 @@ describe('Historical Entry Display (AC: 3)', () => {
       expect(error).toBeNull();
       expect(data).not.toBeNull();
       expect(data!.job).not.toBeNull();
-      expect(data!.job.name).toBe(testData.job.name);
+      expect(data!.job!.name).toBe(testData.job.name);
       expect(data!.service).not.toBeNull();
-      expect(data!.service.name).toBe(testData.service.name);
+      expect(data!.service!.name).toBe(testData.service.name);
       expect(data!.task).not.toBeNull();
-      expect(data!.task.name).toBe(testData.task.name);
+      expect(data!.task!.name).toBe(testData.task.name);
     });
   });
 
@@ -242,8 +242,8 @@ describe('Historical Entry Display (AC: 3)', () => {
       expect(error).toBeNull();
       expect(data).not.toBeNull();
       expect(data!.task).not.toBeNull();
-      expect(data!.task.name).toBe(testData.task.name);
-      expect(data!.task.active).toBe(false); // Task is now inactive
+      expect(data!.task!.name).toBe(testData.task.name);
+      expect(data!.task!.active).toBe(false); // Task is now inactive
     });
 
     afterAll(async () => {
@@ -284,15 +284,15 @@ describe('Historical Entry Display (AC: 3)', () => {
       expect(data).not.toBeNull();
 
       // Verify complete hierarchy is accessible
-      expect(data!.job.name).toBe(testData.job.name);
-      expect(data!.job.project.name).toBe(testData.project.name);
-      expect(data!.job.project.client.name).toBe(testData.client.name);
-      expect(data!.service.name).toBe(testData.service.name);
-      expect(data!.task.name).toBe(testData.task.name);
+      expect(data!.job!.name).toBe(testData.job.name);
+      expect(data!.job!.project!.name).toBe(testData.project.name);
+      expect(data!.job!.project!.client!.name).toBe(testData.client.name);
+      expect(data!.service!.name).toBe(testData.service.name);
+      expect(data!.task!.name).toBe(testData.task.name);
 
       // Verify inactive status is captured
-      expect(data!.service.active).toBe(false);
-      expect(data!.task.active).toBe(false);
+      expect(data!.service!.active).toBe(false);
+      expect(data!.task!.active).toBe(false);
     });
 
     afterAll(async () => {

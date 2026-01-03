@@ -14,7 +14,7 @@ vi.mock('sonner', () => ({
 
 import { toast } from 'sonner';
 
-interface TestFormData {
+interface TestFormData extends Record<string, unknown> {
   name: string;
   value: number;
 }

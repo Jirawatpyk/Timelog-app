@@ -414,7 +414,7 @@ describe('Recent Combinations (Story 4.7)', () => {
         .single();
 
       // Compare as Date objects since Postgres returns different format (+00:00 vs Z)
-      expect(new Date(data!.last_used_at).getTime()).toBe(new Date(updateTime).getTime());
+      expect(new Date(data!.last_used_at!).getTime()).toBe(new Date(updateTime).getTime());
     });
   });
 

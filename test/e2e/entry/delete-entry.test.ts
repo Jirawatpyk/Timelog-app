@@ -163,11 +163,11 @@ describe('Delete Time Entry (Story 4.6)', () => {
       // Delete the entry using the SECURITY DEFINER function
       // This bypasses RLS "new row visible" check
       const { data: result, error } = await staffClient
-        .rpc('soft_delete_time_entry', { entry_id: testData.entries.toDelete.id });
+        .rpc('soft_delete_time_entry' as never, { entry_id: testData.entries.toDelete.id } as never) as unknown as { data: { success: boolean } | null; error: Error | null };
 
       expect(error).toBeNull();
       expect(result).not.toBeNull();
-      expect(result.success).toBe(true);
+      expect(result!.success).toBe(true);
 
       // Verify using service client (bypasses RLS) that deleted_at was set
       const { data: verifyEntry } = await serviceClient
@@ -224,12 +224,12 @@ describe('Delete Time Entry (Story 4.6)', () => {
 
       // Try to soft delete manager's entry using the RPC function
       const { data: result, error } = await staffClient
-        .rpc('soft_delete_time_entry', { entry_id: testData.entries.otherUser.id });
+        .rpc('soft_delete_time_entry' as never, { entry_id: testData.entries.otherUser.id } as never) as unknown as { data: { success: boolean } | null; error: Error | null };
 
       // Function should return error (not owned by user)
       expect(error).toBeNull(); // RPC call itself succeeds
       expect(result).not.toBeNull();
-      expect(result.success).toBe(false);
+      expect(result!.success).toBe(false);
 
       // Verify manager's entry is still there (not deleted)
       const { data: managerEntry } = await serviceClient
@@ -265,12 +265,12 @@ describe('Delete Time Entry (Story 4.6)', () => {
 
       // Try to delete the already deleted entry using the RPC function
       const { data: result, error } = await staffClient
-        .rpc('soft_delete_time_entry', { entry_id: testData.entries.toDelete.id });
+        .rpc('soft_delete_time_entry' as never, { entry_id: testData.entries.toDelete.id } as never) as unknown as { data: { success: boolean } | null; error: Error | null };
 
       // Function should return error (already deleted)
       expect(error).toBeNull(); // RPC call itself succeeds
       expect(result).not.toBeNull();
-      expect(result.success).toBe(false);
+      expect(result!.success).toBe(false);
     });
   });
 });

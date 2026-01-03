@@ -18,8 +18,8 @@ describe('scrollToFirstError (Story 4.8 - AC4)', () => {
     mockElement = document.createElement('button');
     mockElement.id = 'clientId';
     mockElement.tabIndex = 0;
-    mockElement.scrollIntoView = scrollIntoViewMock;
-    mockElement.focus = focusMock;
+    mockElement.scrollIntoView = scrollIntoViewMock as unknown as typeof mockElement.scrollIntoView;
+    mockElement.focus = focusMock as unknown as typeof mockElement.focus;
     document.body.appendChild(mockElement);
 
     vi.useFakeTimers();

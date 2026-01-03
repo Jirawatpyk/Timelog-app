@@ -150,3 +150,35 @@ export interface DepartmentOption {
  * 'all' means show all departments, otherwise specific department ID
  */
 export type DepartmentFilter = 'all' | string;
+
+// ============================================
+// USER LIST TYPES (Story 7.1)
+// ============================================
+
+/**
+ * User item for admin user list display
+ */
+export interface UserListItem {
+  id: string;
+  email: string;
+  displayName: string | null;
+  role: UserRole;
+  department: { id: string; name: string } | null;
+  isActive: boolean;
+}
+
+/**
+ * Response type for paginated user list
+ */
+export interface UserListResponse {
+  users: UserListItem[];
+  totalCount: number;
+}
+
+/**
+ * Pagination parameters for queries
+ */
+export interface PaginationParams {
+  page: number;
+  limit: number;
+}

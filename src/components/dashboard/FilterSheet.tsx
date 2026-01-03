@@ -9,12 +9,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetFooter,
+  SheetClose,
 } from '@/components/ui/sheet';
 import {
   Select,
@@ -75,12 +76,18 @@ export function FilterSheet({
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-auto max-h-[400px]">
-        <SheetHeader className="px-6">
+      <SheetContent side="bottom" className="h-auto max-h-[400px] rounded-t-xl px-6 pt-3 pb-6 [&>button]:hidden">
+        <div className="flex items-center justify-between mb-3">
           <SheetTitle>Filter Entries</SheetTitle>
-        </SheetHeader>
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </SheetClose>
+        </div>
 
-        <div className="px-6 py-6">
+        <div className="py-4">
           <label className="text-sm font-medium mb-2 block">Client</label>
           <Select value={selectedClient} onValueChange={setSelectedClient}>
             <SelectTrigger className="w-full">
@@ -96,11 +103,13 @@ export function FilterSheet({
           </Select>
         </div>
 
-        <SheetFooter className="flex gap-2 px-6">
-          <Button variant="outline" onClick={handleClear}>
+        <SheetFooter className="flex-row gap-2 p-0">
+          <Button variant="outline" onClick={handleClear} className="flex-1">
             Clear
           </Button>
-          <Button onClick={handleApply}>Apply Filter</Button>
+          <Button onClick={handleApply} className="flex-1">
+            Apply
+          </Button>
         </SheetFooter>
         {/* Bottom safe area spacer for iOS home indicator */}
         <div className="h-4 shrink-0" />

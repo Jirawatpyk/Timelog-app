@@ -1,6 +1,6 @@
 # Story 5.7: Search Entries
 
-Status: review
+Status: done
 
 ## Story
 

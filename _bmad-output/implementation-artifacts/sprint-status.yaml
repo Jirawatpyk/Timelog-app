@@ -109,7 +109,7 @@ development_status:
   7-1-user-list-view: done
   7-1a-admin-navigation-layout: done
   7-2-create-new-user: done
-  7-2a-user-invitation-email: review
+  7-2a-user-invitation-email: done
   7-3-edit-user-information: ready-for-dev
   7-4-deactivate-user: ready-for-dev
   7-5-assign-roles: ready-for-dev

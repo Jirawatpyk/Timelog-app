@@ -1,20 +1,31 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { UserTable } from './UserTable';
 import type { UserListItem } from '@/types/domain';
 
 // Mock Next.js navigation
+const mockRefresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    refresh: vi.fn(),
+    refresh: mockRefresh,
     push: vi.fn(),
     back: vi.fn(),
   }),
 }));
 
+// Mock sonner toast
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 // Mock resendInvitation action
+const mockResendInvitation = vi.fn();
 vi.mock('@/actions/user', () => ({
-  resendInvitation: vi.fn().mockResolvedValue({ success: true, data: null }),
+  resendInvitation: (...args: unknown[]) => mockResendInvitation(...args),
 }));
 
 const mockUsers: UserListItem[] = [
@@ -61,6 +72,11 @@ const mockUsers: UserListItem[] = [
 ];
 
 describe('UserTable', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockResendInvitation.mockResolvedValue({ success: true, data: null });
+  });
+
   it('renders table headers', () => {
     render(<UserTable users={mockUsers} />);
 
@@ -160,6 +176,50 @@ describe('UserTable', () => {
       render(<UserTable users={inactiveOnlyUsers} />);
 
       expect(screen.queryByRole('button', { name: /resend/i })).not.toBeInTheDocument();
+    });
+
+    it('calls resendInvitation and shows success toast on click', async () => {
+      const { toast } = await import('sonner');
+      const pendingUser = mockUsers.find((u) => u.status === 'pending')!;
+      render(<UserTable users={[pendingUser]} />);
+
+      // Click first Resend button (desktop view)
+      const resendButton = screen.getAllByRole('button', {
+        name: /resend invitation to dave@example.com/i,
+      })[0];
+      await userEvent.click(resendButton);
+
+      await waitFor(() => {
+        expect(mockResendInvitation).toHaveBeenCalledWith(pendingUser.id);
+      });
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith(
+          `Invitation resent to ${pendingUser.email}`
+        );
+      });
+
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+
+    it('shows error toast when resendInvitation fails', async () => {
+      const { toast } = await import('sonner');
+      mockResendInvitation.mockResolvedValue({
+        success: false,
+        error: 'Failed to resend',
+      });
+
+      const pendingUser = mockUsers.find((u) => u.status === 'pending')!;
+      render(<UserTable users={[pendingUser]} />);
+
+      const resendButton = screen.getAllByRole('button', {
+        name: /resend invitation to dave@example.com/i,
+      })[0];
+      await userEvent.click(resendButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith('Failed to resend');
+      });
     });
   });
 });

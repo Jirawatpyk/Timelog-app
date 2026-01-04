@@ -589,6 +589,43 @@ describe('createUser', () => {
       expect(result.error).toBe('Invalid or inactive department');
     }
   });
+
+  it('rolls back auth user when public.users insert fails', async () => {
+    await setupSupabaseMock({
+      authUser: { id: 'admin-user-id' },
+      userRole: 'admin',
+      existingEmail: false,
+      validDepartment: true,
+      insertSuccess: false, // Insert will fail
+      inviteSuccess: true,
+      invitedUser: { user: { id: 'new-auth-user-id' } },
+    });
+
+    const result = await createUser(validInput);
+
+    expect(result.success).toBe(false);
+    // Verify rollback was called
+    expect(mockDeleteUser).toHaveBeenCalledWith('new-auth-user-id');
+  });
+
+  it('returns error when invitation email fails', async () => {
+    await setupSupabaseMock({
+      authUser: { id: 'admin-user-id' },
+      userRole: 'admin',
+      existingEmail: false,
+      validDepartment: true,
+      inviteSuccess: false, // Invite will fail
+    });
+
+    const result = await createUser(validInput);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Failed to send invitation email');
+    }
+    // Verify rollback was NOT called (no auth user to delete)
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
 });
 
 describe('getActiveDepartments', () => {
@@ -755,8 +792,96 @@ describe('resendInvitation (Story 7.2a)', () => {
     }
   });
 
+  it('returns error when user is not admin or super_admin', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { role: 'staff' }, // Non-admin role
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'staff-user-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await resendInvitation('target-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Insufficient permissions');
+    }
+  });
+
+  it('returns error when manager tries to resend invitation', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { role: 'manager' }, // Manager role
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'manager-user-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await resendInvitation('target-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Insufficient permissions');
+    }
+  });
+
   it('returns error when user not found', async () => {
     const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // First call: role check
+                : { data: null, error: { code: 'PGRST116', message: 'Not found' } } // Second call: user not found
+            ),
+          }),
+        }),
+      };
+    });
 
     vi.mocked(createClient).mockResolvedValue({
       auth: {
@@ -764,16 +889,7 @@ describe('resendInvitation (Story 7.2a)', () => {
           data: { user: { id: 'admin-id' } },
         }),
       },
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { code: 'PGRST116', message: 'Not found' },
-            }),
-          }),
-        }),
-      }),
+      from: mockFromFn,
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await resendInvitation('non-existent-user');
@@ -787,25 +903,35 @@ describe('resendInvitation (Story 7.2a)', () => {
   it('returns error for already confirmed user', async () => {
     const { createClient } = await import('@/lib/supabase/server');
 
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // First call: role check
+                : {
+                    data: {
+                      email: 'confirmed@example.com',
+                      confirmed_at: '2026-01-01T00:00:00Z', // Already confirmed
+                    },
+                    error: null,
+                  }
+            ),
+          }),
+        }),
+      };
+    });
+
     vi.mocked(createClient).mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: { id: 'admin-id' } },
         }),
       },
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                email: 'confirmed@example.com',
-                confirmed_at: '2026-01-01T00:00:00Z', // Already confirmed
-              },
-              error: null,
-            }),
-          }),
-        }),
-      }),
+      from: mockFromFn,
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await resendInvitation('confirmed-user-id');
@@ -819,25 +945,35 @@ describe('resendInvitation (Story 7.2a)', () => {
   it('successfully resends invitation for pending user', async () => {
     const { createClient } = await import('@/lib/supabase/server');
 
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // First call: role check
+                : {
+                    data: {
+                      email: 'pending@example.com',
+                      confirmed_at: null, // Not confirmed
+                    },
+                    error: null,
+                  }
+            ),
+          }),
+        }),
+      };
+    });
+
     vi.mocked(createClient).mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: { id: 'admin-id' } },
         }),
       },
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                email: 'pending@example.com',
-                confirmed_at: null, // Not confirmed
-              },
-              error: null,
-            }),
-          }),
-        }),
-      }),
+      from: mockFromFn,
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     mockInviteUserByEmail.mockResolvedValue({ data: {}, error: null });
@@ -851,8 +987,71 @@ describe('resendInvitation (Story 7.2a)', () => {
     );
   });
 
+  it('allows super_admin to resend invitation', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'super_admin' }, error: null } // First call: role check
+                : {
+                    data: {
+                      email: 'pending@example.com',
+                      confirmed_at: null,
+                    },
+                    error: null,
+                  }
+            ),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'super-admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    mockInviteUserByEmail.mockResolvedValue({ data: {}, error: null });
+
+    const result = await resendInvitation('pending-user-id');
+
+    expect(result.success).toBe(true);
+  });
+
   it('returns error when admin invite fails', async () => {
     const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // First call: role check
+                : {
+                    data: {
+                      email: 'pending@example.com',
+                      confirmed_at: null,
+                    },
+                    error: null,
+                  }
+            ),
+          }),
+        }),
+      };
+    });
 
     vi.mocked(createClient).mockResolvedValue({
       auth: {
@@ -860,19 +1059,7 @@ describe('resendInvitation (Story 7.2a)', () => {
           data: { user: { id: 'admin-id' } },
         }),
       },
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                email: 'pending@example.com',
-                confirmed_at: null,
-              },
-              error: null,
-            }),
-          }),
-        }),
-      }),
+      from: mockFromFn,
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     mockInviteUserByEmail.mockResolvedValue({

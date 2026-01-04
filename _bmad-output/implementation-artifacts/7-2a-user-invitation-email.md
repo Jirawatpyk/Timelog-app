@@ -1,6 +1,6 @@
 # Story 7.2a: User Invitation Email
 
-## Status: review
+## Status: done
 
 ## Story
 
@@ -72,7 +72,7 @@ Story 7.2 creates user records in `public.users` table only. This story extends 
 ## Tasks
 
 ### Task 1: Database Migration - Add confirmed_at Column ✅
-**File:** `supabase/migrations/20260104073517_add_user_confirmed_at.sql`
+**File:** `supabase/migrations/20260104071024_add_user_confirmed_at.sql`
 - [x] Add `confirmed_at TIMESTAMPTZ` column to `public.users`
 - [x] Create trigger to sync `confirmed_at` from `auth.users` on confirmation
 - [x] Backfill existing users: set confirmed_at for users who have logged in
@@ -380,3 +380,43 @@ const statusConfig = {
 - Custom email template (uses Supabase default)
 - Bulk resend invitations
 - Invitation expiry handling
+
+## Dev Agent Record
+
+### File List
+
+#### New Files
+- `src/lib/supabase/admin.ts` - Supabase Admin Client for bypassing RLS
+- `src/lib/supabase/admin.test.ts` - Unit tests for admin client
+- `supabase/migrations/20260104071024_add_user_confirmed_at.sql` - Migration for confirmed_at column
+
+#### Modified Files
+- `src/actions/user.ts` - Added createUser (invitation), resendInvitation, getUsers (status)
+- `src/actions/user.test.ts` - 30 tests for user actions including invitation flow
+- `src/types/domain.ts` - Added UserStatus type, updated UserListItem with status/confirmedAt
+- `src/app/(app)/admin/users/components/StatusBadge.tsx` - Extended with pending/active/inactive status
+- `src/app/(app)/admin/users/components/StatusBadge.test.tsx` - Tests for StatusBadge
+- `src/app/(app)/admin/users/components/UserTable.tsx` - Added Status column and Resend button
+- `src/app/(app)/admin/users/components/UserTable.test.tsx` - Tests for Status/Resend visibility
+- `src/app/(app)/admin/users/components/UserRow.tsx` - Added StatusBadge (used in mobile view)
+- `src/app/(app)/admin/users/components/UserRow.test.tsx` - Tests for UserRow
+- `src/app/(app)/admin/users/components/AddUserDialog.test.tsx` - Updated toast expectation
+
+### Code Review Fixes Applied
+- **HIGH-1**: Added authorization check (admin/super_admin only) to `resendInvitation`
+- **HIGH-2**: Added rollback test verifying `deleteUser` is called when public.users insert fails
+- Added authorization tests for staff/manager rejection in resendInvitation
+- Added super_admin success test for resendInvitation
+
+### Known Limitations
+- **Rate Limiting**: `resendInvitation` does not implement rate limiting. In production, consider:
+  - Supabase's built-in email rate limits (default: 4 emails/hour per user)
+  - Adding application-level rate limiting with Redis/upstash if needed
+  - Adding UI debounce (button disabled during request already implemented)
+
+### Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-01-04 | Initial implementation - all tasks complete | Dev Agent |
+| 2026-01-04 | Code review fixes: authorization check, rollback test, file list | Dev Agent |

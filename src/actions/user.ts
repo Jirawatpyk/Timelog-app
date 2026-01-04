@@ -282,6 +282,22 @@ export async function resendInvitation(userId: string): Promise<ActionResult<nul
     return { success: false, error: 'Not authenticated' };
   }
 
+  // Check authorization - only admin/super_admin can resend invitations
+  const { data: currentUserProfile, error: profileError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !currentUserProfile?.role) {
+    return { success: false, error: 'Failed to verify permissions' };
+  }
+
+  const currentRole = currentUserProfile.role as UserRole;
+  if (currentRole !== 'admin' && currentRole !== 'super_admin') {
+    return { success: false, error: 'Insufficient permissions' };
+  }
+
   // Get user from public.users
   const { data: targetUser, error: fetchError } = await supabase
     .from('users')

@@ -104,6 +104,7 @@ describe('getManagerDepartments', () => {
 describe('getTeamMembers', () => {
   const mockSelect = vi.fn();
   const mockIn = vi.fn();
+  const mockEq = vi.fn();
   const mockOrder = vi.fn();
   const mockFrom = vi.fn();
 
@@ -140,7 +141,8 @@ describe('getTeamMembers', () => {
       data: mockData,
       error: null,
     });
-    mockIn.mockReturnValue({ order: mockOrder });
+    mockEq.mockReturnValue({ order: mockOrder });
+    mockIn.mockReturnValue({ eq: mockEq });
     mockSelect.mockReturnValue({ in: mockIn });
     mockFrom.mockReturnValue({ select: mockSelect });
 
@@ -169,6 +171,7 @@ describe('getTeamMembers', () => {
       },
     ]);
     expect(mockIn).toHaveBeenCalledWith('department_id', ['dept-1']);
+    expect(mockEq).toHaveBeenCalledWith('is_active', true);
   });
 
   it('filters out members with null department', async () => {
@@ -195,7 +198,8 @@ describe('getTeamMembers', () => {
       data: mockData,
       error: null,
     });
-    mockIn.mockReturnValue({ order: mockOrder });
+    mockEq.mockReturnValue({ order: mockOrder });
+    mockIn.mockReturnValue({ eq: mockEq });
     mockSelect.mockReturnValue({ in: mockIn });
     mockFrom.mockReturnValue({ select: mockSelect });
 
@@ -218,7 +222,8 @@ describe('getTeamMembers', () => {
       data: null,
       error: mockError,
     });
-    mockIn.mockReturnValue({ order: mockOrder });
+    mockEq.mockReturnValue({ order: mockOrder });
+    mockIn.mockReturnValue({ eq: mockEq });
     mockSelect.mockReturnValue({ in: mockIn });
     mockFrom.mockReturnValue({ select: mockSelect });
 
@@ -278,7 +283,8 @@ describe('getTeamMembersWithTodayStats', () => {
     // Mock separate query chains for users and time_entries tables
     mockFrom.mockImplementation((table: string) => {
       if (table === 'users') {
-        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersEq = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersIn = vi.fn().mockReturnValue({ eq: usersEq });
         const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
         return { select: usersSelect };
       } else if (table === 'time_entries') {
@@ -357,7 +363,8 @@ describe('getTeamMembersWithTodayStats', () => {
     // Mock separate query chains for users and time_entries tables
     mockFrom.mockImplementation((table: string) => {
       if (table === 'users') {
-        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersEq = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersIn = vi.fn().mockReturnValue({ eq: usersEq });
         const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
         return { select: usersSelect };
       } else if (table === 'time_entries') {
@@ -413,7 +420,8 @@ describe('getTeamMembersWithTodayStats', () => {
     // Mock separate query chains for users and time_entries tables
     mockFrom.mockImplementation((table: string) => {
       if (table === 'users') {
-        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersEq = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersIn = vi.fn().mockReturnValue({ eq: usersEq });
         const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
         return { select: usersSelect };
       } else if (table === 'time_entries') {
@@ -444,11 +452,11 @@ describe('getTeamMembersWithTodayStats', () => {
   it('throws error when members query fails', async () => {
     const mockError = new Error('Database error');
 
-    mockIn.mockResolvedValue({
+    const mockEq = vi.fn().mockResolvedValue({
       data: null,
       error: mockError,
     });
-
+    mockIn.mockReturnValue({ eq: mockEq });
     mockSelect.mockReturnValue({ in: mockIn });
     mockFrom.mockReturnValue({ select: mockSelect });
 
@@ -476,7 +484,8 @@ describe('getTeamMembersWithTodayStats', () => {
     // Mock separate query chains for users and time_entries tables
     mockFrom.mockImplementation((table: string) => {
       if (table === 'users') {
-        const usersIn = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersEq = vi.fn().mockResolvedValue({ data: mockMembers, error: null });
+        const usersIn = vi.fn().mockReturnValue({ eq: usersEq });
         const usersSelect = vi.fn().mockReturnValue({ in: usersIn });
         return { select: usersSelect };
       } else if (table === 'time_entries') {

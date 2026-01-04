@@ -83,13 +83,13 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Fetch user role from public.users table
+    // Fetch user role and active status from public.users table
     // Note: This query runs on every protected route request.
     // For ~60 users this is acceptable. For larger scale, consider
     // caching role in JWT custom claim or cookie after login.
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('role')
+      .select('role, is_active')
       .eq('id', user.sub)
       .single();
 
@@ -97,6 +97,17 @@ export async function updateSession(request: NextRequest) {
     // with null role (which will deny access to restricted routes)
     if (profileError) {
       console.error('Failed to fetch user role:', profileError.message);
+    }
+
+    // Story 7.4: Check if user is deactivated
+    // Deactivated users are signed out and redirected to login
+    if (profile && profile.is_active === false) {
+      // Sign out the deactivated user
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.LOGIN;
+      url.searchParams.set('error', 'account_deactivated');
+      return NextResponse.redirect(url);
     }
 
     const userRole: UserRole | null = (profile?.role as UserRole) ?? null;

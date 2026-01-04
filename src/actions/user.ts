@@ -13,12 +13,14 @@ import type {
   ActionResult,
   DepartmentOption,
   PaginationParams,
+  UpdateUserResult,
   User,
   UserListItem,
   UserListResponse,
   UserRole,
   UserStatus,
 } from '@/types/domain';
+import { canAssignRole, type RoleKey } from '@/lib/roles';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -340,22 +342,27 @@ export async function resendInvitation(userId: string): Promise<ActionResult<nul
 /**
  * Update an existing user's information
  * Story 7.3: Edit User Information (AC 1, 2, 3, 4)
+ * Story 7.5: Assign Roles (AC 2, 3, 5, 6)
  *
  * Flow:
  * 1. Validate input
  * 2. Check authentication and current user's role
  * 3. Check target user exists and get their role
- * 4. Prevent admin from editing super_admin
- * 5. Check for duplicate email (excluding current user)
- * 6. Update user
+ * 4. Story 7.5 AC 6: Prevent self-role-change
+ * 5. Prevent admin from editing super_admin
+ * 6. Story 7.5 AC 1/4: Validate role assignment permission
+ * 7. Check for duplicate email (excluding current user)
+ * 8. Story 7.5 AC 5: If downgrading from manager, clean up manager_departments
+ * 9. Update user
+ * 10. Story 7.5 AC 3: Return promptDepartment flag if becoming manager
  *
  * Note: Audit logging is handled by database trigger (see Epic 1)
  *
  * @param id - User ID to update
  * @param input - User update input
- * @returns ActionResult with updated user or error
+ * @returns ActionResult with updated user and promptDepartment flag
  */
-export async function updateUser(id: string, input: EditUserInput): Promise<ActionResult<User>> {
+export async function updateUser(id: string, input: EditUserInput): Promise<ActionResult<UpdateUserResult>> {
   // Validate input first
   const parsed = editUserSchema.safeParse(input);
   if (!parsed.success) {
@@ -385,7 +392,7 @@ export async function updateUser(id: string, input: EditUserInput): Promise<Acti
 
   const currentRole = currentUserProfile.role as UserRole;
 
-  // Get target user's role
+  // Get target user's current role
   const { data: targetUser, error: targetError } = await supabase
     .from('users')
     .select('role')
@@ -396,9 +403,23 @@ export async function updateUser(id: string, input: EditUserInput): Promise<Acti
     return { success: false, error: 'User not found' };
   }
 
-  // AC 3: Prevent admin from editing super_admin
-  if (targetUser.role === 'super_admin' && currentRole !== 'super_admin') {
+  const targetCurrentRole = targetUser.role as UserRole;
+  const newRole = parsed.data.role as RoleKey;
+  const isRoleChanging = targetCurrentRole !== newRole;
+
+  // Story 7.5 AC 6: Prevent self-role-change
+  if (user.id === id && isRoleChanging) {
+    return { success: false, error: 'Cannot change your own role' };
+  }
+
+  // AC 3 (Story 7.3): Prevent admin from editing super_admin
+  if (targetCurrentRole === 'super_admin' && currentRole !== 'super_admin') {
     return { success: false, error: 'Cannot edit Super Admin' };
+  }
+
+  // Story 7.5 AC 1/4: Validate role assignment permission
+  if (isRoleChanging && !canAssignRole(currentRole as RoleKey, newRole)) {
+    return { success: false, error: 'Cannot assign Super Admin role' };
   }
 
   // AC 4: Check duplicate email (excluding current user)
@@ -412,6 +433,18 @@ export async function updateUser(id: string, input: EditUserInput): Promise<Acti
   if (existingEmail) {
     return { success: false, error: 'Email already exists' };
   }
+
+  // Story 7.5 AC 5: Clean up manager_departments if downgrading from manager
+  if (targetCurrentRole === 'manager' && newRole !== 'manager') {
+    await supabase
+      .from('manager_departments')
+      .delete()
+      .eq('manager_id', id);
+  }
+
+  // Determine if we should prompt for department assignment
+  // Story 7.5 AC 3: Prompt when role changed TO manager
+  const becomingManager = newRole === 'manager' && targetCurrentRole !== 'manager';
 
   // Update user
   const { data: updatedUser, error: updateError } = await supabase
@@ -429,6 +462,148 @@ export async function updateUser(id: string, input: EditUserInput): Promise<Acti
 
   if (updateError || !updatedUser) {
     return { success: false, error: 'Failed to update user' };
+  }
+
+  revalidatePath('/admin/users');
+  return {
+    success: true,
+    data: {
+      user: updatedUser,
+      promptDepartment: becomingManager,
+    },
+  };
+}
+
+/**
+ * Deactivate a user account
+ * Story 7.4: Deactivate User (AC 1, 2, 4, 5)
+ *
+ * Flow:
+ * 1. Check authentication
+ * 2. Prevent self-deactivation (AC 5)
+ * 3. Get current user's role
+ * 4. Get target user's role
+ * 5. Prevent admin from deactivating super_admin (AC 4)
+ * 6. Set is_active = false (AC 2)
+ *
+ * Note: Session invalidation via Admin API handled separately (Task 5)
+ *
+ * @param id - User ID to deactivate
+ * @returns ActionResult with deactivated user or error
+ */
+export async function deactivateUser(id: string): Promise<ActionResult<User>> {
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // AC 5: Prevent self-deactivation
+  if (user.id === id) {
+    return { success: false, error: 'Cannot deactivate your own account' };
+  }
+
+  // Get current user's role
+  const { data: currentUserProfile, error: profileError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !currentUserProfile?.role) {
+    return { success: false, error: 'Failed to verify permissions' };
+  }
+
+  const currentRole = currentUserProfile.role as UserRole;
+
+  // Get target user's role
+  const { data: targetUser, error: targetError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', id)
+    .single();
+
+  if (targetError || !targetUser) {
+    return { success: false, error: 'User not found' };
+  }
+
+  // AC 4: Prevent admin from deactivating super_admin
+  if (targetUser.role === 'super_admin' && currentRole !== 'super_admin') {
+    return { success: false, error: 'Cannot deactivate Super Admin' };
+  }
+
+  // Deactivate user
+  const { data: updatedUser, error: updateError } = await supabase
+    .from('users')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (updateError || !updatedUser) {
+    return { success: false, error: 'Failed to deactivate user' };
+  }
+
+  // Session invalidation will be handled by middleware checking is_active
+  // For immediate invalidation, use Admin API (requires service_role key)
+
+  revalidatePath('/admin/users');
+  return { success: true, data: updatedUser };
+}
+
+/**
+ * Reactivate a deactivated user account
+ * Story 7.4: Deactivate User (AC 3)
+ *
+ * Flow:
+ * 1. Check authentication
+ * 2. Verify current user has admin/super_admin role
+ * 3. Set is_active = true
+ *
+ * @param id - User ID to reactivate
+ * @returns ActionResult with reactivated user or error
+ */
+export async function reactivateUser(id: string): Promise<ActionResult<User>> {
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Verify current user has admin permissions
+  const { data: currentUserProfile, error: profileError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !currentUserProfile?.role) {
+    return { success: false, error: 'Failed to verify permissions' };
+  }
+
+  const currentRole = currentUserProfile.role as UserRole;
+  if (currentRole !== 'admin' && currentRole !== 'super_admin') {
+    return { success: false, error: 'Insufficient permissions' };
+  }
+
+  // Reactivate user
+  const { data: updatedUser, error: updateError } = await supabase
+    .from('users')
+    .update({ is_active: true, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (updateError || !updatedUser) {
+    return { success: false, error: 'Failed to reactivate user' };
   }
 
   revalidatePath('/admin/users');

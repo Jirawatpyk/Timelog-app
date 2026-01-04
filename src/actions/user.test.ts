@@ -6,6 +6,8 @@ import {
   getCurrentUserRole,
   resendInvitation,
   updateUser,
+  deactivateUser,
+  reactivateUser,
 } from './user';
 import type { CreateUserInput, EditUserInput } from '@/schemas/user.schema';
 
@@ -1399,7 +1401,7 @@ describe('updateUser (Story 7.3)', () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.email).toBe(validInput.email);
+      expect(result.data.user.email).toBe(validInput.email);
     }
   });
 
@@ -1518,6 +1520,506 @@ describe('updateUser (Story 7.3)', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe('User not found');
+    }
+  });
+});
+
+/**
+ * Story 7.4: Deactivate User
+ * Tests for deactivateUser server action
+ */
+describe('deactivateUser (Story 7.4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDeleteUser.mockReset();
+  });
+
+  it('requires authentication', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await deactivateUser('user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Not authenticated');
+    }
+  });
+
+  it('prevents self-deactivation (AC 5)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'same-user-id' } },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await deactivateUser('same-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Cannot deactivate your own account');
+    }
+  });
+
+  it('prevents admin from deactivating super_admin (AC 4)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // Current user is admin
+                : { data: { role: 'super_admin' }, error: null } // Target is super_admin
+            ),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await deactivateUser('super-admin-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Cannot deactivate Super Admin');
+    }
+  });
+
+  it('allows super_admin to deactivate another super_admin', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Update query
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: {
+                      id: 'target-super-id',
+                      is_active: false,
+                    },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'super-admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await deactivateUser('target-super-id');
+
+    expect(result.success).toBe(true);
+  });
+
+  it('deactivates user successfully (AC 2)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Update query
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: {
+                      id: 'target-user-id',
+                      email: 'staff@example.com',
+                      is_active: false,
+                    },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await deactivateUser('target-user-id');
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.is_active).toBe(false);
+    }
+  });
+
+  it('returns error when target user not found', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // Current user role
+                : { data: null, error: { code: 'PGRST116' } } // Target user not found
+            ),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await deactivateUser('non-existent-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('User not found');
+    }
+  });
+
+  it('returns error on database update failure', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Update query fails
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { message: 'Database error' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await deactivateUser('target-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Failed to deactivate user');
+    }
+  });
+});
+
+/**
+ * Story 7.4: Reactivate User
+ * Tests for reactivateUser server action
+ */
+describe('reactivateUser (Story 7.4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('requires authentication', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await reactivateUser('user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Not authenticated');
+    }
+  });
+
+  it('reactivates user successfully (AC 3)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // Permission check - current user role
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { role: 'admin' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      } else {
+        // Update query
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: {
+                    id: 'target-user-id',
+                    email: 'staff@example.com',
+                    is_active: true,
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await reactivateUser('target-user-id');
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.is_active).toBe(true);
+    }
+  });
+
+  it('returns error on database update failure', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // Permission check - current user role
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { role: 'admin' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      } else {
+        // Update query fails
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: 'Database error' },
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await reactivateUser('target-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Failed to reactivate user');
+    }
+  });
+
+  it('returns error for non-admin users', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { role: 'staff' },
+              error: null,
+            }),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'staff-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await reactivateUser('target-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Insufficient permissions');
     }
   });
 });

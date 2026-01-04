@@ -14,14 +14,18 @@ import { Button } from '@/components/ui/button';
 import { RoleBadge } from './RoleBadge';
 import { StatusBadge } from './StatusBadge';
 import { EditUserDialog } from './EditUserDialog';
+import { ManagerDeptPrompt } from './ManagerDeptPrompt';
+import { StatusToggleButton } from './StatusToggleButton';
 import type { UserListItem } from '@/types/domain';
 import { Users, Send, Loader2, Pencil } from 'lucide-react';
 import { resendInvitation } from '@/actions/user';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface UserTableProps {
   users: UserListItem[];
+  currentUserId: string;
 }
 
 /**
@@ -33,10 +37,13 @@ interface UserTableProps {
  * - Empty state when no users exist (AC 5)
  * - Resend Invite button for pending users (AC 8, 9)
  */
-export function UserTable({ users }: UserTableProps) {
+export function UserTable({ users, currentUserId }: UserTableProps) {
   const router = useRouter();
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
+  // Story 7.5 AC 3: Track when to show department assignment prompt
+  const [showDeptPrompt, setShowDeptPrompt] = useState(false);
+  const [newManagerId, setNewManagerId] = useState<string | null>(null);
 
   const handleResendInvite = async (userId: string, email: string) => {
     setResendingId(userId);
@@ -51,6 +58,27 @@ export function UserTable({ users }: UserTableProps) {
     } finally {
       setResendingId(null);
     }
+  };
+
+  // Story 7.5 AC 3: Handle role change to manager
+  const handleManagerRoleAssigned = (userId: string) => {
+    setNewManagerId(userId);
+    setShowDeptPrompt(true);
+  };
+
+  // Story 7.5 AC 3: Handle "Assign Now" - links to Story 7.6
+  const handleAssignDeptNow = () => {
+    // TODO: Story 7.6 will implement department assignment UI
+    // For now, show a toast indicating feature is coming
+    toast.info('Department assignment will be available in Story 7.6');
+    setShowDeptPrompt(false);
+    setNewManagerId(null);
+  };
+
+  // Story 7.5 AC 3: Handle "Later"
+  const handleAssignDeptLater = () => {
+    setShowDeptPrompt(false);
+    setNewManagerId(null);
   };
 
   // AC 5: Empty state
@@ -82,7 +110,10 @@ export function UserTable({ users }: UserTableProps) {
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id}>
+              <TableRow
+                key={user.id}
+                className={cn(!user.isActive && 'opacity-50 bg-muted/50')}
+              >
                 <TableCell className="font-medium">
                   {user.displayName || user.email.split('@')[0]}
                 </TableCell>
@@ -107,6 +138,15 @@ export function UserTable({ users }: UserTableProps) {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    {/* Story 7.4: Deactivate/Reactivate button */}
+                    {user.status !== 'pending' && (
+                      <StatusToggleButton
+                        userId={user.id}
+                        isActive={user.isActive}
+                        userName={user.displayName || user.email}
+                        currentUserId={currentUserId}
+                      />
+                    )}
                     {/* AC 8, 9: Resend button only for pending users */}
                     {user.status === 'pending' && (
                       <Button
@@ -137,7 +177,7 @@ export function UserTable({ users }: UserTableProps) {
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {users.map((user) => (
-          <Card key={user.id}>
+          <Card key={user.id} className={cn(!user.isActive && 'opacity-50 bg-muted/50')}>
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">
@@ -165,6 +205,15 @@ export function UserTable({ users }: UserTableProps) {
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
+                  {/* Story 7.4: Deactivate/Reactivate button */}
+                  {user.status !== 'pending' && (
+                    <StatusToggleButton
+                      userId={user.id}
+                      isActive={user.isActive}
+                      userName={user.displayName || user.email}
+                      currentUserId={currentUserId}
+                    />
+                  )}
                   {/* AC 8, 9: Resend button only for pending users */}
                   {user.status === 'pending' && (
                     <Button
@@ -197,8 +246,17 @@ export function UserTable({ users }: UserTableProps) {
           user={editingUser}
           open={!!editingUser}
           onOpenChange={(open) => !open && setEditingUser(null)}
+          onManagerRoleAssigned={handleManagerRoleAssigned}
         />
       )}
+
+      {/* Story 7.5 AC 3: Department Assignment Prompt */}
+      <ManagerDeptPrompt
+        open={showDeptPrompt}
+        onOpenChange={setShowDeptPrompt}
+        onAssignNow={handleAssignDeptNow}
+        onLater={handleAssignDeptLater}
+      />
     </>
   );
 }

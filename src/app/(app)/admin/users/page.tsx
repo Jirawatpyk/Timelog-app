@@ -2,6 +2,7 @@ import { getUsers } from '@/actions/user';
 import { UserTable } from './components/UserTable';
 import { AddUserDialog } from './components/AddUserDialog';
 import { Pagination } from '@/components/shared/Pagination';
+import { createClient } from '@/lib/supabase/server';
 
 interface UsersPageProps {
   searchParams: Promise<{ page?: string }>;
@@ -24,6 +25,13 @@ const PAGE_SIZE = 20;
 export default async function UsersPage({ searchParams }: UsersPageProps) {
   const params = await searchParams;
   const currentPage = Math.max(1, Number(params.page) || 1);
+
+  // Get current user ID for self-deactivation check
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const currentUserId = user?.id ?? '';
 
   const result = await getUsers({ page: currentPage, limit: PAGE_SIZE });
 
@@ -52,7 +60,8 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       </div>
 
       {/* User table - AC 1, AC 5 (empty state handled in UserTable) */}
-      <UserTable users={users} />
+      {/* Story 7.4: Pass currentUserId for self-deactivation check */}
+      <UserTable users={users} currentUserId={currentUserId} />
 
       {/* Pagination - AC 2 */}
       {totalPages > 1 && (

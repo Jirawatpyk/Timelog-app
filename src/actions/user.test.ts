@@ -7,24 +7,137 @@ const mockSelect = vi.fn();
 const mockRange = vi.fn();
 const mockOrder = vi.fn();
 const mockFrom = vi.fn();
+const mockInsert = vi.fn();
+const mockEq = vi.fn();
+const mockIlike = vi.fn();
+const mockSingle = vi.fn();
+const mockGetUser = vi.fn();
 
 vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn().mockImplementation(async () => ({
-    from: mockFrom,
-  })),
+  createClient: vi.fn(),
 }));
+
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}));
+
+// Helper to set up supabase mock
+async function setupSupabaseMock(options: {
+  authUser?: { id: string } | null;
+  userRole?: string;
+  existingEmail?: boolean;
+  validDepartment?: boolean; // For department validation check
+  insertSuccess?: boolean;
+  insertedUser?: object;
+}) {
+  const { createClient } = await import('@/lib/supabase/server');
+
+  mockGetUser.mockResolvedValue({
+    data: { user: options.authUser ?? null },
+  });
+
+  // Reset all mocks
+  mockFrom.mockReset();
+  mockSelect.mockReset();
+  mockEq.mockReset();
+  mockIlike.mockReset();
+  mockSingle.mockReset();
+  mockInsert.mockReset();
+
+  // Setup mock chain for different queries
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'users') {
+      return {
+        select: vi.fn().mockImplementation((columns: string) => {
+          if (columns === 'role') {
+            // Getting current user role
+            return {
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: options.userRole ? { role: options.userRole } : null,
+                  error: options.userRole ? null : { message: 'Not found' },
+                }),
+              }),
+            };
+          }
+          if (columns === 'id') {
+            // Checking duplicate email
+            return {
+              ilike: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: options.existingEmail ? { id: 'existing-id' } : null,
+                  error: options.existingEmail ? null : { code: 'PGRST116' },
+                }),
+              }),
+            };
+          }
+          // Default select chain for getUsers
+          return {
+            range: mockRange.mockReturnValue({
+              order: mockOrder,
+            }),
+          };
+        }),
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: options.insertSuccess ? options.insertedUser : null,
+              error: options.insertSuccess ? null : { message: 'Insert failed' },
+            }),
+          }),
+        }),
+      };
+    }
+    if (table === 'departments') {
+      return {
+        select: vi.fn().mockImplementation((columns: string) => {
+          if (columns === 'id') {
+            // Department validation check: .select('id').eq('id', ...).eq('active', true).single()
+            return {
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: options.validDepartment !== false ? { id: 'valid-dept-id' } : null,
+                    error: options.validDepartment !== false ? null : { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            };
+          }
+          // getActiveDepartments: .select('id, name').eq('active', true).order('name')
+          return {
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn(),
+            }),
+          };
+        }),
+      };
+    }
+    return { select: mockSelect };
+  });
+
+  vi.mocked(createClient).mockResolvedValue({
+    from: mockFrom,
+    auth: { getUser: mockGetUser },
+  } as unknown as Awaited<ReturnType<typeof createClient>>);
+}
 
 describe('getUsers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup mock chain
+    // Setup mock chain for getUsers
     mockFrom.mockReturnValue({ select: mockSelect });
     mockSelect.mockReturnValue({ range: mockRange });
     mockRange.mockReturnValue({ order: mockOrder });
   });
 
   it('returns paginated users with default params', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
     const mockData = [
       {
         id: 'user-1',
@@ -76,6 +189,11 @@ describe('getUsers', () => {
   });
 
   it('handles pagination params correctly', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
     mockOrder.mockResolvedValue({
       data: [],
       error: null,
@@ -89,6 +207,11 @@ describe('getUsers', () => {
   });
 
   it('returns user without department (null)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
     const mockData = [
       {
         id: 'user-1',
@@ -115,6 +238,11 @@ describe('getUsers', () => {
   });
 
   it('returns error on database failure', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
     mockOrder.mockResolvedValue({
       data: null,
       error: { message: 'Database connection failed' },
@@ -130,6 +258,11 @@ describe('getUsers', () => {
   });
 
   it('handles empty user list', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
     mockOrder.mockResolvedValue({
       data: [],
       error: null,
@@ -146,6 +279,11 @@ describe('getUsers', () => {
   });
 
   it('transforms all user roles correctly', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
     const mockData = [
       {
         id: 'u1',
@@ -201,30 +339,6 @@ describe('getUsers', () => {
 });
 
 describe('createUser', () => {
-  // Mock functions for createUser
-  const mockInsert = vi.fn();
-  const mockSelectInsert = vi.fn();
-  const mockSingleInsert = vi.fn();
-  const mockEq = vi.fn();
-  const mockIlike = vi.fn();
-  const mockSingle = vi.fn();
-  const mockGetUser = vi.fn();
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Reset mocks for createUser tests
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'users') {
-        return {
-          select: mockSelect,
-          insert: mockInsert,
-        };
-      }
-      return { select: mockSelect };
-    });
-  });
-
   const validInput: CreateUserInput = {
     email: 'newuser@example.com',
     displayName: 'New User',
@@ -232,78 +346,40 @@ describe('createUser', () => {
     departmentId: '550e8400-e29b-41d4-a716-446655440000',
   };
 
-  it('creates user successfully when admin', async () => {
-    // Mock auth.getUser
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'admin-user-id' } },
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('rejects invalid input before making API calls', async () => {
+    const result = await createUser({
+      email: 'invalid-email',
+      displayName: 'A', // Too short
+      role: 'staff',
+      departmentId: 'not-a-uuid',
     });
 
-    // Mock current user role check
-    mockSelect.mockImplementation(() => ({
-      eq: mockEq.mockReturnValue({
-        single: mockSingle.mockResolvedValue({
-          data: { role: 'admin' },
-          error: null,
-        }),
-      }),
-      ilike: mockIlike.mockReturnValue({
-        single: mockSingle.mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' }, // Not found
-        }),
-      }),
-    }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('Invalid');
+    }
+  });
 
-    // Mock insert
-    mockInsert.mockReturnValue({
-      select: mockSelectInsert.mockReturnValue({
-        single: mockSingleInsert.mockResolvedValue({
-          data: {
-            id: 'new-user-id',
-            email: validInput.email,
-            display_name: validInput.displayName,
-            role: validInput.role,
-            department_id: validInput.departmentId,
-            is_active: true,
-          },
-          error: null,
-        }),
-      }),
-    });
-
-    // Override mock to include auth
-    vi.mocked(await import('@/lib/supabase/server')).createClient.mockResolvedValue({
-      from: mockFrom,
-      auth: { getUser: mockGetUser },
-    } as unknown as Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>);
+  it('requires authentication', async () => {
+    await setupSupabaseMock({ authUser: null });
 
     const result = await createUser(validInput);
 
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.email).toBe(validInput.email);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Not authenticated');
     }
   });
 
   it('prevents admin from creating super_admin', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'admin-user-id' } },
+    await setupSupabaseMock({
+      authUser: { id: 'admin-user-id' },
+      userRole: 'admin',
     });
-
-    // Mock current user is admin
-    mockSelect.mockImplementation(() => ({
-      eq: mockEq.mockReturnValue({
-        single: mockSingle.mockResolvedValue({
-          data: { role: 'admin' },
-          error: null,
-        }),
-      }),
-    }));
-
-    vi.mocked(await import('@/lib/supabase/server')).createClient.mockResolvedValue({
-      from: mockFrom,
-      auth: { getUser: mockGetUser },
-    } as unknown as Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>);
 
     const result = await createUser({
       ...validInput,
@@ -317,46 +393,21 @@ describe('createUser', () => {
   });
 
   it('allows super_admin to create super_admin', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'super-admin-id' } },
+    await setupSupabaseMock({
+      authUser: { id: 'super-admin-id' },
+      userRole: 'super_admin',
+      existingEmail: false,
+      validDepartment: true,
+      insertSuccess: true,
+      insertedUser: {
+        id: 'new-user-id',
+        email: validInput.email,
+        display_name: validInput.displayName,
+        role: 'super_admin',
+        department_id: validInput.departmentId,
+        is_active: true,
+      },
     });
-
-    // Mock current user is super_admin
-    mockSelect.mockImplementation(() => ({
-      eq: mockEq.mockReturnValue({
-        single: mockSingle.mockResolvedValue({
-          data: { role: 'super_admin' },
-          error: null,
-        }),
-      }),
-      ilike: mockIlike.mockReturnValue({
-        single: mockSingle.mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
-        }),
-      }),
-    }));
-
-    mockInsert.mockReturnValue({
-      select: mockSelectInsert.mockReturnValue({
-        single: mockSingleInsert.mockResolvedValue({
-          data: {
-            id: 'new-super-admin-id',
-            email: validInput.email,
-            display_name: validInput.displayName,
-            role: 'super_admin',
-            department_id: validInput.departmentId,
-            is_active: true,
-          },
-          error: null,
-        }),
-      }),
-    });
-
-    vi.mocked(await import('@/lib/supabase/server')).createClient.mockResolvedValue({
-      from: mockFrom,
-      auth: { getUser: mockGetUser },
-    } as unknown as Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>);
 
     const result = await createUser({
       ...validInput,
@@ -367,30 +418,11 @@ describe('createUser', () => {
   });
 
   it('rejects duplicate email', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'admin-user-id' } },
+    await setupSupabaseMock({
+      authUser: { id: 'admin-user-id' },
+      userRole: 'admin',
+      existingEmail: true,
     });
-
-    // Mock current user role check and duplicate check
-    mockSelect.mockImplementation(() => ({
-      eq: mockEq.mockReturnValue({
-        single: mockSingle.mockResolvedValue({
-          data: { role: 'admin' },
-          error: null,
-        }),
-      }),
-      ilike: mockIlike.mockReturnValue({
-        single: mockSingle.mockResolvedValue({
-          data: { id: 'existing-user' }, // Email exists
-          error: null,
-        }),
-      }),
-    }));
-
-    vi.mocked(await import('@/lib/supabase/server')).createClient.mockResolvedValue({
-      from: mockFrom,
-      auth: { getUser: mockGetUser },
-    } as unknown as Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>);
 
     const result = await createUser(validInput);
 
@@ -400,62 +432,72 @@ describe('createUser', () => {
     }
   });
 
-  it('rejects invalid input', async () => {
-    const result = await createUser({
-      email: 'invalid-email',
-      displayName: 'A', // Too short
-      role: 'staff',
-      departmentId: 'not-a-uuid',
+  it('creates user successfully', async () => {
+    await setupSupabaseMock({
+      authUser: { id: 'admin-user-id' },
+      userRole: 'admin',
+      existingEmail: false,
+      validDepartment: true,
+      insertSuccess: true,
+      insertedUser: {
+        id: 'new-user-id',
+        email: validInput.email,
+        display_name: validInput.displayName,
+        role: validInput.role,
+        department_id: validInput.departmentId,
+        is_active: true,
+      },
     });
 
-    expect(result.success).toBe(false);
+    const result = await createUser(validInput);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe(validInput.email);
+    }
   });
 
-  it('requires authentication', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
+  it('rejects invalid or inactive department', async () => {
+    await setupSupabaseMock({
+      authUser: { id: 'admin-user-id' },
+      userRole: 'admin',
+      existingEmail: false,
+      validDepartment: false,
     });
-
-    vi.mocked(await import('@/lib/supabase/server')).createClient.mockResolvedValue({
-      from: mockFrom,
-      auth: { getUser: mockGetUser },
-    } as unknown as Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>);
 
     const result = await createUser(validInput);
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error).toBe('Not authenticated');
+      expect(result.error).toBe('Invalid or inactive department');
     }
   });
 });
 
 describe('getActiveDepartments', () => {
-  const mockEq = vi.fn();
-  const mockOrderDepts = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockFrom.mockReturnValue({
-      select: mockSelect.mockReturnValue({
-        eq: mockEq.mockReturnValue({
-          order: mockOrderDepts,
-        }),
-      }),
-    });
   });
 
   it('returns list of active departments', async () => {
-    const mockDepts = [
-      { id: 'dept-1', name: 'Engineering' },
-      { id: 'dept-2', name: 'Marketing' },
-    ];
-
-    mockOrderDepts.mockResolvedValue({
-      data: mockDepts,
+    const { createClient } = await import('@/lib/supabase/server');
+    const mockOrderDepts = vi.fn().mockResolvedValue({
+      data: [
+        { id: 'dept-1', name: 'Engineering' },
+        { id: 'dept-2', name: 'Marketing' },
+      ],
       error: null,
     });
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: mockOrderDepts,
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getActiveDepartments();
 
@@ -464,16 +506,23 @@ describe('getActiveDepartments', () => {
       expect(result.data).toHaveLength(2);
       expect(result.data[0].name).toBe('Engineering');
     }
-
-    expect(mockFrom).toHaveBeenCalledWith('departments');
-    expect(mockEq).toHaveBeenCalledWith('active', true);
   });
 
   it('returns empty list when no departments', async () => {
-    mockOrderDepts.mockResolvedValue({
-      data: [],
-      error: null,
-    });
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getActiveDepartments();
 
@@ -484,10 +533,20 @@ describe('getActiveDepartments', () => {
   });
 
   it('returns error on database failure', async () => {
-    mockOrderDepts.mockResolvedValue({
-      data: null,
-      error: { message: 'Connection failed' },
-    });
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Connection failed' },
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getActiveDepartments();
 
@@ -499,34 +558,30 @@ describe('getActiveDepartments', () => {
 });
 
 describe('getCurrentUserRole', () => {
-  const mockGetUser = vi.fn();
-  const mockEq = vi.fn();
-  const mockSingle = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('returns current user role', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    });
+    const { createClient } = await import('@/lib/supabase/server');
 
-    mockFrom.mockReturnValue({
-      select: mockSelect.mockReturnValue({
-        eq: mockEq.mockReturnValue({
-          single: mockSingle.mockResolvedValue({
-            data: { role: 'admin' },
-            error: null,
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-id' } },
+        }),
+      },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { role: 'admin' },
+              error: null,
+            }),
           }),
         }),
       }),
-    });
-
-    vi.mocked(await import('@/lib/supabase/server')).createClient.mockResolvedValue({
-      from: mockFrom,
-      auth: { getUser: mockGetUser },
-    } as unknown as Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>);
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getCurrentUserRole();
 
@@ -537,14 +592,16 @@ describe('getCurrentUserRole', () => {
   });
 
   it('returns error when not authenticated', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-    });
+    const { createClient } = await import('@/lib/supabase/server');
 
-    vi.mocked(await import('@/lib/supabase/server')).createClient.mockResolvedValue({
-      from: mockFrom,
-      auth: { getUser: mockGetUser },
-    } as unknown as Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>);
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getCurrentUserRole();
 

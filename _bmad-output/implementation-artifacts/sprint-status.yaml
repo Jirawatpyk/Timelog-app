@@ -108,7 +108,7 @@ development_status:
   epic-7: in-progress
   7-1-user-list-view: done
   7-1a-admin-navigation-layout: done
-  7-2-create-new-user: in-progress
+  7-2-create-new-user: done
   7-3-edit-user-information: ready-for-dev
   7-4-deactivate-user: ready-for-dev
   7-5-assign-roles: ready-for-dev
@@ -120,7 +120,7 @@ development_status:
   epic-8: in-progress
   8-1-pwa-installation: done
   8-2-service-worker-caching: done
-  8-3-offline-message-display: ready-for-dev
+  8-3-offline-message-display: review
   8-4-touch-optimized-ui: ready-for-dev
   8-5-pull-to-refresh: ready-for-dev
   8-6-audit-log-database-trigger: ready-for-dev

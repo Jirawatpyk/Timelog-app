@@ -76,3 +76,142 @@ export async function getUsers(
     },
   };
 }
+
+/**
+ * Get the current user's role
+ * Story 7.2: Create New User (AC 4)
+ *
+ * Used to determine if user can create super_admin
+ */
+export async function getCurrentUserRole(): Promise<ActionResult<UserRole>> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { data: profile, error } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !profile?.role) {
+    return { success: false, error: 'Failed to get user role' };
+  }
+
+  return { success: true, data: profile.role as UserRole };
+}
+
+/**
+ * Get list of active departments for user form
+ * Story 7.2: Create New User (AC 1)
+ */
+export async function getActiveDepartments(): Promise<ActionResult<DepartmentOption[]>> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('departments')
+    .select('id, name')
+    .eq('active', true)
+    .order('name');
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: data ?? [] };
+}
+
+/**
+ * Create a new user
+ * Story 7.2: Create New User (AC 2, 3, 4, 5, 6)
+ *
+ * @param input - User creation input
+ * @returns ActionResult with created user or error
+ */
+export async function createUser(input: CreateUserInput): Promise<ActionResult<User>> {
+  // Validate input first
+  const parsed = createUserSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Get current user's role
+  const { data: currentUserProfile, error: profileError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !currentUserProfile?.role) {
+    return { success: false, error: 'Failed to verify permissions' };
+  }
+
+  const currentRole = currentUserProfile.role as UserRole;
+
+  // Check role permission - admin cannot create super_admin
+  if (parsed.data.role === 'super_admin' && currentRole !== 'super_admin') {
+    return { success: false, error: 'Cannot create Super Admin user' };
+  }
+
+  // Check for duplicate email (case-insensitive)
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id')
+    .ilike('email', parsed.data.email)
+    .single();
+
+  if (existingUser) {
+    return { success: false, error: 'Email already exists' };
+  }
+
+  // Verify department exists and is active
+  const { data: department } = await supabase
+    .from('departments')
+    .select('id')
+    .eq('id', parsed.data.departmentId)
+    .eq('active', true)
+    .single();
+
+  if (!department) {
+    return { success: false, error: 'Invalid or inactive department' };
+  }
+
+  // Create user
+  const { data: newUser, error: insertError } = await supabase
+    .from('users')
+    .insert({
+      email: parsed.data.email,
+      display_name: parsed.data.displayName,
+      role: parsed.data.role,
+      department_id: parsed.data.departmentId,
+      is_active: true,
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    // Handle unique constraint violation
+    if (insertError.code === '23505') {
+      return { success: false, error: 'Email already exists' };
+    }
+    return { success: false, error: 'Failed to create user' };
+  }
+
+  revalidatePath('/admin/users');
+  return { success: true, data: newUser };
+}

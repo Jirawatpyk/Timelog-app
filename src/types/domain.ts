@@ -166,6 +166,7 @@ export type UserStatus = 'pending' | 'active' | 'inactive';
 /**
  * User item for admin user list display
  * Extended with status for Story 7.2a (User Invitation Email)
+ * Extended with managedDepartments for Story 7.6
  */
 export interface UserListItem {
   id: string;
@@ -178,6 +179,8 @@ export interface UserListItem {
   status: UserStatus;
   /** When user confirmed their email. NULL means pending invitation */
   confirmedAt: string | null;
+  /** Departments managed by this user (for role=manager). Story 7.6 */
+  managedDepartments?: DepartmentOption[];
 }
 
 /**

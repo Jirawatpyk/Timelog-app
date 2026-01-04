@@ -1,6 +1,7 @@
 // src/app/(app)/team/page.tsx
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
+import { Building2 } from 'lucide-react';
 import { checkManagerAccess } from '@/lib/auth/check-manager-access';
 import {
   getManagerDepartments,
@@ -68,6 +69,19 @@ async function TeamDashboardContent({
   }
 
   const departments = departmentsResult.data;
+
+  // Story 7.6 AC 5: Show empty state when manager has no departments assigned
+  if (departments.length === 0 && !isAdmin) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+        <div className="rounded-full bg-muted p-4 mb-4">
+          <Building2 className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h2 className="text-lg font-semibold mb-2">No departments assigned yet</h2>
+        <p className="text-muted-foreground">Contact your admin.</p>
+      </div>
+    );
+  }
 
   // Determine which departments to query based on filter
   let departmentIds: string[];

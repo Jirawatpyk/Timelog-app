@@ -1,6 +1,6 @@
 # Story 7.5: Assign Roles
 
-## Status: review
+## Status: complete
 
 ## Story
 
@@ -292,8 +292,17 @@ All 1783 unit tests pass. TypeScript compiles cleanly. Lint passes with no error
 - `src/app/(app)/admin/users/components/UserTable.tsx` - Integrated department prompt
 - `src/app/(app)/admin/users/components/UserTable.test.tsx` - Added Story 7.5 integration tests
 
+### Code Review Fixes
+
+1. **Fix TypeScript errors in `test/e2e/admin/assign-roles.test.ts`**
+   - Lines 190, 236, 248 had const literal type comparison issues
+   - TypeScript inferred literal types (e.g., `'admin'`) causing TS2367 errors on comparisons
+   - Fixed by declaring variables with explicit `string` type to simulate dynamic values
+   - This allows the runtime comparison tests to work without TypeScript complaints
+
 ## Change Log
 
 | Date | Change |
 |------|--------|
+| 2026-01-05 | Code Review: Fixed TypeScript errors in E2E tests |
 | 2026-01-04 | Story 7.5 implementation complete - Role assignment with AC 1-6 |

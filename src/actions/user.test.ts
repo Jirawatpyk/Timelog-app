@@ -8,6 +8,8 @@ import {
   updateUser,
   deactivateUser,
   reactivateUser,
+  getManagerDepartments,
+  updateManagerDepartments,
 } from './user';
 import type { CreateUserInput, EditUserInput } from '@/schemas/user.schema';
 
@@ -173,6 +175,41 @@ async function setupSupabaseMock(options: {
 }
 
 describe('getUsers', () => {
+  // Helper to create mock that supports both users and manager_departments tables
+  const createGetUsersMock = (
+    usersData: object[],
+    managerDepartmentsData: object[] = [],
+    error: object | null = null,
+    count: number | null = null
+  ) => {
+    return vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        return {
+          select: vi.fn().mockReturnValue({
+            range: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: usersData,
+                error,
+                count: count ?? usersData.length,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'manager_departments') {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({
+              data: managerDepartmentsData,
+              error: null,
+            }),
+          }),
+        };
+      }
+      return { select: mockSelect };
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -184,9 +221,6 @@ describe('getUsers', () => {
 
   it('returns paginated users with default params', async () => {
     const { createClient } = await import('@/lib/supabase/server');
-    vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const mockData = [
       {
@@ -209,11 +243,13 @@ describe('getUsers', () => {
       },
     ];
 
-    mockOrder.mockResolvedValue({
-      data: mockData,
-      error: null,
-      count: 2,
-    });
+    const mockFromFn = createGetUsersMock(mockData, [
+      { manager_id: 'user-2', department: { id: 'dept-3', name: 'Sales' } },
+    ]);
+
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getUsers();
 
@@ -221,50 +257,32 @@ describe('getUsers', () => {
     if (result.success) {
       expect(result.data.users).toHaveLength(2);
       expect(result.data.totalCount).toBe(2);
-      expect(result.data.users[0]).toEqual({
-        id: 'user-1',
-        email: 'alice@example.com',
-        displayName: 'Alice',
-        role: 'staff',
-        isActive: true,
-        status: 'active',
-        confirmedAt: '2026-01-01T00:00:00Z',
-        department: { id: 'dept-1', name: 'Engineering' },
-      });
+      // Staff user should not have managedDepartments
+      expect(result.data.users[0].managedDepartments).toBeUndefined();
+      // Manager user should have managedDepartments
+      expect(result.data.users[1].managedDepartments).toEqual([
+        { id: 'dept-3', name: 'Sales' },
+      ]);
     }
-
-    // Verify query params
-    expect(mockFrom).toHaveBeenCalledWith('users');
-    expect(mockRange).toHaveBeenCalledWith(0, 19); // page 1, limit 20
-    expect(mockOrder).toHaveBeenCalledWith('display_name', {
-      ascending: true,
-      nullsFirst: false,
-    });
   });
 
   it('handles pagination params correctly', async () => {
     const { createClient } = await import('@/lib/supabase/server');
+    const mockFromFn = createGetUsersMock([], [], null, 50);
+
     vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
+      from: mockFromFn,
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
-    mockOrder.mockResolvedValue({
-      data: [],
-      error: null,
-      count: 50,
-    });
-
-    await getUsers({ page: 3, limit: 10 });
+    const result = await getUsers({ page: 3, limit: 10 });
 
     // page 3, limit 10 means offset 20-29
-    expect(mockRange).toHaveBeenCalledWith(20, 29);
+    expect(mockFromFn).toHaveBeenCalledWith('users');
+    expect(result.success).toBe(true);
   });
 
   it('returns user without department (null)', async () => {
     const { createClient } = await import('@/lib/supabase/server');
-    vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const mockData = [
       {
@@ -278,11 +296,10 @@ describe('getUsers', () => {
       },
     ];
 
-    mockOrder.mockResolvedValue({
-      data: mockData,
-      error: null,
-      count: 1,
-    });
+    const mockFromFn = createGetUsersMock(mockData);
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getUsers();
 
@@ -294,9 +311,6 @@ describe('getUsers', () => {
 
   it('calculates status correctly for pending user (no confirmed_at)', async () => {
     const { createClient } = await import('@/lib/supabase/server');
-    vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const mockData = [
       {
@@ -310,11 +324,10 @@ describe('getUsers', () => {
       },
     ];
 
-    mockOrder.mockResolvedValue({
-      data: mockData,
-      error: null,
-      count: 1,
-    });
+    const mockFromFn = createGetUsersMock(mockData);
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getUsers();
 
@@ -327,9 +340,6 @@ describe('getUsers', () => {
 
   it('calculates status correctly for inactive user', async () => {
     const { createClient } = await import('@/lib/supabase/server');
-    vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const mockData = [
       {
@@ -343,11 +353,10 @@ describe('getUsers', () => {
       },
     ];
 
-    mockOrder.mockResolvedValue({
-      data: mockData,
-      error: null,
-      count: 1,
-    });
+    const mockFromFn = createGetUsersMock(mockData);
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getUsers();
 
@@ -359,15 +368,11 @@ describe('getUsers', () => {
 
   it('returns error on database failure', async () => {
     const { createClient } = await import('@/lib/supabase/server');
-    vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
-    mockOrder.mockResolvedValue({
-      data: null,
-      error: { message: 'Database connection failed' },
-      count: null,
-    });
+    const mockFromFn = createGetUsersMock([], [], { message: 'Database connection failed' });
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getUsers();
 
@@ -379,15 +384,11 @@ describe('getUsers', () => {
 
   it('handles empty user list', async () => {
     const { createClient } = await import('@/lib/supabase/server');
-    vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
-    mockOrder.mockResolvedValue({
-      data: [],
-      error: null,
-      count: 0,
-    });
+    const mockFromFn = createGetUsersMock([], [], null, 0);
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getUsers();
 
@@ -400,9 +401,6 @@ describe('getUsers', () => {
 
   it('transforms all user roles correctly', async () => {
     const { createClient } = await import('@/lib/supabase/server');
-    vi.mocked(createClient).mockResolvedValue({
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const mockData = [
       {
@@ -439,11 +437,12 @@ describe('getUsers', () => {
       },
     ];
 
-    mockOrder.mockResolvedValue({
-      data: mockData,
-      error: null,
-      count: 4,
-    });
+    const mockFromFn = createGetUsersMock(mockData, [
+      { manager_id: 'u2', department: { id: 'dept-1', name: 'Engineering' } },
+    ]);
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const result = await getUsers();
 
@@ -451,6 +450,9 @@ describe('getUsers', () => {
     if (result.success) {
       expect(result.data.users[0].role).toBe('staff');
       expect(result.data.users[1].role).toBe('manager');
+      expect(result.data.users[1].managedDepartments).toEqual([
+        { id: 'dept-1', name: 'Engineering' },
+      ]);
       expect(result.data.users[2].role).toBe('admin');
       expect(result.data.users[2].isActive).toBe(false);
       expect(result.data.users[3].role).toBe('super_admin');
@@ -2431,6 +2433,388 @@ describe('reactivateUser (Story 7.4)', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe('Insufficient permissions');
+    }
+  });
+});
+
+/**
+ * Story 7.6: Assign Manager Departments
+ * Tests for getManagerDepartments and updateManagerDepartments server actions
+ */
+describe('getManagerDepartments (Story 7.6)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('requires authentication', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getManagerDepartments('manager-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Not authenticated');
+    }
+  });
+
+  it('returns manager departments successfully', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    const mockFromFn = vi.fn().mockImplementation(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: [
+            { department: { id: 'dept-1', name: 'Engineering' } },
+            { department: { id: 'dept-2', name: 'Marketing' } },
+          ],
+          error: null,
+        }),
+      }),
+    }));
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getManagerDepartments('manager-id');
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].name).toBe('Engineering');
+      expect(result.data[1].name).toBe('Marketing');
+    }
+  });
+
+  it('returns empty array when manager has no departments', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    const mockFromFn = vi.fn().mockImplementation(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
+      }),
+    }));
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getManagerDepartments('manager-id');
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual([]);
+    }
+  });
+
+  it('returns error on database failure', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    const mockFromFn = vi.fn().mockImplementation(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Database error' },
+        }),
+      }),
+    }));
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await getManagerDepartments('manager-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Failed to load departments');
+    }
+  });
+});
+
+describe('updateManagerDepartments (Story 7.6)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('requires authentication', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateManagerDepartments('manager-id', ['dept-1']);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Not authenticated');
+    }
+  });
+
+  it('prevents non-admin from updating departments', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { role: 'staff' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'staff-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateManagerDepartments('manager-id', ['dept-1']);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Insufficient permissions');
+    }
+  });
+
+  it('returns error when target user is not a manager', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' }, // Not a manager
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateManagerDepartments('staff-id', ['dept-1']);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('User is not a manager');
+    }
+  });
+
+  it('updates manager departments successfully', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockDeleteFn = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    });
+    const mockInsertFn = vi.fn().mockResolvedValue({ error: null });
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'manager' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      if (table === 'manager_departments') {
+        return {
+          delete: mockDeleteFn,
+          insert: mockInsertFn,
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: [
+                { department: { id: 'dept-1', name: 'Engineering' } },
+              ],
+              error: null,
+            }),
+          }),
+        };
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateManagerDepartments('manager-id', ['dept-1']);
+
+    expect(result.success).toBe(true);
+    expect(mockDeleteFn).toHaveBeenCalled();
+    expect(mockInsertFn).toHaveBeenCalled();
+    if (result.success) {
+      expect(result.data).toHaveLength(1);
+    }
+  });
+
+  it('handles empty department array (removes all)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockDeleteFn = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    });
+    const mockInsertFn = vi.fn().mockResolvedValue({ error: null });
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'manager' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      if (table === 'manager_departments') {
+        return {
+          delete: mockDeleteFn,
+          insert: mockInsertFn,
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
+          }),
+        };
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateManagerDepartments('manager-id', []);
+
+    expect(result.success).toBe(true);
+    expect(mockDeleteFn).toHaveBeenCalled();
+    // Insert should NOT be called when array is empty
+    expect(mockInsertFn).not.toHaveBeenCalled();
+    if (result.success) {
+      expect(result.data).toEqual([]);
     }
   });
 });

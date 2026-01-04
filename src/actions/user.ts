@@ -58,6 +58,29 @@ export async function getUsers(
     return { success: false, error: error.message };
   }
 
+  // Story 7.6: Fetch manager departments for managers in this page
+  const managerIds = (data ?? [])
+    .filter((row) => row.role === 'manager')
+    .map((row) => row.id);
+
+  // Build map of manager_id -> departments
+  const managerDepartmentsMap = new Map<string, DepartmentOption[]>();
+  if (managerIds.length > 0) {
+    const { data: mdData } = await supabase
+      .from('manager_departments')
+      .select('manager_id, department:departments(id, name)')
+      .in('manager_id', managerIds);
+
+    for (const md of mdData ?? []) {
+      const dept = md.department as unknown as DepartmentOption;
+      if (dept) {
+        const existing = managerDepartmentsMap.get(md.manager_id) ?? [];
+        existing.push(dept);
+        managerDepartmentsMap.set(md.manager_id, existing);
+      }
+    }
+  }
+
   // Transform snake_case to camelCase at boundary
   // Note: Supabase returns FK joins based on relationship type
   const users: UserListItem[] = (data ?? []).map((row) => {
@@ -77,6 +100,10 @@ export async function getUsers(
         ? 'pending'
         : 'active';
 
+    // Story 7.6: Include managed departments for managers
+    const managedDepartments =
+      row.role === 'manager' ? managerDepartmentsMap.get(row.id) ?? [] : undefined;
+
     return {
       id: row.id,
       email: row.email,
@@ -86,6 +113,7 @@ export async function getUsers(
       isActive: row.is_active,
       status,
       confirmedAt: row.confirmed_at,
+      managedDepartments,
     };
   });
 
@@ -608,4 +636,138 @@ export async function reactivateUser(id: string): Promise<ActionResult<User>> {
 
   revalidatePath('/admin/users');
   return { success: true, data: updatedUser };
+}
+
+/**
+ * Get departments assigned to a manager
+ * Story 7.6: Assign Manager Departments (AC 1)
+ *
+ * @param managerId - The manager's user ID
+ * @returns ActionResult with array of DepartmentOption
+ */
+export async function getManagerDepartments(
+  managerId: string
+): Promise<ActionResult<DepartmentOption[]>> {
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { data, error } = await supabase
+    .from('manager_departments')
+    .select('department:departments(id, name)')
+    .eq('manager_id', managerId);
+
+  if (error) {
+    return { success: false, error: 'Failed to load departments' };
+  }
+
+  // Transform joined data - Supabase returns FK join as object at runtime
+  const departments = (data ?? [])
+    .map((d) => d.department as unknown as DepartmentOption)
+    .filter(Boolean);
+
+  return { success: true, data: departments };
+}
+
+/**
+ * Update departments assigned to a manager
+ * Story 7.6: Assign Manager Departments (AC 2, AC 3)
+ *
+ * Uses atomic delete + insert pattern for consistency
+ *
+ * @param managerId - The manager's user ID
+ * @param departmentIds - Array of department IDs to assign
+ * @returns ActionResult with updated DepartmentOption array
+ */
+export async function updateManagerDepartments(
+  managerId: string,
+  departmentIds: string[]
+): Promise<ActionResult<DepartmentOption[]>> {
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Verify current user has admin permissions
+  const { data: currentUserProfile, error: profileError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !currentUserProfile?.role) {
+    return { success: false, error: 'Failed to verify permissions' };
+  }
+
+  const currentRole = currentUserProfile.role as UserRole;
+  if (currentRole !== 'admin' && currentRole !== 'super_admin') {
+    return { success: false, error: 'Insufficient permissions' };
+  }
+
+  // Verify target user is a manager
+  const { data: targetUser, error: targetError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', managerId)
+    .single();
+
+  if (targetError || !targetUser) {
+    return { success: false, error: 'User not found' };
+  }
+
+  if (targetUser.role !== 'manager') {
+    return { success: false, error: 'User is not a manager' };
+  }
+
+  // Atomic update: delete all existing assignments, then insert new ones
+  const { error: deleteError } = await supabase
+    .from('manager_departments')
+    .delete()
+    .eq('manager_id', managerId);
+
+  if (deleteError) {
+    return { success: false, error: 'Failed to update departments' };
+  }
+
+  // Insert new assignments (if any)
+  if (departmentIds.length > 0) {
+    const { error: insertError } = await supabase
+      .from('manager_departments')
+      .insert(
+        departmentIds.map((deptId) => ({
+          manager_id: managerId,
+          department_id: deptId,
+        }))
+      );
+
+    if (insertError) {
+      return { success: false, error: 'Failed to save departments' };
+    }
+  }
+
+  // Fetch updated departments for return
+  const { data: updated } = await supabase
+    .from('manager_departments')
+    .select('department:departments(id, name)')
+    .eq('manager_id', managerId);
+
+  const departments = (updated ?? [])
+    .map((d) => d.department as unknown as DepartmentOption)
+    .filter(Boolean);
+
+  revalidatePath('/admin/users');
+  revalidatePath('/team');
+
+  return { success: true, data: departments };
 }

@@ -1,10 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ADMIN_NAV_ITEMS, isActiveAdminRoute } from '@/constants/admin-navigation';
+import { AdminNavLinks, BackToAppLink } from './AdminNavItems';
 
 /**
  * Admin Sidebar Navigation Component
@@ -33,38 +30,12 @@ export function AdminSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1" aria-label="Admin navigation">
-        {ADMIN_NAV_ITEMS.map((item) => {
-          const isActive = isActiveAdminRoute(pathname, item.href);
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
+        <AdminNavLinks pathname={pathname} />
       </nav>
 
       {/* Back to App */}
       <div className="p-2 border-t">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to App
-        </Link>
+        <BackToAppLink />
       </div>
     </aside>
   );

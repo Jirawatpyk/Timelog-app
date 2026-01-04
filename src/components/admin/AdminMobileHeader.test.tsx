@@ -85,7 +85,7 @@ describe('AdminMobileHeader', () => {
       await user.click(button);
 
       await waitFor(() => {
-        expect(screen.getByRole('link', { name: /back to app/i })).toBeVisible();
+        expect(screen.getByRole('link', { name: /return to main dashboard/i })).toBeVisible();
       });
     });
 
@@ -142,7 +142,7 @@ describe('AdminMobileHeader', () => {
       await user.click(screen.getByRole('button', { name: /open admin menu/i }));
 
       await waitFor(() => {
-        const link = screen.getByRole('link', { name: /back to app/i });
+        const link = screen.getByRole('link', { name: /return to main dashboard/i });
         expect(link).toHaveAttribute('href', '/dashboard');
       });
     });

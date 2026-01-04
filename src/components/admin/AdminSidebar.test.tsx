@@ -102,14 +102,15 @@ describe('AdminSidebar', () => {
     it('should render Back to App link', () => {
       render(<AdminSidebar />);
 
-      const backLink = screen.getByRole('link', { name: /back to app/i });
+      const backLink = screen.getByRole('link', { name: /return to main dashboard/i });
       expect(backLink).toBeInTheDocument();
+      expect(backLink).toHaveTextContent('Back to App');
     });
 
     it('should link to /dashboard', () => {
       render(<AdminSidebar />);
 
-      const backLink = screen.getByRole('link', { name: /back to app/i });
+      const backLink = screen.getByRole('link', { name: /return to main dashboard/i });
       expect(backLink).toHaveAttribute('href', '/dashboard');
     });
   });

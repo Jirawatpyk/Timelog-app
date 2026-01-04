@@ -6,6 +6,7 @@
 // Navigation components
 export { AdminSidebar } from './AdminSidebar';
 export { AdminMobileHeader } from './AdminMobileHeader';
+export { AdminNavLinks, BackToAppLink } from './AdminNavItems';
 
 // Data table components
 export { DataTable } from './DataTable';

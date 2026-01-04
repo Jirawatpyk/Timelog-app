@@ -1,9 +1,13 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+import { createUserSchema, type CreateUserInput } from '@/schemas/user.schema';
 import type {
   ActionResult,
+  DepartmentOption,
   PaginationParams,
+  User,
   UserListItem,
   UserListResponse,
   UserRole,

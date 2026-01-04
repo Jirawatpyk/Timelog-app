@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, ArrowLeft } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -13,8 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
-import { ADMIN_NAV_ITEMS, isActiveAdminRoute } from '@/constants/admin-navigation';
+import { AdminNavLinks, BackToAppLink } from './AdminNavItems';
 
 /**
  * Admin Mobile Header Component
@@ -36,6 +34,8 @@ export function AdminMobileHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  const handleNavigate = () => setOpen(false);
+
   return (
     <header className="md:hidden sticky top-0 z-40 h-14 flex items-center gap-4 border-b bg-background px-4">
       <Sheet open={open} onOpenChange={setOpen}>
@@ -53,39 +53,11 @@ export function AdminMobileHeader() {
           </SheetHeader>
 
           <nav className="flex-1 p-2 space-y-1" aria-label="Admin mobile navigation">
-            {ADMIN_NAV_ITEMS.map((item) => {
-              const isActive = isActiveAdminRoute(pathname, item.href);
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            <AdminNavLinks pathname={pathname} onNavigate={handleNavigate} />
           </nav>
 
           <div className="p-2 border-t mt-auto">
-            <Link
-              href="/dashboard"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to App
-            </Link>
+            <BackToAppLink onNavigate={handleNavigate} />
           </div>
         </SheetContent>
       </Sheet>

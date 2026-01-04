@@ -23,6 +23,73 @@ describe('Sidebar', () => {
     vi.clearAllMocks();
   });
 
+  describe('Admin section hiding (Story 7.1a)', () => {
+    it('should return null when pathname starts with /admin', async () => {
+      const { usePathname } = await import('next/navigation');
+      vi.mocked(usePathname).mockReturnValue('/admin');
+
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+      });
+
+      const { container } = render(<Sidebar />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('should return null when on /admin/master-data', async () => {
+      const { usePathname } = await import('next/navigation');
+      vi.mocked(usePathname).mockReturnValue('/admin/master-data');
+
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+      });
+
+      const { container } = render(<Sidebar />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('should return null when on /admin/users', async () => {
+      const { usePathname } = await import('next/navigation');
+      vi.mocked(usePathname).mockReturnValue('/admin/users');
+
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+      });
+
+      const { container } = render(<Sidebar />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('should render normally for non-admin paths', async () => {
+      const { usePathname } = await import('next/navigation');
+      vi.mocked(usePathname).mockReturnValue('/dashboard');
+
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+      });
+
+      render(<Sidebar />);
+      expect(screen.getByRole('navigation', { name: /sidebar/i })).toBeInTheDocument();
+    });
+
+    it('should render normally for /entry path', async () => {
+      const { usePathname } = await import('next/navigation');
+      vi.mocked(usePathname).mockReturnValue('/entry');
+
+      mockUseUser.mockReturnValue({
+        role: 'staff',
+        isLoading: false,
+      });
+
+      render(<Sidebar />);
+      expect(screen.getByRole('navigation', { name: /sidebar/i })).toBeInTheDocument();
+    });
+  });
+
   describe('Role-based navigation rendering', () => {
     it('should render Entry and Dashboard for staff role', () => {
       mockUseUser.mockReturnValue({

@@ -1,6 +1,6 @@
 # Story 7.1a: Admin Navigation Layout
 
-## Status: ready-for-dev
+## Status: done
 
 ## Story
 
@@ -99,78 +99,78 @@ Reference: AWS Console, Azure Portal, Stripe Dashboard, Salesforce Setup
 
 ### Task 1: Create Admin Navigation Constants
 **File:** `src/constants/admin-navigation.ts`
-- [ ] Create `AdminNavItem` interface (href, label, icon)
-- [ ] Define `ADMIN_NAV_ITEMS` array: Master Data, Users
-- [ ] Export `isActiveAdminRoute(pathname, href)` helper
-- [ ] Add tests
+- [x] Create `AdminNavItem` interface (href, label, icon)
+- [x] Define `ADMIN_NAV_ITEMS` array: Master Data, Users
+- [x] Export `isActiveAdminRoute(pathname, href)` helper
+- [x] Add tests
 
 ### Task 2: Modify App Sidebar to Hide in Admin
 **File:** `src/components/navigation/Sidebar.tsx`
-- [ ] Import `usePathname` from next/navigation
-- [ ] Add condition: if pathname starts with `/admin`, return null
-- [ ] Add test: `should return null when pathname starts with /admin`
-- [ ] Add test: `should render normally for non-admin paths`
+- [x] Import `usePathname` from next/navigation
+- [x] Add condition: if pathname starts with `/admin`, return null
+- [x] Add test: `should return null when pathname starts with /admin`
+- [x] Add test: `should render normally for non-admin paths`
 
 ### Task 3: Modify Bottom Nav to Hide in Admin
 **File:** `src/components/navigation/BottomNav.tsx`
-- [ ] Import `usePathname` from next/navigation
-- [ ] Add condition: if pathname starts with `/admin`, return null
-- [ ] Add test: `should return null when pathname starts with /admin`
-- [ ] Add test: `should render normally for non-admin paths`
+- [x] Import `usePathname` from next/navigation
+- [x] Add condition: if pathname starts with `/admin`, return null
+- [x] Add test: `should return null when pathname starts with /admin`
+- [x] Add test: `should render normally for non-admin paths`
 
 ### Task 4: Create AdminSidebar Component
 **File:** `src/components/admin/AdminSidebar.tsx`
-- [ ] Create sidebar container (w-56, border-r, flex-col)
-- [ ] Render "Admin" header at top
-- [ ] Map through `ADMIN_NAV_ITEMS` with icons
-- [ ] Apply active state styling (bg-primary)
-- [ ] Add "Back to App" link at bottom with ArrowLeft icon
-- [ ] Add aria-current="page" for active item
-- [ ] Hidden on mobile (hidden md:flex)
+- [x] Create sidebar container (w-56, border-r, flex-col)
+- [x] Render "Admin" header at top
+- [x] Map through `ADMIN_NAV_ITEMS` with icons
+- [x] Apply active state styling (bg-primary)
+- [x] Add "Back to App" link at bottom with ArrowLeft icon
+- [x] Add aria-current="page" for active item
+- [x] Hidden on mobile (hidden md:flex)
 
 ### Task 5: Create AdminSidebar Tests
 **File:** `src/components/admin/AdminSidebar.test.tsx`
-- [ ] Test renders "Admin" header
-- [ ] Test renders all navigation items
-- [ ] Test active state on current route
-- [ ] Test links have correct hrefs
-- [ ] Test "Back to App" links to /dashboard
-- [ ] Test aria-current attribute
+- [x] Test renders "Admin" header
+- [x] Test renders all navigation items
+- [x] Test active state on current route
+- [x] Test links have correct hrefs
+- [x] Test "Back to App" links to /dashboard
+- [x] Test aria-current attribute
 
 ### Task 6: Create AdminMobileHeader Component
 **File:** `src/components/admin/AdminMobileHeader.tsx`
-- [ ] Create sticky header with "Admin" text
-- [ ] Add hamburger menu button (Menu icon)
-- [ ] Use Sheet component for slide-in menu
-- [ ] Render same nav items as AdminSidebar in sheet
-- [ ] Close sheet on navigation
-- [ ] Visible only on mobile (md:hidden)
+- [x] Create sticky header with "Admin" text
+- [x] Add hamburger menu button (Menu icon)
+- [x] Use Sheet component for slide-in menu
+- [x] Render same nav items as AdminSidebar in sheet
+- [x] Close sheet on navigation
+- [x] Visible only on mobile (md:hidden)
 
 ### Task 7: Create AdminMobileHeader Tests
 **File:** `src/components/admin/AdminMobileHeader.test.tsx`
-- [ ] Test renders "Admin" text
-- [ ] Test hamburger button visible
-- [ ] Test sheet opens on button click
-- [ ] Test navigation items in sheet
-- [ ] Test sheet closes on item click
+- [x] Test renders "Admin" text
+- [x] Test hamburger button visible
+- [x] Test sheet opens on button click
+- [x] Test navigation items in sheet
+- [x] Test sheet closes on item click
 
 ### Task 8: Create Admin Components Index
 **File:** `src/components/admin/index.ts`
-- [ ] Export AdminSidebar
-- [ ] Export AdminMobileHeader
+- [x] Export AdminSidebar
+- [x] Export AdminMobileHeader
 
 ### Task 9: Update Admin Layout
 **File:** `src/app/(app)/admin/layout.tsx`
-- [ ] Import AdminSidebar, AdminMobileHeader
-- [ ] Restructure layout to use flex container
-- [ ] Add AdminSidebar (desktop)
-- [ ] Add AdminMobileHeader (mobile)
-- [ ] Content area takes flex-1
+- [x] Import AdminSidebar, AdminMobileHeader
+- [x] Restructure layout to use flex container
+- [x] Add AdminSidebar (desktop)
+- [x] Add AdminMobileHeader (mobile)
+- [x] Content area takes flex-1
 
 ### Task 10: Update App Layout (if needed)
 **File:** `src/app/(app)/layout.tsx`
-- [ ] Verify Sidebar and BottomNav hide correctly in Admin
-- [ ] No duplicate navigation when in Admin section
+- [x] Verify Sidebar and BottomNav hide correctly in Admin
+- [x] No duplicate navigation when in Admin section
 
 ## Dev Notes
 
@@ -489,19 +489,64 @@ Before starting implementation:
 
 ## Definition of Done
 
-- [ ] App Sidebar hides when on `/admin/*`
-- [ ] App Bottom Nav hides when on `/admin/*`
-- [ ] Admin Sidebar shows on desktop with correct items
-- [ ] Admin Mobile Header shows on mobile with hamburger
-- [ ] Active state highlights current page
-- [ ] Navigation between Master Data and Users works
-- [ ] "Back to App" returns to dashboard and restores App nav
-- [ ] `/admin` redirects to `/admin/master-data`
-- [ ] Mobile sheet opens/closes correctly
-- [ ] Keyboard navigation works
-- [ ] All tests pass (including nav hiding tests)
-- [ ] No TypeScript errors
-- [ ] No console errors
+- [x] App Sidebar hides when on `/admin/*`
+- [x] App Bottom Nav hides when on `/admin/*`
+- [x] Admin Sidebar shows on desktop with correct items
+- [x] Admin Mobile Header shows on mobile with hamburger
+- [x] Active state highlights current page
+- [x] Navigation between Master Data and Users works
+- [x] "Back to App" returns to dashboard and restores App nav
+- [x] `/admin` redirects to `/admin/master-data`
+- [x] Mobile sheet opens/closes correctly
+- [x] Keyboard navigation works
+- [x] All tests pass (including nav hiding tests)
+- [x] No TypeScript errors
+- [x] No console errors
+
+## Dev Agent Record
+
+### Implementation Summary
+Story 7.1a implements a dedicated admin navigation layout using the "Context-Switching Sidebar" pattern (Enterprise Standard). When users navigate to `/admin/*` routes, the App navigation (Sidebar on desktop, BottomNav on mobile) is hidden and replaced with Admin-specific navigation.
+
+### Key Decisions
+1. **Navigation Hiding Pattern**: Used `pathname.startsWith('/admin')` check with early `return null` in Sidebar and BottomNav components
+2. **Mobile Menu**: Used shadcn/ui Sheet component with left-side slide-in for consistent UX
+3. **Active State Logic**: Special handling for `/admin` route to highlight "Master Data" (as it redirects there)
+4. **Accessibility**: Added `aria-current="page"`, `aria-label` on hamburger button, and SheetDescription for screen readers
+
+### Test Coverage
+- `admin-navigation.test.ts`: 13 tests (constants and helper function)
+- `Sidebar.test.tsx`: +5 tests for admin hiding behavior
+- `BottomNav.test.tsx`: +5 tests for admin hiding behavior
+- `AdminSidebar.test.tsx`: 16 tests (rendering, active state, accessibility)
+- `AdminMobileHeader.test.tsx`: 13 tests (header, sheet behavior, navigation)
+- **Total story-related tests: 52 new tests**
+
+### Pre-existing Issues (Not from this story)
+- 6 failures in `src/lib/queries/team.test.ts` - mock doesn't properly chain `.eq()` method after `.in()` - unrelated to this story
+
+## File List
+
+### Created Files
+| File | Purpose |
+|------|---------|
+| `src/constants/admin-navigation.ts` | Admin nav items and route helper |
+| `src/constants/admin-navigation.test.ts` | Tests for navigation constants |
+| `src/components/admin/AdminSidebar.tsx` | Desktop admin sidebar component |
+| `src/components/admin/AdminSidebar.test.tsx` | Tests for AdminSidebar |
+| `src/components/admin/AdminMobileHeader.tsx` | Mobile admin header with hamburger menu |
+| `src/components/admin/AdminMobileHeader.test.tsx` | Tests for AdminMobileHeader |
+| `src/components/admin/index.ts` | Barrel export for admin components |
+| `test/e2e/admin/navigation.test.ts` | E2E tests for admin navigation (Playwright) |
+
+### Modified Files
+| File | Changes |
+|------|---------|
+| `src/components/navigation/Sidebar.tsx` | Added admin path check to return null |
+| `src/components/navigation/Sidebar.test.tsx` | Added 5 tests for admin hiding |
+| `src/components/navigation/BottomNav.tsx` | Added admin path check to return null |
+| `src/components/navigation/BottomNav.test.tsx` | Added 5 tests for admin hiding, removed obsolete admin highlight test |
+| `src/app/(app)/admin/layout.tsx` | Added AdminSidebar and AdminMobileHeader |
 
 ## Change Log
 
@@ -509,3 +554,5 @@ Before starting implementation:
 |------|--------|--------|
 | 2026-01-04 | Story created - Option A (Enterprise Standard) | Party Mode Team |
 | 2026-01-04 | Added AC 8 (landing page), explicit nav hiding tests, header height note, prerequisites | Party Mode Review |
+| 2026-01-04 | Implementation complete - all 10 tasks done, 52 tests passing | Dev Agent |
+| 2026-01-04 | Code review: Fixed SheetContent width (w-64→w-56), added E2E tests, verified skeleton logic | Code Review |

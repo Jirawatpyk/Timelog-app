@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 /**
  * Bottom Navigation Component
  * Story 4.1: Bottom Navigation Component
+ * Story 7.1a: Hide in Admin section - Admin has its own navigation
  *
  * Provides persistent navigation for mobile devices with role-based items
  *
@@ -20,10 +21,16 @@ import { cn } from '@/lib/utils';
  * - Client-side navigation with Next.js Link (AC: 5)
  * - Hidden on desktop (AC: 6)
  * - iOS safe area support (AC: 7)
+ * - Hidden in Admin section (/admin/*) (Story 7.1a AC: 2)
  */
 export function BottomNav() {
   const pathname = usePathname();
   const { role, isLoading } = useUser();
+
+  // Hide in Admin section - Admin has its own navigation (Story 7.1a)
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   if (isLoading || !role) {
     return <BottomNavSkeleton />;

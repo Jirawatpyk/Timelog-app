@@ -21,6 +21,68 @@ describe('BottomNav', () => {
     mockPathname.mockReturnValue('/entry');
   });
 
+  describe('Admin section hiding (Story 7.1a)', () => {
+    it('should return null when pathname starts with /admin', () => {
+      mockPathname.mockReturnValue('/admin');
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+        error: null,
+      });
+
+      const { container } = render(<BottomNav />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('should return null when on /admin/master-data', () => {
+      mockPathname.mockReturnValue('/admin/master-data');
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+        error: null,
+      });
+
+      const { container } = render(<BottomNav />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('should return null when on /admin/users', () => {
+      mockPathname.mockReturnValue('/admin/users');
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+        error: null,
+      });
+
+      const { container } = render(<BottomNav />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('should render normally for non-admin paths', () => {
+      mockPathname.mockReturnValue('/dashboard');
+      mockUseUser.mockReturnValue({
+        role: 'admin',
+        isLoading: false,
+        error: null,
+      });
+
+      render(<BottomNav />);
+      expect(screen.getByRole('navigation', { name: /bottom navigation/i })).toBeInTheDocument();
+    });
+
+    it('should render normally for /entry path', () => {
+      mockPathname.mockReturnValue('/entry');
+      mockUseUser.mockReturnValue({
+        role: 'staff',
+        isLoading: false,
+        error: null,
+      });
+
+      render(<BottomNav />);
+      expect(screen.getByRole('navigation', { name: /bottom navigation/i })).toBeInTheDocument();
+    });
+  });
+
   describe('Loading State', () => {
     it('should render skeleton when loading', () => {
       mockUseUser.mockReturnValue({
@@ -152,13 +214,8 @@ describe('BottomNav', () => {
       expect(teamLink).toHaveClass('text-primary');
     });
 
-    it('should highlight Admin when on /admin sub-routes', () => {
-      mockPathname.mockReturnValue('/admin/master-data');
-      render(<BottomNav />);
-
-      const adminLink = screen.getByRole('link', { name: /admin/i });
-      expect(adminLink).toHaveClass('text-primary');
-    });
+    // Note: BottomNav now returns null on /admin/* paths (Story 7.1a)
+    // Admin navigation is handled by AdminMobileHeader component
 
     it('should NOT highlight Entry when on /entry-reports (edge case)', () => {
       mockPathname.mockReturnValue('/entry-reports');

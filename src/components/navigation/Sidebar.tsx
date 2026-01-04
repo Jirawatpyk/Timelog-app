@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 /**
  * Desktop Sidebar Navigation Component
  * Story 4.11: Desktop Sidebar Navigation
+ * Story 7.1a: Hide in Admin section - Admin has its own sidebar
  *
  * Provides persistent navigation for desktop viewports with role-based items
  *
@@ -19,10 +20,16 @@ import { cn } from '@/lib/utils';
  * - Client-side navigation with Next.js Link (AC: 4)
  * - Fixed width w-60 (240px) (AC: 5)
  * - 44px minimum height for navigation items (AC: 6)
+ * - Hidden in Admin section (/admin/*) (Story 7.1a AC: 2)
  */
 export function Sidebar() {
   const pathname = usePathname();
   const { role, isLoading } = useUser();
+
+  // Hide in Admin section - Admin has its own sidebar (Story 7.1a)
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   if (isLoading || !role) {
     return <SidebarSkeleton />;
@@ -90,6 +97,7 @@ export function Sidebar() {
 /**
  * Skeleton loading state for Sidebar
  * Shows placeholder items while user role is loading
+ * Note: Admin path check happens in Sidebar before skeleton is rendered
  */
 export function SidebarSkeleton() {
   return (

@@ -1522,6 +1522,417 @@ describe('updateUser (Story 7.3)', () => {
       expect(result.error).toBe('User not found');
     }
   });
+
+  // Story 7.5: Assign Roles - Additional tests
+  it('prevents self-role-change (Story 7.5 AC 6)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // Current user role
+                : { data: { role: 'admin' }, error: null } // Target user role (same user)
+            ),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'same-user-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    // Try to change own role from admin to staff
+    const result = await updateUser('same-user-id', {
+      ...validInput,
+      role: 'staff', // Different from current role 'admin'
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Cannot change your own role');
+    }
+  });
+
+  it('allows self-update without role change (Story 7.5 AC 6)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' }, // Same role
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: 'same-user-id', email: validInput.email, role: 'admin' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'same-user-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    // Update own user but keep same role
+    const result = await updateUser('same-user-id', {
+      ...validInput,
+      role: 'admin', // Same as current role
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('prevents admin from assigning super_admin role (Story 7.5 AC 1)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // Current user is admin
+                : { data: { role: 'staff' }, error: null } // Target user is staff
+            ),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    // Admin trying to assign super_admin role
+    const result = await updateUser('target-user-id', {
+      ...validInput,
+      role: 'super_admin',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Cannot assign Super Admin role');
+    }
+  });
+
+  it('returns promptDepartment=true when role changes to manager (Story 7.5 AC 3)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' }, // Target is currently staff
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: 'target-id', email: validInput.email, role: 'manager' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    // Change staff to manager
+    const result = await updateUser('target-id', {
+      ...validInput,
+      role: 'manager',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.promptDepartment).toBe(true);
+    }
+  });
+
+  it('returns promptDepartment=false when role does not change to manager (Story 7.5 AC 3)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: 'target-id', email: validInput.email, role: 'admin' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    // Change staff to admin (not manager)
+    const result = await updateUser('target-id', {
+      ...validInput,
+      role: 'admin',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.promptDepartment).toBeFalsy();
+    }
+  });
+
+  it('cleans up manager_departments when downgrading from manager (Story 7.5 AC 5)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockDeleteFn = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    });
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'manager_departments') {
+        return {
+          delete: mockDeleteFn,
+        };
+      }
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'manager' }, // Target is currently manager
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: 'target-id', email: validInput.email, role: 'staff' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    // Downgrade manager to staff
+    const result = await updateUser('target-id', {
+      ...validInput,
+      role: 'staff',
+    });
+
+    expect(result.success).toBe(true);
+    // Verify manager_departments delete was called
+    expect(mockFromFn).toHaveBeenCalledWith('manager_departments');
+    expect(mockDeleteFn).toHaveBeenCalled();
+  });
 });
 
 /**

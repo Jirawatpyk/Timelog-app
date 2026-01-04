@@ -43,7 +43,8 @@ export function UserTable({ users, currentUserId }: UserTableProps) {
   const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
   // Story 7.5 AC 3: Track when to show department assignment prompt
   const [showDeptPrompt, setShowDeptPrompt] = useState(false);
-  const [newManagerId, setNewManagerId] = useState<string | null>(null);
+  // Note: newManagerId can be used in Story 7.6 for department assignment
+  const [_newManagerId, setNewManagerId] = useState<string | null>(null);
 
   const handleResendInvite = async (userId: string, email: string) => {
     setResendingId(userId);

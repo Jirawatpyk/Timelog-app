@@ -194,9 +194,9 @@ test.describe('Story 7.4: Deactivate User', () => {
         await reactivateButton.click();
 
         // Should show loading indicator (spinner icon)
-        // This happens quickly, so we use a short timeout
-        const spinner = page.locator('.animate-spin');
         // Loading state may be too fast to catch, but shouldn't error
+        const _spinner = page.locator('.animate-spin');
+        // Variable prefixed with _ to indicate intentionally unused
       }
     });
   });

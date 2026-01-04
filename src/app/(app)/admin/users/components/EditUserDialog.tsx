@@ -1,6 +1,7 @@
 /**
  * Edit User Dialog Component
  * Story 7.3: Edit User Information (AC 1, 2, 3, 4, 5)
+ * Story 7.5: Assign Roles (AC 1, 3, 4, 6 - role filtering, manager prompt callback)
  *
  * Modal dialog for editing existing users with pre-populated data.
  */
@@ -42,22 +43,17 @@ import { editUserSchema, type EditUserInput } from '@/schemas/user.schema';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import type { UserListItem, UserRole, DepartmentOption } from '@/types/domain';
+import { getRoleOptions, type RoleKey } from '@/lib/roles';
 
 interface EditUserDialogProps {
   user: UserListItem;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Callback when role changed to manager (for department assignment prompt) */
+  onManagerRoleAssigned?: (userId: string) => void;
 }
 
-// Role options with labels
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: 'staff', label: 'Staff' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'super_admin', label: 'Super Admin' },
-];
-
-export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
+export function EditUserDialog({ user, open, onOpenChange, onManagerRoleAssigned }: EditUserDialogProps) {
   const router = useRouter();
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
@@ -127,13 +123,9 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
     }
   }, [form.formState.errors]);
 
-  // Filter role options - admin can't assign super_admin
-  const availableRoles = ROLE_OPTIONS.filter((role) => {
-    if (role.value === 'super_admin') {
-      return currentUserRole === 'super_admin';
-    }
-    return true;
-  });
+  // Filter role options based on current user's role
+  // Story 7.5 AC 1, AC 4: admin sees staff/manager/admin, super_admin sees all
+  const availableRoles = currentUserRole ? getRoleOptions(currentUserRole as RoleKey) : [];
 
   const onSubmit = async (data: EditUserInput) => {
     const result = await updateUser(user.id, data);
@@ -142,11 +134,17 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       toast.success('User updated successfully');
       router.refresh();
       onOpenChange(false);
+
+      // Story 7.5 AC 3: Show department prompt when role changed to manager
+      if (result.data.promptDepartment && onManagerRoleAssigned) {
+        onManagerRoleAssigned(user.id);
+      }
     } else {
       // Set error on email field for duplicate email
       if (result.error.includes('Email')) {
         form.setError('email', { message: result.error });
       }
+      // Story 7.5 AC 6: Show self-role-change error
       toast.error(result.error);
     }
   };

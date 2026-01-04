@@ -195,3 +195,14 @@ export interface PaginationParams {
   page: number;
   limit: number;
 }
+
+/**
+ * Result type for updateUser action
+ * Story 7.5: Assign Roles (AC 3)
+ * Includes promptDepartment flag when role changed to manager
+ */
+export interface UpdateUserResult {
+  user: User;
+  /** True when role changed to manager (should prompt for department assignment) */
+  promptDepartment?: boolean;
+}

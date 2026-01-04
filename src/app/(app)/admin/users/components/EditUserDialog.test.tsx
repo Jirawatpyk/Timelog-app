@@ -1,8 +1,9 @@
 /**
  * Edit User Dialog Tests
  * Story 7.3: Edit User Information (AC 1, 2, 3, 4, 5)
+ * Story 7.5: Assign Roles (AC 1, AC 3, AC 4, AC 6)
  *
- * Tests for editing existing users with pre-populated data
+ * Tests for editing existing users with pre-populated data and role assignment
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -35,20 +36,25 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('EditUserDialog', () => {
+  // Use valid UUIDs for schema validation
+  const DEPT_1_ID = '00000000-0000-0000-0000-000000000001';
+  const DEPT_2_ID = '00000000-0000-0000-0000-000000000002';
+  const USER_ID = '00000000-0000-0000-0000-000000000123';
+
   const mockUser: UserListItem = {
-    id: 'user-123',
+    id: USER_ID,
     email: 'test@example.com',
     displayName: 'Test User',
     role: 'staff',
-    department: { id: 'dept-1', name: 'Engineering' },
+    department: { id: DEPT_1_ID, name: 'Engineering' },
     isActive: true,
     status: 'active',
     confirmedAt: '2026-01-01T00:00:00Z',
   };
 
   const mockDepartments = [
-    { id: 'dept-1', name: 'Engineering' },
-    { id: 'dept-2', name: 'Marketing' },
+    { id: DEPT_1_ID, name: 'Engineering' },
+    { id: DEPT_2_ID, name: 'Marketing' },
   ];
 
   beforeEach(() => {
@@ -172,6 +178,177 @@ describe('EditUserDialog', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText(/edit user/i)).toBeInTheDocument();
+    });
+  });
+
+  // Story 7.5: Assign Roles Tests
+  describe('Story 7.5: Role Assignment', () => {
+    it('AC 1: admin sees staff, manager, admin options (not super_admin)', async () => {
+      const user = userEvent.setup();
+      vi.mocked(userActions.getCurrentUserRole).mockResolvedValue({
+        success: true,
+        data: 'admin',
+      });
+
+      render(<EditUserDialog user={mockUser} open={true} onOpenChange={() => {}} />);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
+      });
+
+      // Open role dropdown
+      await user.click(screen.getByLabelText(/role/i));
+
+      // Should see staff, manager, admin
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: /staff/i })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: /manager/i })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: /^admin$/i })).toBeInTheDocument();
+      });
+
+      // Should NOT see super_admin
+      expect(screen.queryByRole('option', { name: /super admin/i })).not.toBeInTheDocument();
+    });
+
+    it('AC 4: super_admin sees all 4 role options including super_admin', async () => {
+      const user = userEvent.setup();
+      vi.mocked(userActions.getCurrentUserRole).mockResolvedValue({
+        success: true,
+        data: 'super_admin',
+      });
+
+      render(<EditUserDialog user={mockUser} open={true} onOpenChange={() => {}} />);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
+      });
+
+      // Open role dropdown
+      await user.click(screen.getByLabelText(/role/i));
+
+      // Should see all 4 options
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: /staff/i })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: /manager/i })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: /^admin$/i })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: /super admin/i })).toBeInTheDocument();
+      });
+    });
+
+    it('AC 3: calls onManagerRoleAssigned when role changes to manager', async () => {
+      const user = userEvent.setup();
+      const onManagerRoleAssigned = vi.fn();
+
+      // Mock updateUser to return promptDepartment: true
+      // Note: user in response is database User type (snake_case), not UserListItem
+      vi.mocked(userActions.updateUser).mockResolvedValue({
+        success: true,
+        data: {
+          user: {
+            id: USER_ID,
+            email: mockUser.email,
+            display_name: mockUser.displayName,
+            role: 'manager',
+            department_id: DEPT_1_ID,
+            is_active: true,
+            created_at: '2026-01-01T00:00:00Z',
+          },
+          promptDepartment: true,
+        },
+      });
+
+      render(
+        <EditUserDialog
+          user={mockUser}
+          open={true}
+          onOpenChange={() => {}}
+          onManagerRoleAssigned={onManagerRoleAssigned}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
+      });
+
+      // Change role to manager
+      await user.click(screen.getByLabelText(/role/i));
+      await user.click(screen.getByRole('option', { name: /manager/i }));
+
+      // Submit form
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => {
+        expect(onManagerRoleAssigned).toHaveBeenCalledWith(USER_ID);
+      });
+    });
+
+    it('AC 3: does not call onManagerRoleAssigned when promptDepartment is false', async () => {
+      const user = userEvent.setup();
+      const onManagerRoleAssigned = vi.fn();
+
+      // Mock updateUser to return promptDepartment: false
+      // Note: user in response is database User type (snake_case), not UserListItem
+      vi.mocked(userActions.updateUser).mockResolvedValue({
+        success: true,
+        data: {
+          user: {
+            id: USER_ID,
+            email: mockUser.email,
+            display_name: mockUser.displayName,
+            role: 'admin',
+            department_id: DEPT_1_ID,
+            is_active: true,
+            created_at: '2026-01-01T00:00:00Z',
+          },
+          promptDepartment: false,
+        },
+      });
+
+      render(
+        <EditUserDialog
+          user={mockUser}
+          open={true}
+          onOpenChange={() => {}}
+          onManagerRoleAssigned={onManagerRoleAssigned}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
+      });
+
+      // Submit form without changing role
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => {
+        expect(onManagerRoleAssigned).not.toHaveBeenCalled();
+      });
+    });
+
+    it('AC 6: shows error toast when self-role-change is attempted', async () => {
+      const user = userEvent.setup();
+      const sonner = await import('sonner');
+
+      // Mock updateUser to return self-role-change error
+      vi.mocked(userActions.updateUser).mockResolvedValue({
+        success: false,
+        error: 'Cannot change your own role',
+      });
+
+      render(<EditUserDialog user={mockUser} open={true} onOpenChange={() => {}} />);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
+      });
+
+      // Change role and submit
+      await user.click(screen.getByLabelText(/role/i));
+      await user.click(screen.getByRole('option', { name: /manager/i }));
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => {
+        expect(sonner.toast.error).toHaveBeenCalledWith('Cannot change your own role');
+      });
     });
   });
 });

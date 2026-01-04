@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TimeEntryForm } from './TimeEntryForm';
 import * as useEntryData from '@/hooks/use-entry-data';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { toast } from 'sonner';
 
 // Mock the hooks
 vi.mock('@/hooks/use-entry-data', () => ({
@@ -13,6 +16,22 @@ vi.mock('@/hooks/use-entry-data', () => ({
   useTasks: vi.fn(),
   useRecentCombinations: vi.fn(),
 }));
+
+// Mock online status hook - Story 8.3
+vi.mock('@/hooks/use-online-status', () => ({
+  useOnlineStatus: vi.fn(() => true),
+}));
+
+// Mock sonner toast
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    info: vi.fn(),
+    success: vi.fn(),
+  },
+}));
+
+const mockUseOnlineStatus = vi.mocked(useOnlineStatus);
 
 const mockClients = [
   { id: 'client-1', name: 'Client A', active: true, created_at: '' },
@@ -45,6 +64,8 @@ function createWrapper() {
 describe('TimeEntryForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default to online - Story 8.3
+    mockUseOnlineStatus.mockReturnValue(true);
 
     // Default mock implementations - use 'as unknown as' to bypass strict UseQueryResult typing
     vi.mocked(useEntryData.useClients).mockReturnValue({
@@ -189,5 +210,26 @@ describe('TimeEntryForm', () => {
     render(<TimeEntryForm />, { wrapper: createWrapper() });
 
     expect(screen.getByText('Duration (hours) *')).toBeInTheDocument();
+  });
+
+  // Story 8.3: Offline submission tests
+  describe('offline submission handling (Story 8.3)', () => {
+    it('calls useOnlineStatus hook', () => {
+      mockUseOnlineStatus.mockReturnValue(true);
+      render(<TimeEntryForm />, { wrapper: createWrapper() });
+
+      // Hook should be called during render
+      expect(mockUseOnlineStatus).toHaveBeenCalled();
+    });
+
+    it('preserves form when offline', () => {
+      mockUseOnlineStatus.mockReturnValue(false);
+      render(<TimeEntryForm />, { wrapper: createWrapper() });
+
+      // Form should still be visible and editable even when offline
+      expect(screen.getByTestId('time-entry-form')).toBeInTheDocument();
+      expect(screen.getByTestId('client-selector')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    });
   });
 });

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useOnlineStatus } from '@/hooks/use-online-status';
 
 import {
   ClientSelector,
@@ -35,9 +36,11 @@ interface EditEntryFormProps {
  * Edit Entry Form Component
  * Story 4.5 - AC2: Pre-populate fields with existing entry data
  * Story 4.5 - AC3: Update submission
+ * Story 8.3: Offline-aware form submission
  */
 export function EditEntryForm({ entry, onSuccess, onCancel }: EditEntryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isOnline = useOnlineStatus();
 
   // Initialize cascading state from entry data
   const [clientId, setClientId] = useState<string | null>(
@@ -139,9 +142,26 @@ export function EditEntryForm({ entry, onSuccess, onCancel }: EditEntryFormProps
     onCancel();
   };
 
+  /**
+   * Handle form submit button click
+   * Story 8.3 - AC2: Check online status before validation
+   */
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Story 8.3 - AC2: Check online status BEFORE validation
+    if (!isOnline) {
+      toast.error('Please connect to the internet before saving');
+      return; // Form data is preserved
+    }
+
+    // Proceed with normal form validation and submission
+    form.handleSubmit(onSubmit)();
+  };
+
   return (
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
+      onSubmit={handleFormSubmit}
       className="space-y-6"
       data-testid="edit-entry-form"
     >

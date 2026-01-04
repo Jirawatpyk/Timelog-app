@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useOnlineStatus } from '@/hooks/use-online-status';
 import {
   ClientSelector,
   ProjectSelector,
@@ -35,10 +36,12 @@ import type { RecentCombination } from '@/types/domain';
  * Story 4.4: Date selection, submission, and success animation
  * Story 4.7: Recent combinations quick entry
  * Story 4.8: Form validation & error states
+ * Story 8.3: Offline-aware form submission
  */
 export function TimeEntryForm() {
   const queryClient = useQueryClient();
   const durationInputRef = useRef<HTMLInputElement>(null);
+  const isOnline = useOnlineStatus();
 
   // Local state for cascading dependency tracking
   const [clientId, setClientId] = useState<string | null>(null);
@@ -158,6 +161,23 @@ export function TimeEntryForm() {
   };
 
   /**
+   * Handle form submit button click
+   * Story 8.3 - AC2: Check online status before validation
+   */
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Story 8.3 - AC2: Check online status BEFORE validation
+    if (!isOnline) {
+      toast.error('Please connect to the internet before saving');
+      return; // Form data is preserved
+    }
+
+    // Proceed with normal form validation and submission
+    form.handleSubmit(onSubmit, onInvalid)();
+  };
+
+  /**
    * Form submission handler
    * Story 4.4 - AC5, AC6, AC7
    * Story 4.8 - AC8: Server error handling
@@ -260,7 +280,7 @@ export function TimeEntryForm() {
       />
 
       <form
-        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+        onSubmit={handleFormSubmit}
         className="space-y-6"
         data-testid="time-entry-form"
       >

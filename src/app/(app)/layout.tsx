@@ -6,6 +6,7 @@ import { DraftCleanup } from '@/components/shared/draft-cleanup';
 import { InstallPrompt } from '@/components/shared/InstallPrompt';
 import { ServiceWorkerRegistration } from '@/components/shared/ServiceWorkerRegistration';
 import { UpdateNotification } from '@/components/shared/UpdateNotification';
+import { OfflineBanner } from '@/components/shared/OfflineBanner';
 import { BottomNav, Sidebar } from '@/components/navigation';
 import { hasEnvVars } from '@/lib/utils';
 import { CalendarClock } from 'lucide-react';
@@ -25,6 +26,10 @@ import Link from 'next/link';
  * Story 4.12: Desktop Header Enhancement
  * - Desktop: Full UserProfileDropdown (name + role badge) + ThemeSwitcher in header
  * - Mobile: Compact UserProfileDropdown (short name only) + ThemeSwitcher in header (consistent)
+ *
+ * Story 8.3: Offline Message Display
+ * - Adds OfflineBanner at top of page when offline
+ * - Shows toast when connection is restored
  */
 export default function ProtectedLayout({
   children,
@@ -33,6 +38,8 @@ export default function ProtectedLayout({
 }) {
   return (
     <AuthStateListener>
+      {/* Offline Banner - Story 8.3 (fixed position, z-50) */}
+      <OfflineBanner />
       {/* Cleanup expired drafts on app load - Story 4.10 */}
       <DraftCleanup />
       {/* Flex container for Sidebar + Main content */}

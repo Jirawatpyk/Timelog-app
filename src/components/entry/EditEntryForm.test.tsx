@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { EditEntryForm } from './EditEntryForm';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { toast } from 'sonner';
 import type { TimeEntryWithDetails } from '@/types/domain';
 
 // Mock the entry actions
@@ -13,6 +15,13 @@ vi.mock('@/actions/entry', () => ({
   getActiveServices: vi.fn().mockResolvedValue({ success: true, data: [] }),
   getActiveTasks: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
+
+// Mock online status hook - Story 8.3
+vi.mock('@/hooks/use-online-status', () => ({
+  useOnlineStatus: vi.fn(() => true),
+}));
+
+const mockUseOnlineStatus = vi.mocked(useOnlineStatus);
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
@@ -75,6 +84,8 @@ describe('EditEntryForm', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-02T12:00:00'));
     sessionStorage.clear();
+    // Default to online - Story 8.3
+    mockUseOnlineStatus.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -167,5 +178,46 @@ describe('EditEntryForm', () => {
 
     expect(cancelButton).toHaveClass('min-h-[48px]');
     expect(saveButton).toHaveClass('min-h-[48px]');
+  });
+
+  // Story 8.3: Offline submission tests
+  describe('offline submission handling (Story 8.3)', () => {
+    it('shows error toast when submitting while offline', () => {
+      mockUseOnlineStatus.mockReturnValue(false);
+      const entry = createMockEntry();
+
+      render(
+        <EditEntryForm
+          entry={entry}
+          onSuccess={vi.fn()}
+          onCancel={vi.fn()}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      // Use fireEvent.submit to bypass disabled button state
+      const form = screen.getByTestId('edit-entry-form');
+      fireEvent.submit(form);
+
+      expect(toast.error).toHaveBeenCalledWith('Please connect to the internet before saving');
+    });
+
+    it('preserves form data when offline', () => {
+      mockUseOnlineStatus.mockReturnValue(false);
+      const entry = createMockEntry();
+
+      render(
+        <EditEntryForm
+          entry={entry}
+          onSuccess={vi.fn()}
+          onCancel={vi.fn()}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      // Form should still be visible and editable
+      expect(screen.getByTestId('edit-entry-form')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    });
   });
 });

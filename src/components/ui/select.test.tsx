@@ -14,6 +14,115 @@ import {
   SelectValue,
 } from './select'
 
+describe('Select Touch Optimization (Story 8.4)', () => {
+  describe('SelectTrigger - AC 1: Minimum Touch Target Size', () => {
+    it('default size has h-11 height class (44px)', () => {
+      render(
+        <Select>
+          <SelectTrigger data-testid="trigger">
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+        </Select>
+      )
+      const trigger = screen.getByTestId('trigger')
+      expect(trigger.className).toContain('data-[size=default]:h-11')
+    })
+
+    it('sm size has h-10 height class (40px)', () => {
+      render(
+        <Select>
+          <SelectTrigger data-testid="trigger" size="sm">
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+        </Select>
+      )
+      const trigger = screen.getByTestId('trigger')
+      expect(trigger.className).toContain('data-[size=sm]:h-10')
+    })
+  })
+
+  describe('SelectTrigger - AC 2: Touch Feedback', () => {
+    it('has touch-feedback class', () => {
+      render(
+        <Select>
+          <SelectTrigger data-testid="trigger">
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+        </Select>
+      )
+      const trigger = screen.getByTestId('trigger')
+      expect(trigger.className).toContain('touch-feedback')
+    })
+  })
+
+  describe('SelectTrigger - AC 4: iOS Zoom Prevention', () => {
+    it('has text-base class for 16px font size', () => {
+      render(
+        <Select>
+          <SelectTrigger data-testid="trigger">
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+        </Select>
+      )
+      const trigger = screen.getByTestId('trigger')
+      expect(trigger.className).toContain('text-base')
+    })
+  })
+
+  describe('SelectItem - Touch Optimization', () => {
+    it('has min-h-11 class for 44px minimum height', async () => {
+      const user = userEvent.setup()
+      render(
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="test" data-testid="item">Test</SelectItem>
+          </SelectContent>
+        </Select>
+      )
+      await user.click(screen.getByRole('combobox'))
+      const item = screen.getByTestId('item')
+      expect(item.className).toContain('min-h-11')
+    })
+
+    it('has touch-feedback class', async () => {
+      const user = userEvent.setup()
+      render(
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="test" data-testid="item">Test</SelectItem>
+          </SelectContent>
+        </Select>
+      )
+      await user.click(screen.getByRole('combobox'))
+      const item = screen.getByTestId('item')
+      expect(item.className).toContain('touch-feedback')
+    })
+
+    it('has text-base class for 16px font size', async () => {
+      const user = userEvent.setup()
+      render(
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="test" data-testid="item">Test</SelectItem>
+          </SelectContent>
+        </Select>
+      )
+      await user.click(screen.getByRole('combobox'))
+      const item = screen.getByTestId('item')
+      expect(item.className).toContain('text-base')
+    })
+  })
+})
+
 describe('Select Component', () => {
   describe('SelectTrigger', () => {
     it('renders with overflow-hidden class for truncation', () => {

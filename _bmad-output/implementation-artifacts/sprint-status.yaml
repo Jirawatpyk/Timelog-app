@@ -107,7 +107,7 @@ development_status:
   # Epic 7: User Administration (8 stories)
   epic-7: in-progress
   7-1-user-list-view: done
-  7-1a-admin-navigation-layout: ready-for-dev
+  7-1a-admin-navigation-layout: in-progress
   7-2-create-new-user: ready-for-dev
   7-3-edit-user-information: ready-for-dev
   7-4-deactivate-user: ready-for-dev
@@ -119,7 +119,7 @@ development_status:
   # Epic 8: PWA & UX Polish (9 stories)
   epic-8: in-progress
   8-1-pwa-installation: done
-  8-2-service-worker-caching: ready-for-dev
+  8-2-service-worker-caching: done
   8-3-offline-message-display: ready-for-dev
   8-4-touch-optimized-ui: ready-for-dev
   8-5-pull-to-refresh: ready-for-dev

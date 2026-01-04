@@ -4,6 +4,8 @@ import { AuthStateListener } from '@/components/shared/auth-state-listener';
 import { UserProfileDropdown } from '@/components/shared/user-profile-dropdown';
 import { DraftCleanup } from '@/components/shared/draft-cleanup';
 import { InstallPrompt } from '@/components/shared/InstallPrompt';
+import { ServiceWorkerRegistration } from '@/components/shared/ServiceWorkerRegistration';
+import { UpdateNotification } from '@/components/shared/UpdateNotification';
 import { BottomNav, Sidebar } from '@/components/navigation';
 import { hasEnvVars } from '@/lib/utils';
 import { CalendarClock } from 'lucide-react';
@@ -81,6 +83,12 @@ export default function ProtectedLayout({
 
       {/* PWA Install Prompt - Story 8.1 */}
       <InstallPrompt />
+
+      {/* Service Worker Registration - Story 8.2 */}
+      <ServiceWorkerRegistration />
+
+      {/* Update Notification - Story 8.2 */}
+      <UpdateNotification />
     </AuthStateListener>
   );
 }

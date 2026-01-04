@@ -11,9 +11,11 @@ import type { Department } from '@/types/domain';
 
 // Mock server actions
 const mockToggleDepartmentActive = vi.fn();
+const mockCheckDepartmentUsage = vi.fn();
 
 vi.mock('@/actions/master-data', () => ({
   toggleDepartmentActive: (id: string, active: boolean) => mockToggleDepartmentActive(id, active),
+  checkDepartmentUsage: (id: string) => mockCheckDepartmentUsage(id),
 }));
 
 // Mock sonner toast
@@ -163,8 +165,8 @@ describe('DepartmentsListClient', () => {
   });
 
   describe('Toggle Active Status (AC6)', () => {
-    it('toggles department active status on switch click', async () => {
-      mockToggleDepartmentActive.mockResolvedValue({ success: true, data: { ...mockDepartments[0], active: false } });
+    it('shows confirmation dialog when deactivating', async () => {
+      mockCheckDepartmentUsage.mockResolvedValue({ success: true, data: { used: true, count: 5 } });
 
       render(<DepartmentsListClient initialDepartments={mockDepartments} />);
 
@@ -172,13 +174,41 @@ describe('DepartmentsListClient', () => {
       const switches = screen.getAllByRole('switch');
       await user.click(switches[0]);
 
+      // Should show confirmation dialog
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+        expect(screen.getByText(/deactivate audio production/i)).toBeInTheDocument();
+        // Check for count separately as it may be in a <strong> tag
+        expect(screen.getByText('5')).toBeInTheDocument();
+        expect(screen.getByText(/active users/i)).toBeInTheDocument();
+      });
+    });
+
+    it('deactivates after confirmation', async () => {
+      mockCheckDepartmentUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
+      mockToggleDepartmentActive.mockResolvedValue({ success: true, data: { ...mockDepartments[0], active: false } });
+
+      render(<DepartmentsListClient initialDepartments={mockDepartments} />);
+
+      const switches = screen.getAllByRole('switch');
+      await user.click(switches[0]);
+
+      // Wait for dialog and click confirm
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const deactivateButton = screen.getByRole('button', { name: /deactivate/i });
+      await user.click(deactivateButton);
+
       await waitFor(() => {
         expect(mockToggleDepartmentActive).toHaveBeenCalledWith('1', false);
       });
     });
 
-    it('shows success toast after successful toggle', async () => {
+    it('shows success toast after successful deactivation', async () => {
       const { toast } = await import('sonner');
+      mockCheckDepartmentUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
       mockToggleDepartmentActive.mockResolvedValue({ success: true, data: { ...mockDepartments[0], active: false } });
 
       render(<DepartmentsListClient initialDepartments={mockDepartments} />);
@@ -187,12 +217,40 @@ describe('DepartmentsListClient', () => {
       await user.click(switches[0]);
 
       await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const deactivateButton = screen.getByRole('button', { name: /deactivate/i });
+      await user.click(deactivateButton);
+
+      await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith('Department deactivated');
       });
     });
 
+    it('activates without confirmation dialog', async () => {
+      // Test with inactive department (Legacy Dept)
+      mockToggleDepartmentActive.mockResolvedValue({ success: true, data: { ...mockDepartments[2], active: true } });
+
+      render(<DepartmentsListClient initialDepartments={mockDepartments} />);
+
+      // Find the toggle switch for Legacy Dept (inactive department)
+      const switches = screen.getAllByRole('switch');
+      // switches[2] is for Legacy Dept which is inactive
+      await user.click(switches[2]);
+
+      // Should directly call toggle without dialog
+      await waitFor(() => {
+        expect(mockToggleDepartmentActive).toHaveBeenCalledWith('3', true);
+      });
+
+      // No confirmation dialog should appear
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
+
     it('reverts optimistic update on error', async () => {
       const { toast } = await import('sonner');
+      mockCheckDepartmentUsage.mockResolvedValue({ success: true, data: { used: false, count: 0 } });
       mockToggleDepartmentActive.mockResolvedValue({ success: false, error: 'Server error' });
 
       render(<DepartmentsListClient initialDepartments={mockDepartments} />);
@@ -202,6 +260,13 @@ describe('DepartmentsListClient', () => {
       expect(switches[0]).toBeChecked();
 
       await user.click(switches[0]);
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const deactivateButton = screen.getByRole('button', { name: /deactivate/i });
+      await user.click(deactivateButton);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Server error');

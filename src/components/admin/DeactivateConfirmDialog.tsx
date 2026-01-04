@@ -23,7 +23,7 @@ interface DeactivateConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemName: string;
-  itemType: 'service' | 'task' | 'client' | 'project' | 'job';
+  itemType: 'service' | 'task' | 'client' | 'project' | 'job' | 'department';
   usageCount: number;
   usageLabel?: string; // e.g., "jobs" for projects, "time entries" for jobs
   onConfirm: () => void;

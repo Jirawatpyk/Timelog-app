@@ -23,7 +23,8 @@ import { AddDepartmentDialog } from '@/components/admin/AddDepartmentDialog';
 import { EditDepartmentDialog } from '@/components/admin/EditDepartmentDialog';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { toggleDepartmentActive } from '@/actions/master-data';
+import { DeactivateConfirmDialog } from '@/components/admin/DeactivateConfirmDialog';
+import { toggleDepartmentActive, checkDepartmentUsage } from '@/actions/master-data';
 import type { Department } from '@/types/domain';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -42,6 +43,11 @@ export function DepartmentsListClient({ initialDepartments }: DepartmentsListCli
   // Toggle state
   const [pendingId, setPendingId] = useState<string | null>(null);
 
+  // Deactivate confirmation dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [departmentToDeactivate, setDepartmentToDeactivate] = useState<Department | null>(null);
+  const [usageCount, setUsageCount] = useState(0);
+
   const filteredDepartments = useMemo(() => {
     return departments.filter((department) => {
       const matchesSearch = department.name
@@ -58,7 +64,29 @@ export function DepartmentsListClient({ initialDepartments }: DepartmentsListCli
   }, [departments, search, statusFilter]);
 
   const handleToggle = async (department: Department) => {
-    // No confirmation needed for departments - deactivating doesn't affect users
+    // If deactivating, check usage first and show confirmation
+    if (department.active) {
+      setPendingId(department.id);
+      const usageResult = await checkDepartmentUsage(department.id);
+      setPendingId(null);
+
+      if (!usageResult.success) {
+        toast.error(usageResult.error);
+        return;
+      }
+
+      // Show confirmation dialog with usage count
+      setUsageCount(usageResult.data.count);
+      setDepartmentToDeactivate(department);
+      setShowConfirmDialog(true);
+      return;
+    }
+
+    // Activating - no confirmation needed
+    await performToggle(department);
+  };
+
+  const performToggle = async (department: Department) => {
     const newActive = !department.active;
 
     // Optimistic update
@@ -71,6 +99,8 @@ export function DepartmentsListClient({ initialDepartments }: DepartmentsListCli
 
     const result = await toggleDepartmentActive(department.id, newActive);
     setPendingId(null);
+    setShowConfirmDialog(false);
+    setDepartmentToDeactivate(null);
 
     if (!result.success) {
       // Revert on error
@@ -240,6 +270,19 @@ export function DepartmentsListClient({ initialDepartments }: DepartmentsListCli
           data={filteredDepartments}
           columns={columns}
           keyField="id"
+        />
+      )}
+
+      {departmentToDeactivate && (
+        <DeactivateConfirmDialog
+          open={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          itemName={departmentToDeactivate.name}
+          itemType="department"
+          usageCount={usageCount}
+          usageLabel="active users"
+          onConfirm={() => performToggle(departmentToDeactivate)}
+          isPending={pendingId === departmentToDeactivate.id}
         />
       )}
     </div>

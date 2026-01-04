@@ -1321,3 +1321,45 @@ export async function toggleDepartmentActive(
   revalidatePath('/admin/master-data');
   return { success: true, data };
 }
+
+/**
+ * Check if a department is in use (has active users)
+ *
+ * @param id - Department ID to check
+ * @returns ActionResult with usage info (count of active users)
+ */
+export async function checkDepartmentUsage(id: string): Promise<ActionResult<ItemUsage>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth - super_admin only
+  const authResult = await requireSuperAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Count active users in this department
+  const { count, error } = await supabase
+    .from('users')
+    .select('*', { count: 'exact', head: true })
+    .eq('department_id', id)
+    .eq('is_active', true);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  const userCount = count ?? 0;
+  return {
+    success: true,
+    data: {
+      used: userCount > 0,
+      count: userCount,
+    },
+  };
+}

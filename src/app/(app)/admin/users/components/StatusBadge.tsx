@@ -16,7 +16,7 @@ const statusConfig: Record<
   { label: string; className: string; ariaLabel: string }
 > = {
   pending: {
-    label: 'Pending',
+    label: '🟡 Pending',
     className: cn(
       'bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80',
       'dark:bg-yellow-800 dark:text-yellow-100'
@@ -24,7 +24,7 @@ const statusConfig: Record<
     ariaLabel: 'Status: Pending invitation',
   },
   active: {
-    label: 'Active',
+    label: '🟢 Active',
     className: cn(
       'bg-green-100 text-green-800 hover:bg-green-100/80',
       'dark:bg-green-800 dark:text-green-100'
@@ -32,7 +32,7 @@ const statusConfig: Record<
     ariaLabel: 'Status: Active',
   },
   inactive: {
-    label: 'Inactive',
+    label: '🔴 Inactive',
     className: cn(
       'bg-red-100 text-red-600 hover:bg-red-100/80',
       'dark:bg-red-900 dark:text-red-200'

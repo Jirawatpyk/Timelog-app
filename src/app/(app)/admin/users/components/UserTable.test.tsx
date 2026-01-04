@@ -110,15 +110,15 @@ describe('UserTable', () => {
     expect(screen.getAllByText('Admin')).toHaveLength(2);
   });
 
-  it('renders status badges correctly', () => {
+  it('renders status badges with emojis correctly (AC 7)', () => {
     render(<UserTable users={mockUsers} />);
 
     // Active badges: Alice + Bob = 2 users × 2 views = 4
     // Inactive badges: Carol = 1 user × 2 views = 2
     // Pending badges: Dave = 1 user × 2 views = 2
-    const activeBadges = screen.getAllByText('Active');
-    const inactiveBadges = screen.getAllByText('Inactive');
-    const pendingBadges = screen.getAllByText('Pending');
+    const activeBadges = screen.getAllByText('🟢 Active');
+    const inactiveBadges = screen.getAllByText('🔴 Inactive');
+    const pendingBadges = screen.getAllByText('🟡 Pending');
 
     expect(activeBadges).toHaveLength(4);
     expect(inactiveBadges).toHaveLength(2);

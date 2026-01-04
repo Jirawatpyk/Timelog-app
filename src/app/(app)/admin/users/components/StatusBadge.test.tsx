@@ -3,39 +3,39 @@ import { render, screen } from '@testing-library/react';
 import { StatusBadge } from './StatusBadge';
 
 describe('StatusBadge', () => {
-  describe('renders correct labels', () => {
-    it('renders Pending badge for pending status', () => {
+  describe('renders correct labels with emojis (AC 7)', () => {
+    it('renders 🟡 Pending badge for pending status', () => {
       render(<StatusBadge status="pending" />);
-      expect(screen.getByText('Pending')).toBeInTheDocument();
+      expect(screen.getByText('🟡 Pending')).toBeInTheDocument();
     });
 
-    it('renders Active badge for active status', () => {
+    it('renders 🟢 Active badge for active status', () => {
       render(<StatusBadge status="active" />);
-      expect(screen.getByText('Active')).toBeInTheDocument();
+      expect(screen.getByText('🟢 Active')).toBeInTheDocument();
     });
 
-    it('renders Inactive badge for inactive status', () => {
+    it('renders 🔴 Inactive badge for inactive status', () => {
       render(<StatusBadge status="inactive" />);
-      expect(screen.getByText('Inactive')).toBeInTheDocument();
+      expect(screen.getByText('🔴 Inactive')).toBeInTheDocument();
     });
   });
 
   describe('applies correct colors', () => {
     it('applies yellow styling for pending status', () => {
       render(<StatusBadge status="pending" />);
-      const badge = screen.getByText('Pending');
+      const badge = screen.getByText('🟡 Pending');
       expect(badge).toHaveClass('bg-yellow-100', 'text-yellow-800');
     });
 
     it('applies green styling for active status', () => {
       render(<StatusBadge status="active" />);
-      const badge = screen.getByText('Active');
+      const badge = screen.getByText('🟢 Active');
       expect(badge).toHaveClass('bg-green-100', 'text-green-800');
     });
 
     it('applies red styling for inactive status', () => {
       render(<StatusBadge status="inactive" />);
-      const badge = screen.getByText('Inactive');
+      const badge = screen.getByText('🔴 Inactive');
       expect(badge).toHaveClass('bg-red-100', 'text-red-600');
     });
   });

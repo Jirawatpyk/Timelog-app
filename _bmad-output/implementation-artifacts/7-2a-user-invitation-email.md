@@ -418,19 +418,33 @@ const statusConfig = {
 - `src/actions/user.ts` - Added createUser (invitation), resendInvitation, getUsers (status)
 - `src/actions/user.test.ts` - 30 tests for user actions including invitation flow
 - `src/types/domain.ts` - Added UserStatus type, updated UserListItem with status/confirmedAt
-- `src/app/(app)/admin/users/components/StatusBadge.tsx` - Extended with pending/active/inactive status
-- `src/app/(app)/admin/users/components/StatusBadge.test.tsx` - Tests for StatusBadge
+- `src/app/(app)/admin/users/components/StatusBadge.tsx` - Extended with emojis per AC 7 (🟡🟢🔴)
+- `src/app/(app)/admin/users/components/StatusBadge.test.tsx` - Tests for StatusBadge with emojis
 - `src/app/(app)/admin/users/components/UserTable.tsx` - Added Status column and Resend button
-- `src/app/(app)/admin/users/components/UserTable.test.tsx` - Tests for Status/Resend visibility
-- `src/app/(app)/admin/users/components/UserRow.tsx` - Added StatusBadge (used in mobile view)
-- `src/app/(app)/admin/users/components/UserRow.test.tsx` - Tests for UserRow
+- `src/app/(app)/admin/users/components/UserTable.test.tsx` - Tests for Status/Resend visibility + click handlers
 - `src/app/(app)/admin/users/components/AddUserDialog.test.tsx` - Updated toast expectation
 
+#### Deleted Files (Dead Code Cleanup - LOW-1)
+- `src/app/(app)/admin/users/components/UserRow.tsx` - Was never imported/used by UserTable
+- `src/app/(app)/admin/users/components/UserRow.test.tsx` - Tests for unused component
+
 ### Code Review Fixes Applied
+
+**HIGH Issues:**
 - **HIGH-1**: Added authorization check (admin/super_admin only) to `resendInvitation`
 - **HIGH-2**: Added rollback test verifying `deleteUser` is called when public.users insert fails
-- Added authorization tests for staff/manager rejection in resendInvitation
-- Added super_admin success test for resendInvitation
+
+**MEDIUM Issues:**
+- **MEDIUM-1**: Fixed migration filename in story doc (20260104073517 → 20260104071024)
+- **MEDIUM-2**: Rate limiting documented as Known Limitation
+- **MEDIUM-3**: Added File List section under Dev Agent Record
+
+**LOW Issues:**
+- **LOW-1**: Deleted unused UserRow.tsx and UserRow.test.tsx (dead code removed)
+- **LOW-2**: Added emojis to StatusBadge per AC 7 (🟡 Pending, 🟢 Active, 🔴 Inactive)
+- **LOW-3**: Status logic edge case documented (correct per AC)
+- **LOW-4**: Added click handler tests for Resend button
+- **LOW-5**: Admin client already has proper typed generic
 
 ### Known Limitations
 - **Rate Limiting**: `resendInvitation` does not implement rate limiting. In production, consider:
@@ -455,5 +469,6 @@ const statusConfig = {
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-01-04 | Initial implementation - all tasks complete | Dev Agent |
-| 2026-01-04 | Code review fixes: authorization check, rollback test, file list | Dev Agent |
+| 2026-01-04 | Code review fixes: HIGH issues (authorization, rollback test) | Dev Agent |
 | 2026-01-04 | Documentation update: Dev Notes code snippets, security considerations | Dev Agent |
+| 2026-01-04 | LOW fixes: Delete dead code (UserRow), add emojis to StatusBadge (AC 7) | Dev Agent |

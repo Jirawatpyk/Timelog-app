@@ -39,7 +39,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
-    <div className="space-y-6">
+    <div className="py-6 space-y-6">
       {/* Header with total count and Add User button - Story 7.1 AC 1, Story 7.2 */}
       <div className="flex items-center justify-between">
         <div>

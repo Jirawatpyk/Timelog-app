@@ -18,6 +18,10 @@ import {
   checkServiceUsage,
   checkTaskUsage,
   checkClientUsage,
+  getDepartments,
+  createDepartment,
+  updateDepartment,
+  toggleDepartmentActive,
 } from './master-data';
 
 // Mock Supabase client
@@ -1152,6 +1156,480 @@ describe('Master Data Server Actions', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toBe('Invalid ID format');
+      }
+    });
+  });
+
+  /**
+   * Department Actions Tests
+   * Story 3.7: Department Management (AC: 1, 3, 5, 6)
+   * NOTE: Department actions require super_admin role (not just admin)
+   */
+  describe('getDepartments', () => {
+    it('returns departments when user is super_admin', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'departments') {
+          return {
+            select: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({
+                  data: [
+                    { id: '1', name: 'Audio Production', active: true },
+                    { id: '2', name: 'Video Production', active: true },
+                  ],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await getDepartments();
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toHaveLength(2);
+        expect(result.data[0].name).toBe('Audio Production');
+      }
+    });
+
+    it('returns error when user is admin (not super_admin)', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await getDepartments();
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Super Admin access required');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await getDepartments();
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+  });
+
+  describe('createDepartment', () => {
+    it('creates department successfully when user is super_admin', async () => {
+      const mockDepartment = { id: VALID_UUID, name: 'New Department', active: true };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'departments') {
+          return {
+            insert: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockDepartment,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await createDepartment({ name: 'New Department' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockDepartment);
+      }
+    });
+
+    it('returns error when user is admin (not super_admin)', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await createDepartment({ name: 'New Department' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Super Admin access required');
+      }
+    });
+
+    it('returns validation error for name too short', async () => {
+      const result = await createDepartment({ name: 'A' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Department name must be at least 2 characters');
+      }
+    });
+
+    it('returns validation error for empty name', async () => {
+      const result = await createDepartment({ name: '' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Department name must be at least 2 characters');
+      }
+    });
+
+    it('returns error for duplicate department name', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'departments') {
+          return {
+            insert: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: '23505', message: 'Unique constraint violation' },
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await createDepartment({ name: 'Audio Production' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Department name already exists');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await createDepartment({ name: 'New Department' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+  });
+
+  describe('updateDepartment', () => {
+    it('updates department successfully when user is super_admin', async () => {
+      const mockDepartment = { id: VALID_UUID, name: 'Updated Department', active: true };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'departments') {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: mockDepartment,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await updateDepartment(VALID_UUID, { name: 'Updated Department' });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockDepartment);
+      }
+    });
+
+    it('returns error when user is admin (not super_admin)', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await updateDepartment(VALID_UUID, { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Super Admin access required');
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await updateDepartment('invalid-id', { name: 'Updated' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns validation error for name too short', async () => {
+      const result = await updateDepartment(VALID_UUID, { name: 'A' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Department name must be at least 2 characters');
+      }
+    });
+
+    it('returns error for duplicate department name', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'departments') {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: '23505', message: 'Unique constraint violation' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await updateDepartment(VALID_UUID, { name: 'Existing Name' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Department name already exists');
+      }
+    });
+  });
+
+  describe('toggleDepartmentActive', () => {
+    it('toggles department active status when user is super_admin', async () => {
+      const mockDepartment = { id: VALID_UUID, name: 'Audio Production', active: false };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'departments') {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: mockDepartment,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await toggleDepartmentActive(VALID_UUID, false);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.active).toBe(false);
+      }
+    });
+
+    it('returns error when user is admin (not super_admin)', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await toggleDepartmentActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Super Admin access required');
+      }
+    });
+
+    it('returns error for invalid UUID format', async () => {
+      const result = await toggleDepartmentActive('not-a-uuid', false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Invalid ID format');
+      }
+    });
+
+    it('returns error when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+      });
+
+      const result = await toggleDepartmentActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Not authenticated');
+      }
+    });
+
+    it('returns error when database update fails', async () => {
+      mockFrom.mockImplementation((table) => {
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'departments') {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { message: 'Update failed' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: mockSelect };
+      });
+
+      const result = await toggleDepartmentActive(VALID_UUID, false);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('Update failed');
       }
     });
   });

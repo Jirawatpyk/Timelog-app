@@ -3,11 +3,28 @@
  * Story 3.1: Service Type Management (AC: 1)
  * Story 3.5: Master Data Admin UI Layout (AC: 1)
  * Story 3.6: Projects & Jobs Admin UI (AC: 9)
+ * Story 3.7: Department Management (AC: 1, 2)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import MasterDataPage from './page';
+
+// Mock Supabase client (required for role check)
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => Promise.resolve({
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'test-user-id' } } })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: { role: 'admin' } })),
+        })),
+      })),
+    })),
+  })),
+}));
 
 // Mock the list components since they are server components that fetch data
 vi.mock('./components/ClientsList', () => ({
@@ -28,6 +45,10 @@ vi.mock('./components/ServicesList', () => ({
 
 vi.mock('./components/TasksList', () => ({
   TasksList: () => <div data-testid="tasks-list">Tasks List Mock</div>,
+}));
+
+vi.mock('./components/DepartmentsList', () => ({
+  DepartmentsList: () => <div data-testid="departments-list">Departments List Mock</div>,
 }));
 
 // Helper to render page with searchParams

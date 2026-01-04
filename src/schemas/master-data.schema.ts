@@ -193,3 +193,30 @@ export const updateJobSchema = z.object({
  * Update job input type
  */
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;
+
+// ============================================================================
+// Department Schema
+// Story 3.7: Department Management (AC: 4, 7)
+// ============================================================================
+
+/**
+ * Department validation schema
+ *
+ * Validates department input with:
+ * - Required name field
+ * - Min 2 characters
+ * - Max 100 characters
+ * - Automatic whitespace trimming
+ */
+export const departmentSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Department name must be at least 2 characters')
+    .max(100, 'Department name must be 100 characters or less'),
+});
+
+/**
+ * Department input type derived from schema
+ */
+export type DepartmentInput = z.infer<typeof departmentSchema>;

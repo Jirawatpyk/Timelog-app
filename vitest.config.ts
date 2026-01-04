@@ -16,13 +16,14 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30000,
     hookTimeout: 30000,
-    // Include test files in src/ and test/ (excluding e2e which uses Playwright)
+    // Include test files in src/ and test/
     include: ['src/**/*.test.{ts,tsx}', 'test/**/*.test.{ts,tsx}'],
-    exclude: ['**/node_modules/**', '**/e2e/**', '**/dist/**'],
+    exclude: ['**/node_modules/**', '**/dist/**'],
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@test': path.resolve(__dirname, './test'),
     },
     // Ensure React dev mode is used for testing
     conditions: ['development', 'browser'],

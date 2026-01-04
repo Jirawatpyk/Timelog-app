@@ -5,7 +5,17 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { serviceSchema, clientSchema, taskSchema, uuidSchema, type ServiceInput, type ClientInput, type TaskInput } from './master-data.schema';
+import {
+  serviceSchema,
+  clientSchema,
+  taskSchema,
+  departmentSchema,
+  uuidSchema,
+  type ServiceInput,
+  type ClientInput,
+  type TaskInput,
+  type DepartmentInput,
+} from './master-data.schema';
 
 describe('serviceSchema', () => {
   describe('valid inputs', () => {
@@ -300,6 +310,106 @@ describe('taskSchema', () => {
     it('rejects non-string name', () => {
       const input = { name: 123 };
       const result = taskSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+/**
+ * Department Schema Tests
+ * Story 3.7: Department Management (AC: 4, 7)
+ */
+describe('departmentSchema', () => {
+  describe('valid inputs', () => {
+    it('accepts valid department name', () => {
+      const input: DepartmentInput = { name: 'Audio Production' };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.name).toBe('Audio Production');
+      }
+    });
+
+    it('accepts 2 character name (min length)', () => {
+      const input: DepartmentInput = { name: 'IT' };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts 100 character name (max length)', () => {
+      const longName = 'A'.repeat(100);
+      const input: DepartmentInput = { name: longName };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('trims whitespace from name', () => {
+      const input: DepartmentInput = { name: '  Video Production  ' };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.name).toBe('Video Production');
+      }
+    });
+  });
+
+  describe('invalid inputs', () => {
+    it('rejects empty string', () => {
+      const input = { name: '' };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Department name must be at least 2 characters');
+      }
+    });
+
+    it('rejects single character name', () => {
+      const input = { name: 'A' };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Department name must be at least 2 characters');
+      }
+    });
+
+    it('rejects whitespace-only string', () => {
+      const input = { name: '   ' };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Department name must be at least 2 characters');
+      }
+    });
+
+    it('rejects name exceeding 100 characters', () => {
+      const longName = 'A'.repeat(101);
+      const input = { name: longName };
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Department name must be 100 characters or less');
+      }
+    });
+
+    it('rejects missing name field', () => {
+      const input = {};
+      const result = departmentSchema.safeParse(input);
+
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects non-string name', () => {
+      const input = { name: 123 };
+      const result = departmentSchema.safeParse(input);
 
       expect(result.success).toBe(false);
     });

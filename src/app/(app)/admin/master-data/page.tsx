@@ -3,6 +3,7 @@
  * Story 3.1: Service Type Management (AC: 1)
  * Story 3.5: Master Data Admin UI Layout (AC: 1)
  * Story 3.6: Projects & Jobs Admin UI (AC: 9)
+ * Story 3.7: Department Management (AC: 2)
  *
  * Provides admin interface for managing master data:
  * - Clients (Story 3.2)
@@ -10,8 +11,9 @@
  * - Jobs (Story 3.6)
  * - Services (Story 3.1)
  * - Tasks (Story 3.3)
+ * - Departments (Story 3.7) - super_admin only
  *
- * Tab order: Clients → Projects → Jobs → Services → Tasks (data hierarchy)
+ * Tab order: Clients → Projects → Jobs → Services → Tasks → Departments (data hierarchy)
  * Features URL-synced tabs for preserving navigation state.
  */
 
@@ -23,6 +25,8 @@ import { ProjectsList } from './components/ProjectsList';
 import { JobsList } from './components/JobsList';
 import { ServicesList } from './components/ServicesList';
 import { TasksList } from './components/TasksList';
+import { DepartmentsList } from './components/DepartmentsList';
+import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
 interface MasterDataPageProps {
@@ -129,8 +133,8 @@ function JobsTableSkeleton() {
   );
 }
 
-// Tab order follows data hierarchy: Clients → Projects → Jobs → Services → Tasks
-const validTabs = ['clients', 'projects', 'jobs', 'services', 'tasks'] as const;
+// Tab order follows data hierarchy: Clients → Projects → Jobs → Services → Tasks → Departments
+const validTabs = ['clients', 'projects', 'jobs', 'services', 'tasks', 'departments'] as const;
 type TabValue = (typeof validTabs)[number];
 
 function isValidTab(tab: string | undefined): tab is TabValue {
@@ -139,7 +143,26 @@ function isValidTab(tab: string | undefined): tab is TabValue {
 
 export default async function MasterDataPage({ searchParams }: MasterDataPageProps) {
   const params = await searchParams;
-  const activeTab: TabValue = isValidTab(params.tab) ? params.tab : 'clients';
+
+  // Check if current user is super_admin for Departments tab
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let isSuperAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    isSuperAdmin = profile?.role === 'super_admin';
+  }
+
+  // Validate tab - if departments tab selected but user is not super_admin, default to clients
+  let activeTab: TabValue = isValidTab(params.tab) ? params.tab : 'clients';
+  if (activeTab === 'departments' && !isSuperAdmin) {
+    activeTab = 'clients';
+  }
 
   return (
     <div className="py-6">
@@ -172,6 +195,13 @@ export default async function MasterDataPage({ searchParams }: MasterDataPagePro
               Tasks
             </Link>
           </TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="departments" asChild>
+              <Link href="?tab=departments" scroll={false}>
+                Departments
+              </Link>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="clients" className="mt-0">
@@ -203,6 +233,14 @@ export default async function MasterDataPage({ searchParams }: MasterDataPagePro
             <TasksList />
           </Suspense>
         </TabsContent>
+
+        {isSuperAdmin && (
+          <TabsContent value="departments" className="mt-0">
+            <Suspense fallback={<TableSkeleton />}>
+              <DepartmentsList />
+            </Suspense>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

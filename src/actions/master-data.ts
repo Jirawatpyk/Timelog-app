@@ -14,6 +14,7 @@ import {
   serviceSchema,
   clientSchema,
   taskSchema,
+  departmentSchema,
   uuidSchema,
   createProjectSchema,
   updateProjectSchema,
@@ -22,6 +23,7 @@ import {
   type ServiceInput,
   type ClientInput,
   type TaskInput,
+  type DepartmentInput,
   type CreateProjectInput,
   type UpdateProjectInput,
   type CreateJobInput,
@@ -31,6 +33,7 @@ import type {
   Service,
   Client,
   Task,
+  Department,
   Project,
   Job,
   ActionResult,
@@ -1123,4 +1126,198 @@ export async function checkJobUsage(id: string): Promise<ActionResult<ItemUsage>
       count: count ?? 0,
     },
   };
+}
+
+// ============================================================================
+// Department Actions
+// Story 3.7: Department Management (AC: 1, 3, 5, 6)
+// NOTE: Department management is restricted to super_admin ONLY
+// ============================================================================
+
+/**
+ * Check if user is authenticated and has super_admin role
+ * Unlike requireAdminAuth, this ONLY allows super_admin (not regular admin)
+ */
+async function requireSuperAdminAuth(): Promise<
+  | { success: true; supabase: Awaited<ReturnType<typeof createClient>>; userId: string }
+  | { success: false; error: string }
+> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'super_admin') {
+    return { success: false, error: 'Super Admin access required' };
+  }
+
+  return { success: true, supabase, userId: user.id };
+}
+
+/**
+ * Get all departments ordered by active status then name
+ * Active departments first, then inactive, alphabetically within each group
+ *
+ * @returns ActionResult with departments array
+ */
+export async function getDepartments(): Promise<ActionResult<Department[]>> {
+  // Check auth - super_admin only
+  const authResult = await requireSuperAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Order by active (true first), then name alphabetically
+  const { data, error } = await supabase
+    .from('departments')
+    .select('*')
+    .order('active', { ascending: false })
+    .order('name');
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: data || [] };
+}
+
+/**
+ * Create a new department
+ *
+ * @param input - Department input data (name)
+ * @returns ActionResult with created department or error
+ */
+export async function createDepartment(input: DepartmentInput): Promise<ActionResult<Department>> {
+  // Validate input first
+  const parsed = departmentSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth - super_admin only
+  const authResult = await requireSuperAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Insert department
+  const { data, error } = await supabase
+    .from('departments')
+    .insert({ name: parsed.data.name })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Department name already exists' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Update an existing department
+ *
+ * @param id - Department ID to update
+ * @param input - Updated department data (name)
+ * @returns ActionResult with updated department or error
+ */
+export async function updateDepartment(
+  id: string,
+  input: DepartmentInput
+): Promise<ActionResult<Department>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Validate input
+  const parsed = departmentSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Check auth - super_admin only
+  const authResult = await requireSuperAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update department
+  const { data, error } = await supabase
+    .from('departments')
+    .update({ name: parsed.data.name })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'Department name already exists' };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
+}
+
+/**
+ * Toggle department active status
+ * Note: Deactivating a department does NOT affect existing users in that department
+ *
+ * @param id - Department ID to toggle
+ * @param active - New active status
+ * @returns ActionResult with updated department or error
+ */
+export async function toggleDepartmentActive(
+  id: string,
+  active: boolean
+): Promise<ActionResult<Department>> {
+  // Validate ID format
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return { success: false, error: idResult.error.errors[0].message };
+  }
+
+  // Check auth - super_admin only
+  const authResult = await requireSuperAdminAuth();
+  if (!authResult.success) {
+    return { success: false, error: authResult.error };
+  }
+
+  const { supabase } = authResult;
+
+  // Update active status
+  const { data, error } = await supabase
+    .from('departments')
+    .update({ active })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/admin/master-data');
+  return { success: true, data };
 }

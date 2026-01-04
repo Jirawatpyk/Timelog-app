@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { ADMIN_NAV_ITEMS, isActiveAdminRoute } from '@/constants/admin-navigation';
 
 /**
@@ -52,17 +53,24 @@ export function AdminNavLinks({ pathname, onNavigate }: AdminNavItemsProps) {
 
 /**
  * Renders the "Back to App" link
+ * Styled as secondary button to distinguish from nav items (exit action)
  */
 export function BackToAppLink({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <Link
-      href="/dashboard"
-      onClick={onNavigate}
-      aria-label="Return to main dashboard"
-      className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+    <Button
+      variant="secondary"
+      size="sm"
+      className="w-full justify-start gap-3"
+      asChild
     >
-      <ArrowLeft className="h-4 w-4" />
-      Back to App
-    </Link>
+      <Link
+        href="/dashboard"
+        onClick={onNavigate}
+        aria-label="Return to main dashboard"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to App
+      </Link>
+    </Button>
   );
 }

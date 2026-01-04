@@ -52,13 +52,14 @@ export function AdminMobileHeader() {
             </SheetDescription>
           </SheetHeader>
 
+          {/* Back to App - Always visible at top for easy access */}
+          <div className="p-2 border-b">
+            <BackToAppLink onNavigate={handleNavigate} />
+          </div>
+
           <nav className="flex-1 p-2 space-y-1" aria-label="Admin mobile navigation">
             <AdminNavLinks pathname={pathname} onNavigate={handleNavigate} />
           </nav>
-
-          <div className="p-2 border-t mt-auto">
-            <BackToAppLink onNavigate={handleNavigate} />
-          </div>
         </SheetContent>
       </Sheet>
 

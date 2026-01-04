@@ -28,15 +28,15 @@ export function AdminSidebar() {
         <span className="font-semibold text-lg">Admin</span>
       </div>
 
+      {/* Back to App - Always visible at top for easy access */}
+      <div className="p-2 border-b">
+        <BackToAppLink />
+      </div>
+
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1" aria-label="Admin navigation">
         <AdminNavLinks pathname={pathname} />
       </nav>
-
-      {/* Back to App */}
-      <div className="p-2 border-t">
-        <BackToAppLink />
-      </div>
     </aside>
   );
 }

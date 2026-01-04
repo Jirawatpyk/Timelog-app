@@ -282,7 +282,10 @@ describe('AddUserDialog', () => {
     });
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('User created');
+      // Story 7.2a: Toast includes invitation confirmation
+      expect(toast.success).toHaveBeenCalledWith(
+        'User created. Invitation sent to test@example.com'
+      );
     });
   });
 

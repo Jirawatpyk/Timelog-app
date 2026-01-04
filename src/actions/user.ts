@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { createUserSchema, type CreateUserInput } from '@/schemas/user.schema';
 import type {
@@ -11,6 +12,7 @@ import type {
   UserListItem,
   UserListResponse,
   UserRole,
+  UserStatus,
 } from '@/types/domain';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -37,6 +39,7 @@ export async function getUsers(
       display_name,
       role,
       is_active,
+      confirmed_at,
       department:departments(id, name)
     `,
       { count: 'exact' }
@@ -58,6 +61,15 @@ export async function getUsers(
     if (deptData && typeof deptData === 'object' && 'id' in deptData) {
       dept = deptData as { id: string; name: string };
     }
+
+    // Calculate user status based on confirmed_at and is_active
+    // Story 7.2a: AC 7 - Status column logic
+    const status: UserStatus = !row.is_active
+      ? 'inactive'
+      : row.confirmed_at === null
+        ? 'pending'
+        : 'active';
+
     return {
       id: row.id,
       email: row.email,
@@ -65,6 +77,8 @@ export async function getUsers(
       role: row.role as UserRole,
       department: dept,
       isActive: row.is_active,
+      status,
+      confirmedAt: row.confirmed_at,
     };
   });
 
@@ -127,8 +141,15 @@ export async function getActiveDepartments(): Promise<ActionResult<DepartmentOpt
 }
 
 /**
- * Create a new user
+ * Create a new user with invitation email
  * Story 7.2: Create New User (AC 2, 3, 4, 5, 6)
+ * Story 7.2a: User Invitation Email (AC 1, 2, 3, 4, 5)
+ *
+ * Flow:
+ * 1. Validate input and permissions
+ * 2. Create auth.users via Admin API (sends invitation email)
+ * 3. Create public.users with same ID
+ * 4. Rollback auth.users if public.users insert fails
  *
  * @param input - User creation input
  * @returns ActionResult with created user or error
@@ -191,27 +212,106 @@ export async function createUser(input: CreateUserInput): Promise<ActionResult<U
     return { success: false, error: 'Invalid or inactive department' };
   }
 
-  // Create user
+  // Step 1: Create auth.users via Admin API and send invitation email
+  // Story 7.2a: AC 1, 2 - Automatic Invitation Email & Auth User Creation
+  const supabaseAdmin = createAdminClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    parsed.data.email,
+    {
+      data: {
+        display_name: parsed.data.displayName,
+        role: parsed.data.role,
+      },
+      redirectTo: `${appUrl}/login`,
+    }
+  );
+
+  if (authError) {
+    // Story 7.2a: AC 5 - Email Send Failure
+    return { success: false, error: 'Failed to send invitation email' };
+  }
+
+  // Step 2: Create public.users with auth user ID
   const { data: newUser, error: insertError } = await supabase
     .from('users')
     .insert({
+      id: authUser.user.id, // Use auth.users ID for consistency
       email: parsed.data.email,
       display_name: parsed.data.displayName,
       role: parsed.data.role,
       department_id: parsed.data.departmentId,
       is_active: true,
+      confirmed_at: null, // Pending invitation
     })
     .select()
     .single();
 
   if (insertError) {
+    // Story 7.2a: AC 4 - Rollback on Failure
+    // Delete auth user if public.users insert fails
+    await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+
     // Handle unique constraint violation
     if (insertError.code === '23505') {
       return { success: false, error: 'Email already exists' };
     }
-    return { success: false, error: 'Failed to create user' };
+    return { success: false, error: 'Failed to create user profile' };
   }
 
   revalidatePath('/admin/users');
   return { success: true, data: newUser };
+}
+
+/**
+ * Resend invitation email to a pending user
+ * Story 7.2a: User Invitation Email (AC 8, 9)
+ *
+ * @param userId - The user ID to resend invitation to
+ * @returns ActionResult indicating success or failure
+ */
+export async function resendInvitation(userId: string): Promise<ActionResult<null>> {
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Get user from public.users
+  const { data: targetUser, error: fetchError } = await supabase
+    .from('users')
+    .select('email, confirmed_at')
+    .eq('id', userId)
+    .single();
+
+  if (fetchError || !targetUser) {
+    return { success: false, error: 'User not found' };
+  }
+
+  // Check if user already confirmed (AC 9)
+  if (targetUser.confirmed_at !== null) {
+    return { success: false, error: 'User already confirmed' };
+  }
+
+  // Resend invitation via Admin API
+  const supabaseAdmin = createAdminClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    targetUser.email,
+    {
+      redirectTo: `${appUrl}/login`,
+    }
+  );
+
+  if (inviteError) {
+    return { success: false, error: 'Failed to resend invitation' };
+  }
+
+  return { success: true, data: null };
 }

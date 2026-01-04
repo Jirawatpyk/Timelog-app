@@ -152,11 +152,20 @@ export interface DepartmentOption {
 export type DepartmentFilter = 'all' | string;
 
 // ============================================
-// USER LIST TYPES (Story 7.1)
+// USER LIST TYPES (Story 7.1, 7.2a)
 // ============================================
 
 /**
+ * User status for invitation flow
+ * - pending: Invited but not confirmed (confirmed_at is NULL)
+ * - active: Confirmed and is_active = true
+ * - inactive: is_active = false
+ */
+export type UserStatus = 'pending' | 'active' | 'inactive';
+
+/**
  * User item for admin user list display
+ * Extended with status for Story 7.2a (User Invitation Email)
  */
 export interface UserListItem {
   id: string;
@@ -165,6 +174,10 @@ export interface UserListItem {
   role: UserRole;
   department: { id: string; name: string } | null;
   isActive: boolean;
+  /** User status: pending (not confirmed), active (confirmed + active), inactive */
+  status: UserStatus;
+  /** When user confirmed their email. NULL means pending invitation */
+  confirmedAt: string | null;
 }
 
 /**

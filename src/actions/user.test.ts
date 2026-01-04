@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUsers, createUser, getActiveDepartments, getCurrentUserRole } from './user';
+import {
+  getUsers,
+  createUser,
+  getActiveDepartments,
+  getCurrentUserRole,
+  resendInvitation,
+} from './user';
 import type { CreateUserInput } from '@/schemas/user.schema';
 
 // Mock Supabase client
@@ -13,8 +19,24 @@ const mockIlike = vi.fn();
 const mockSingle = vi.fn();
 const mockGetUser = vi.fn();
 
+// Mock Admin client functions
+const mockInviteUserByEmail = vi.fn();
+const mockDeleteUser = vi.fn();
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: vi.fn(() => ({
+    auth: {
+      admin: {
+        inviteUserByEmail: mockInviteUserByEmail,
+        deleteUser: mockDeleteUser,
+        getUserById: vi.fn(),
+      },
+    },
+  })),
 }));
 
 vi.mock('next/cache', () => ({
@@ -29,7 +51,34 @@ async function setupSupabaseMock(options: {
   validDepartment?: boolean; // For department validation check
   insertSuccess?: boolean;
   insertedUser?: object;
+  inviteSuccess?: boolean; // For admin invite
+  invitedUser?: { user: { id: string } }; // Returned from invite
 }) {
+  // Reset admin mocks
+  mockInviteUserByEmail.mockReset();
+  mockDeleteUser.mockReset();
+
+  // Setup admin invite mock
+  if (options.inviteSuccess !== undefined) {
+    if (options.inviteSuccess) {
+      mockInviteUserByEmail.mockResolvedValue({
+        data: options.invitedUser || { user: { id: 'auth-user-id' } },
+        error: null,
+      });
+    } else {
+      mockInviteUserByEmail.mockResolvedValue({
+        data: null,
+        error: { message: 'Failed to invite' },
+      });
+    }
+  } else {
+    // Default: successful invite
+    mockInviteUserByEmail.mockResolvedValue({
+      data: { user: { id: 'auth-user-id' } },
+      error: null,
+    });
+  }
+  mockDeleteUser.mockResolvedValue({ data: null, error: null });
   const { createClient } = await import('@/lib/supabase/server');
 
   mockGetUser.mockResolvedValue({
@@ -93,16 +142,14 @@ async function setupSupabaseMock(options: {
         select: vi.fn().mockImplementation((columns: string) => {
           if (columns === 'id') {
             // Department validation check: .select('id').eq('id', ...).eq('active', true).single()
-            return {
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({
-                    data: options.validDepartment !== false ? { id: 'valid-dept-id' } : null,
-                    error: options.validDepartment !== false ? null : { code: 'PGRST116' },
-                  }),
-                }),
-              }),
-            };
+            // Use explicit chaining to handle .eq().eq().single()
+            const singleMock = vi.fn().mockResolvedValue({
+              data: options.validDepartment !== false ? { id: 'valid-dept-id' } : null,
+              error: options.validDepartment !== false ? null : { code: 'PGRST116' },
+            });
+            const secondEqMock = vi.fn().mockReturnValue({ single: singleMock });
+            const firstEqMock = vi.fn().mockReturnValue({ eq: secondEqMock, single: singleMock });
+            return { eq: firstEqMock };
           }
           // getActiveDepartments: .select('id, name').eq('active', true).order('name')
           return {
@@ -145,6 +192,7 @@ describe('getUsers', () => {
         display_name: 'Alice',
         role: 'staff',
         is_active: true,
+        confirmed_at: '2026-01-01T00:00:00Z',
         department: { id: 'dept-1', name: 'Engineering' },
       },
       {
@@ -153,6 +201,7 @@ describe('getUsers', () => {
         display_name: 'Bob',
         role: 'manager',
         is_active: true,
+        confirmed_at: '2026-01-01T00:00:00Z',
         department: { id: 'dept-2', name: 'Marketing' },
       },
     ];
@@ -175,6 +224,8 @@ describe('getUsers', () => {
         displayName: 'Alice',
         role: 'staff',
         isActive: true,
+        status: 'active',
+        confirmedAt: '2026-01-01T00:00:00Z',
         department: { id: 'dept-1', name: 'Engineering' },
       });
     }
@@ -219,6 +270,7 @@ describe('getUsers', () => {
         display_name: 'No Dept',
         role: 'admin',
         is_active: true,
+        confirmed_at: '2026-01-01T00:00:00Z',
         department: null,
       },
     ];
@@ -234,6 +286,71 @@ describe('getUsers', () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.users[0].department).toBeNull();
+    }
+  });
+
+  it('calculates status correctly for pending user (no confirmed_at)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const mockData = [
+      {
+        id: 'user-1',
+        email: 'pending@example.com',
+        display_name: 'Pending User',
+        role: 'staff',
+        is_active: true,
+        confirmed_at: null,
+        department: null,
+      },
+    ];
+
+    mockOrder.mockResolvedValue({
+      data: mockData,
+      error: null,
+      count: 1,
+    });
+
+    const result = await getUsers();
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.users[0].status).toBe('pending');
+      expect(result.data.users[0].confirmedAt).toBeNull();
+    }
+  });
+
+  it('calculates status correctly for inactive user', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+    vi.mocked(createClient).mockResolvedValue({
+      from: mockFrom,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const mockData = [
+      {
+        id: 'user-1',
+        email: 'inactive@example.com',
+        display_name: 'Inactive User',
+        role: 'staff',
+        is_active: false,
+        confirmed_at: '2026-01-01T00:00:00Z',
+        department: null,
+      },
+    ];
+
+    mockOrder.mockResolvedValue({
+      data: mockData,
+      error: null,
+      count: 1,
+    });
+
+    const result = await getUsers();
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.users[0].status).toBe('inactive');
     }
   });
 
@@ -608,6 +725,166 @@ describe('getCurrentUserRole', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe('Not authenticated');
+    }
+  });
+});
+
+describe('resendInvitation (Story 7.2a)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockInviteUserByEmail.mockReset();
+  });
+
+  it('returns error when not authenticated', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await resendInvitation('user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Not authenticated');
+    }
+  });
+
+  it('returns error when user not found', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: { code: 'PGRST116', message: 'Not found' },
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await resendInvitation('non-existent-user');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('User not found');
+    }
+  });
+
+  it('returns error for already confirmed user', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                email: 'confirmed@example.com',
+                confirmed_at: '2026-01-01T00:00:00Z', // Already confirmed
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await resendInvitation('confirmed-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('User already confirmed');
+    }
+  });
+
+  it('successfully resends invitation for pending user', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                email: 'pending@example.com',
+                confirmed_at: null, // Not confirmed
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    mockInviteUserByEmail.mockResolvedValue({ data: {}, error: null });
+
+    const result = await resendInvitation('pending-user-id');
+
+    expect(result.success).toBe(true);
+    expect(mockInviteUserByEmail).toHaveBeenCalledWith(
+      'pending@example.com',
+      expect.any(Object)
+    );
+  });
+
+  it('returns error when admin invite fails', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                email: 'pending@example.com',
+                confirmed_at: null,
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    mockInviteUserByEmail.mockResolvedValue({
+      data: null,
+      error: { message: 'Rate limit exceeded' },
+    });
+
+    const result = await resendInvitation('pending-user-id');
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Failed to resend invitation');
     }
   });
 });

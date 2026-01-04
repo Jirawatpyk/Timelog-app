@@ -28,7 +28,7 @@ export function UserRow({ user }: UserRowProps) {
         {user.department?.name || '-'}
       </TableCell>
       <TableCell>
-        <StatusBadge isActive={user.isActive} />
+        <StatusBadge status={user.status} />
       </TableCell>
     </TableRow>
   );

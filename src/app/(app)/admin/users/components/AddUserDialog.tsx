@@ -123,7 +123,8 @@ export function AddUserDialog({
     const result = await createUser(data);
 
     if (result.success) {
-      toast.success('User created');
+      // Story 7.2a: AC 3 - Success toast with email confirmation
+      toast.success(`User created. Invitation sent to ${data.email}`);
       form.reset();
       onUserCreated?.(result.data);
       handleOpenChange(false);
@@ -220,7 +221,7 @@ export function AddUserDialog({
                 value={form.watch('role')}
                 onValueChange={(value) => form.setValue('role', value as UserRole)}
               >
-                <SelectTrigger id="role" aria-label="Role">
+                <SelectTrigger id="role" aria-label="Role" className="w-full">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,7 +246,7 @@ export function AddUserDialog({
                 value={form.watch('departmentId')}
                 onValueChange={(value) => form.setValue('departmentId', value)}
               >
-                <SelectTrigger id="departmentId" aria-label="Department">
+                <SelectTrigger id="departmentId" aria-label="Department" className="w-full">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>

@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TimeEntryForm } from './TimeEntryForm';
 import * as useEntryData from '@/hooks/use-entry-data';
 import { useOnlineStatus } from '@/hooks/use-online-status';
-import { toast } from 'sonner';
 
 // Mock the hooks
 vi.mock('@/hooks/use-entry-data', () => ({

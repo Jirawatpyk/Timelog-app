@@ -110,7 +110,7 @@ development_status:
   7-1a-admin-navigation-layout: done
   7-2-create-new-user: done
   7-2a-user-invitation-email: done
-  7-3-edit-user-information: ready-for-dev
+  7-3-edit-user-information: done
   7-4-deactivate-user: ready-for-dev
   7-5-assign-roles: ready-for-dev
   7-6-assign-manager-departments: ready-for-dev

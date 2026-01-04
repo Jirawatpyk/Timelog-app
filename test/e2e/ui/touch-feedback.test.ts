@@ -65,7 +65,7 @@ test.describe('Touch Feedback Timing (Story 8.4 - AC 2)', () => {
             // Check for "0.05s" or "50ms" in transition property
             return transition?.includes('0.05s') || transition?.includes('50ms');
           }
-        } catch (e) {
+        } catch {
           // Skip stylesheets that can't be accessed (CORS)
           continue;
         }

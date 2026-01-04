@@ -13,8 +13,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RoleBadge } from './RoleBadge';
 import { StatusBadge } from './StatusBadge';
+import { EditUserDialog } from './EditUserDialog';
 import type { UserListItem } from '@/types/domain';
-import { Users, Send, Loader2 } from 'lucide-react';
+import { Users, Send, Loader2, Pencil } from 'lucide-react';
 import { resendInvitation } from '@/actions/user';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -35,6 +36,7 @@ interface UserTableProps {
 export function UserTable({ users }: UserTableProps) {
   const router = useRouter();
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
 
   const handleResendInvite = async (userId: string, email: string) => {
     setResendingId(userId);
@@ -95,25 +97,36 @@ export function UserTable({ users }: UserTableProps) {
                   <StatusBadge status={user.status} />
                 </TableCell>
                 <TableCell className="text-right">
-                  {/* AC 8, 9: Resend button only for pending users */}
-                  {user.status === 'pending' && (
+                  <div className="flex justify-end gap-1">
+                    {/* Story 7.3: Edit button */}
                     <Button
                       variant="ghost"
-                      size="sm"
-                      onClick={() => handleResendInvite(user.id, user.email)}
-                      disabled={resendingId === user.id}
-                      aria-label={`Resend invitation to ${user.email}`}
+                      size="icon"
+                      onClick={() => setEditingUser(user)}
+                      aria-label={`Edit ${user.displayName || user.email}`}
                     >
-                      {resendingId === user.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-1" />
-                          Resend
-                        </>
-                      )}
+                      <Pencil className="h-4 w-4" />
                     </Button>
-                  )}
+                    {/* AC 8, 9: Resend button only for pending users */}
+                    {user.status === 'pending' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleResendInvite(user.id, user.email)}
+                        disabled={resendingId === user.id}
+                        aria-label={`Resend invitation to ${user.email}`}
+                      >
+                        {resendingId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-1" />
+                            Resend
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -142,30 +155,50 @@ export function UserTable({ users }: UserTableProps) {
                     </span>
                   )}
                 </div>
-                {/* AC 8, 9: Resend button only for pending users */}
-                {user.status === 'pending' && (
+                <div className="flex gap-1">
+                  {/* Story 7.3: Edit button */}
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={() => handleResendInvite(user.id, user.email)}
-                    disabled={resendingId === user.id}
-                    aria-label={`Resend invitation to ${user.email}`}
+                    size="icon"
+                    onClick={() => setEditingUser(user)}
+                    aria-label={`Edit ${user.displayName || user.email}`}
                   >
-                    {resendingId === user.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-1" />
-                        Resend
-                      </>
-                    )}
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                )}
+                  {/* AC 8, 9: Resend button only for pending users */}
+                  {user.status === 'pending' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResendInvite(user.id, user.email)}
+                      disabled={resendingId === user.id}
+                      aria-label={`Resend invitation to ${user.email}`}
+                    >
+                      {resendingId === user.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-1" />
+                          Resend
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Story 7.3: Edit User Dialog */}
+      {editingUser && (
+        <EditUserDialog
+          user={editingUser}
+          open={!!editingUser}
+          onOpenChange={(open) => !open && setEditingUser(null)}
+        />
+      )}
     </>
   );
 }

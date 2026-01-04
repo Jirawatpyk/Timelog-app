@@ -5,8 +5,9 @@ import {
   getActiveDepartments,
   getCurrentUserRole,
   resendInvitation,
+  updateUser,
 } from './user';
-import type { CreateUserInput } from '@/schemas/user.schema';
+import type { CreateUserInput, EditUserInput } from '@/schemas/user.schema';
 
 // Mock Supabase client
 const mockSelect = vi.fn();
@@ -1072,6 +1073,451 @@ describe('resendInvitation (Story 7.2a)', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe('Failed to resend invitation');
+    }
+  });
+});
+
+/**
+ * Story 7.3: Edit User Information
+ * Tests for updateUser server action
+ */
+describe('updateUser (Story 7.3)', () => {
+  const validInput: EditUserInput = {
+    email: 'updated@example.com',
+    displayName: 'Updated User',
+    role: 'staff',
+    departmentId: '550e8400-e29b-41d4-a716-446655440000',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('rejects invalid input before making API calls', async () => {
+    const result = await updateUser('user-id', {
+      email: 'invalid-email',
+      displayName: 'A', // Too short
+      role: 'staff',
+      departmentId: 'not-a-uuid',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('Invalid');
+    }
+  });
+
+  it('requires authentication', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+      from: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateUser('user-id', validInput);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Not authenticated');
+    }
+  });
+
+  it('prevents admin from editing super_admin user', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // Current user is admin
+                : { data: { role: 'super_admin' }, error: null } // Target user is super_admin
+            ),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateUser('super-admin-id', validInput);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Cannot edit Super Admin');
+    }
+  });
+
+  it('allows super_admin to edit super_admin user', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'super_admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 3) {
+          // Duplicate email check
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Update query: update().eq().select().single()
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: {
+                      id: 'target-super-id',
+                      email: validInput.email,
+                      display_name: validInput.displayName,
+                      role: validInput.role,
+                      department_id: validInput.departmentId,
+                    },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'super-admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateUser('target-super-id', validInput);
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects duplicate email (excluding current user)', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Duplicate email check - email exists
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: 'other-user-id' },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateUser('target-user-id', validInput);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Email already exists');
+    }
+  });
+
+  it('updates user successfully', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 3) {
+          // Duplicate email check - no duplicate
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Update query: update().eq().select().single()
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: {
+                      id: 'target-user-id',
+                      email: validInput.email,
+                      display_name: validInput.displayName,
+                      role: validInput.role,
+                      department_id: validInput.departmentId,
+                    },
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateUser('target-user-id', validInput);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe(validInput.email);
+    }
+  });
+
+  it('returns error on database update failure', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+
+    const mockFromFn = vi.fn().mockImplementation((table: string) => {
+      if (table === 'users') {
+        callCount++;
+        if (callCount === 1) {
+          // Current user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'admin' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 2) {
+          // Target user role check
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { role: 'staff' },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (callCount === 3) {
+          // Duplicate email check - no duplicate
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                neq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { code: 'PGRST116' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Update query - fails: update().eq().select().single()
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { message: 'Database error' },
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+      }
+      return { select: vi.fn() };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateUser('target-user-id', validInput);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Failed to update user');
+    }
+  });
+
+  it('returns error when target user not found', async () => {
+    const { createClient } = await import('@/lib/supabase/server');
+
+    let callCount = 0;
+    const mockFromFn = vi.fn().mockImplementation(() => {
+      callCount++;
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              callCount === 1
+                ? { data: { role: 'admin' }, error: null } // Current user role
+                : { data: null, error: { code: 'PGRST116' } } // Target user not found
+            ),
+          }),
+        }),
+      };
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'admin-id' } },
+        }),
+      },
+      from: mockFromFn,
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const result = await updateUser('non-existent-id', validInput);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('User not found');
     }
   });
 });

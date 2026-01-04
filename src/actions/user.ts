@@ -3,7 +3,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { createUserSchema, type CreateUserInput } from '@/schemas/user.schema';
+import {
+  createUserSchema,
+  editUserSchema,
+  type CreateUserInput,
+  type EditUserInput,
+} from '@/schemas/user.schema';
 import type {
   ActionResult,
   DepartmentOption,
@@ -330,4 +335,102 @@ export async function resendInvitation(userId: string): Promise<ActionResult<nul
   }
 
   return { success: true, data: null };
+}
+
+/**
+ * Update an existing user's information
+ * Story 7.3: Edit User Information (AC 1, 2, 3, 4)
+ *
+ * Flow:
+ * 1. Validate input
+ * 2. Check authentication and current user's role
+ * 3. Check target user exists and get their role
+ * 4. Prevent admin from editing super_admin
+ * 5. Check for duplicate email (excluding current user)
+ * 6. Update user
+ *
+ * Note: Audit logging is handled by database trigger (see Epic 1)
+ *
+ * @param id - User ID to update
+ * @param input - User update input
+ * @returns ActionResult with updated user or error
+ */
+export async function updateUser(id: string, input: EditUserInput): Promise<ActionResult<User>> {
+  // Validate input first
+  const parsed = editUserSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  const supabase = await createClient();
+
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Get current user's role
+  const { data: currentUserProfile, error: profileError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !currentUserProfile?.role) {
+    return { success: false, error: 'Failed to verify permissions' };
+  }
+
+  const currentRole = currentUserProfile.role as UserRole;
+
+  // Get target user's role
+  const { data: targetUser, error: targetError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', id)
+    .single();
+
+  if (targetError || !targetUser) {
+    return { success: false, error: 'User not found' };
+  }
+
+  // AC 3: Prevent admin from editing super_admin
+  if (targetUser.role === 'super_admin' && currentRole !== 'super_admin') {
+    return { success: false, error: 'Cannot edit Super Admin' };
+  }
+
+  // AC 4: Check duplicate email (excluding current user)
+  const { data: existingEmail } = await supabase
+    .from('users')
+    .select('id')
+    .ilike('email', parsed.data.email)
+    .neq('id', id)
+    .single();
+
+  if (existingEmail) {
+    return { success: false, error: 'Email already exists' };
+  }
+
+  // Update user
+  const { data: updatedUser, error: updateError } = await supabase
+    .from('users')
+    .update({
+      email: parsed.data.email,
+      display_name: parsed.data.displayName,
+      role: parsed.data.role,
+      department_id: parsed.data.departmentId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (updateError || !updatedUser) {
+    return { success: false, error: 'Failed to update user' };
+  }
+
+  revalidatePath('/admin/users');
+  return { success: true, data: updatedUser };
 }

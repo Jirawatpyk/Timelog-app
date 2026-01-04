@@ -14,7 +14,6 @@ AS $$
   INNER JOIN time_entries te ON te.job_id = j.id
   WHERE te.user_id = auth.uid()
     AND te.deleted_at IS NULL
-    AND c.deleted_at IS NULL
   ORDER BY c.name;
 $$;
 

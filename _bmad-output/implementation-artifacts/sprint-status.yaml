@@ -102,12 +102,12 @@ development_status:
   6-4-aggregated-team-hours: done
   6-5-multi-department-support: done
   6-6-near-real-time-updates: done
-  epic-6-retrospective: optional
+  epic-6-retrospective: done
 
   # Epic 7: User Administration (8 stories)
   epic-7: in-progress
   7-1-user-list-view: done
-  7-1a-admin-sidebar-navigation: in-progress
+  7-1a-admin-navigation-layout: ready-for-dev
   7-2-create-new-user: ready-for-dev
   7-3-edit-user-information: ready-for-dev
   7-4-deactivate-user: ready-for-dev

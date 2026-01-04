@@ -394,6 +394,7 @@ export type Database = {
           display_name: string | null
           email: string
           id: string
+          is_active: boolean
           role: string | null
         }
         Insert: {
@@ -402,6 +403,7 @@ export type Database = {
           display_name?: string | null
           email: string
           id: string
+          is_active?: boolean
           role?: string | null
         }
         Update: {
@@ -410,6 +412,7 @@ export type Database = {
           display_name?: string | null
           email?: string
           id?: string
+          is_active?: boolean
           role?: string | null
         }
         Relationships: [
@@ -427,7 +430,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_clients: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
+      get_user_role: { Args: never; Returns: string }
+      soft_delete_time_entry: { Args: { entry_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

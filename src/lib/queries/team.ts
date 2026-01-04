@@ -70,8 +70,6 @@ export async function getTeamMembers(
 
   const supabase = await createClient();
 
-  // TODO: Epic 7 - Add .eq('active', true) when users.active column is added
-  // This will filter out deactivated users from team dashboard
   const { data, error } = await supabase
     .from('users')
     .select(
@@ -85,6 +83,7 @@ export async function getTeamMembers(
     `
     )
     .in('department_id', departmentIds)
+    .eq('is_active', true)
     .order('display_name');
 
   if (error) throw error;
@@ -126,9 +125,7 @@ export async function getTeamMembersWithTodayStats(
   const supabase = await createClient();
   const today = formatLocalDate(new Date());
 
-  // Get all team members
-  // TODO: Epic 7 - Add .eq('active', true) when users.active column is added
-  // This will filter out deactivated users from team dashboard
+  // Get all active team members
   const { data: members, error: membersError } = await supabase
     .from('users')
     .select(
@@ -141,7 +138,8 @@ export async function getTeamMembersWithTodayStats(
       department:departments!inner(name)
     `
     )
-    .in('department_id', departmentIds);
+    .in('department_id', departmentIds)
+    .eq('is_active', true);
 
   if (membersError) throw membersError;
 

@@ -24,10 +24,13 @@ import type { TimeEntryWithDetails } from '@/types/domain';
  * TODO: Replace with proper observability tool (Datadog/Sentry) for production monitoring.
  */
 const perfLog = {
-  start: (label: string) => {
+  start: (label: string): string => {
     if (process.env.NODE_ENV === 'development') {
-      console.time(label);
+      const uniqueLabel = `${label}:${Date.now()}`;
+      console.time(uniqueLabel);
+      return uniqueLabel;
     }
+    return label;
   },
   end: (label: string) => {
     if (process.env.NODE_ENV === 'development') {
@@ -47,8 +50,8 @@ export async function getUserEntries(
   dateRange: DateRange,
   filter?: FilterState
 ): Promise<TimeEntryWithDetails[]> {
-  const perfLabel = `getUserEntries${filter?.clientId ? ':filter' : ''}${filter?.searchQuery ? ':search' : ''}`;
-  perfLog.start(perfLabel);
+  const perfLabelBase = `getUserEntries${filter?.clientId ? ':filter' : ''}${filter?.searchQuery ? ':search' : ''}`;
+  const perfLabel = perfLog.start(perfLabelBase);
 
   const supabase = await createClient();
 
@@ -154,8 +157,8 @@ export async function getDashboardStats(
   period?: 'today' | 'week' | 'month',
   filter?: FilterState
 ): Promise<DashboardStats> {
-  const perfLabel = `getDashboardStats:${period || 'all'}${filter?.clientId ? ':filter' : ''}${filter?.searchQuery ? ':search' : ''}`;
-  perfLog.start(perfLabel);
+  const perfLabelBase = `getDashboardStats:${period || 'all'}${filter?.clientId ? ':filter' : ''}${filter?.searchQuery ? ':search' : ''}`;
+  const perfLabel = perfLog.start(perfLabelBase);
 
   const supabase = await createClient();
 
@@ -318,7 +321,7 @@ export async function getDashboardStats(
  * Falls back to JS deduplication if RPC not available.
  */
 export async function getUserClients(): Promise<ClientOption[]> {
-  perfLog.start('getUserClients');
+  const perfLabel = perfLog.start('getUserClients');
 
   const supabase = await createClient();
 
@@ -334,6 +337,7 @@ export async function getUserClients(): Promise<ClientOption[]> {
   const { data: rpcClients, error: rpcError } = await supabase.rpc('get_user_clients');
 
   if (!rpcError && rpcClients) {
+    perfLog.end(perfLabel);
     return rpcClients.map((c: { id: string; name: string }) => ({
       id: c.id,
       name: c.name,
@@ -376,7 +380,7 @@ export async function getUserClients(): Promise<ClientOption[]> {
     .map(([id, name]) => ({ id, name }))
     .sort((a, b) => a.name.localeCompare(b.name, 'en'));
 
-  perfLog.end('getUserClients');
+  perfLog.end(perfLabel);
   return clients;
 }
 
@@ -386,7 +390,7 @@ export async function getUserClients(): Promise<ClientOption[]> {
  * Used to show a welcoming empty state for new users.
  */
 export async function checkIsFirstTimeUser(): Promise<boolean> {
-  perfLog.start('checkIsFirstTimeUser');
+  const perfLabel = perfLog.start('checkIsFirstTimeUser');
 
   const supabase = await createClient();
 
@@ -406,11 +410,11 @@ export async function checkIsFirstTimeUser(): Promise<boolean> {
 
   if (error) {
     // On error, assume not first-time to avoid showing wrong state
-    perfLog.end('checkIsFirstTimeUser');
+    perfLog.end(perfLabel);
     return false;
   }
 
   const isFirstTime = count === 0;
-  perfLog.end('checkIsFirstTimeUser');
+  perfLog.end(perfLabel);
   return isFirstTime;
 }

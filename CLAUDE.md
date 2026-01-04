@@ -340,3 +340,154 @@ Before adding a new dependency:
 3. Verify TypeScript support quality
 4. Check maintenance status and community size
 5. Consider if a simple utility function would suffice
+
+## Date Handling (Timezone-Safe)
+
+### Common Gotcha: toISOString() in UTC+ Timezones
+
+**Problem**: `toISOString()` converts to UTC, which shifts dates backward in UTC+ timezones.
+
+```typescript
+// ❌ WRONG: In Thailand (UTC+7), Jan 4 at 2:00 AM becomes Jan 3
+const today = new Date().toISOString().split('T')[0];
+// Result: "2026-01-03" when local date is actually Jan 4
+```
+
+**Solution**: Use `formatLocalDate()` helper from `src/lib/utils.ts`:
+
+```typescript
+// ✅ CORRECT: Formats date in local timezone
+import { formatLocalDate } from '@/lib/utils';
+
+const today = formatLocalDate(new Date());
+// Result: "2026-01-04" (correct local date)
+```
+
+### formatLocalDate Implementation
+
+```typescript
+// src/lib/utils.ts
+export function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+```
+
+### When to Use
+
+| Use Case | Method |
+|----------|--------|
+| Filtering entries by date (DB query) | `formatLocalDate()` |
+| Displaying dates to user | `date-fns format()` with locale |
+| Storing in database | ISO format from DB (already UTC) |
+| Comparing dates | `formatLocalDate()` for both |
+
+### Type Naming Convention
+
+To avoid confusion between UI types and database types:
+
+| Suffix | Usage | Example |
+|--------|-------|---------|
+| `*Option` | UI/component props (dropdowns, selectors) | `DepartmentOption` |
+| `*Row` | Database row types (auto-generated) | `Tables<'departments'>` |
+| `*With*` | Extended types with relations | `TimeEntryWithDetails` |
+
+## Supabase Join Query Type Workaround
+
+### Known Limitation
+
+Supabase SDK doesn't correctly infer types for join queries. The SDK infers joined relations as arrays even for `!inner` joins.
+
+**Problem:**
+```typescript
+// Supabase infers department as array, but it's actually a single object
+const { data } = await supabase
+  .from('users')
+  .select('*, department:departments!inner(id, name)')
+  .eq('id', userId);
+
+// data.department is typed as array but returns object at runtime
+```
+
+**Workaround:**
+```typescript
+// Define expected row type
+interface UserWithDepartment {
+  id: string;
+  email: string;
+  department: { id: string; name: string };
+}
+
+// Type assertion after query
+const { data } = await supabase
+  .from('users')
+  .select('*, department:departments!inner(id, name)')
+  .eq('id', userId);
+
+const users = data as unknown as UserWithDepartment[];
+```
+
+### When to Use
+
+| Scenario | Solution |
+|----------|----------|
+| Simple select (no joins) | Use generated types directly |
+| Single join (1:1 relation) | Use `as unknown as Type[]` |
+| Multiple joins | Define interface, use type assertion |
+| Complex aggregations | Use RPC functions instead |
+
+## E2E Testing Authentication
+
+### E2E Auth Helpers
+
+Use `test/helpers/e2e-auth.ts` for role-based login in Playwright tests:
+
+```typescript
+import { loginAsManager, loginAsStaff, loginAsAdmin } from '@test/helpers/e2e-auth';
+
+test.describe('Team Dashboard', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsManager(page);
+  });
+
+  test('manager can view team', async ({ page }) => {
+    await page.goto('/team');
+    await expect(page.getByText('Team Dashboard')).toBeVisible();
+  });
+});
+```
+
+### Available Functions
+
+| Function | Access Level |
+|----------|--------------|
+| `loginAsStaff(page)` | Personal dashboard, entry |
+| `loginAsManager(page)` | + Team dashboard |
+| `loginAsAdmin(page)` | + Admin panel |
+| `loginAsSuperAdmin(page)` | Full access |
+| `navigateAsManager(page, '/team')` | Login + navigate in one call |
+
+### Test Credentials
+
+Credentials are defined in `TEST_CREDENTIALS` constant:
+- All use `password123` for testing
+- Emails follow pattern: `{role}@example.com`
+
+### RLS Testing (Unit Tests)
+
+For unit tests with RLS, use `test/helpers/supabase-test.ts`:
+
+```typescript
+import { asUser, createUserClient } from '@test/helpers/supabase-test';
+import { testUsers } from '@test/helpers/test-users';
+
+// Execute query as specific user
+const entries = await asUser(testUsers.staff.email, (supabase) =>
+  supabase.from('time_entries').select('*')
+);
+
+// Or get authenticated client
+const staffClient = await createUserClient(testUsers.staff.email);
+```

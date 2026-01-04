@@ -276,6 +276,8 @@ Ensure these are set:
 - Service Role Key must NEVER be exposed to client
 - `createAdminClient()` should only be used in server actions
 - Admin API bypasses RLS - use with caution
+- `resendInvitation` requires admin or super_admin role (authorization check added in code review)
+- All admin operations must verify user authentication and authorization before execution
 
 ### Status Column Implementation
 
@@ -313,30 +315,52 @@ Or use `auth.admin.getUserById()` per user (less efficient for list).
 
 ```typescript
 export async function resendInvitation(userId: string): Promise<ActionResult<null>> {
-  const supabaseAdmin = createAdminClient();
+  const supabase = await createClient();
 
-  // Get user email
-  const { data: user } = await supabase
+  // Check authentication
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  // Check authorization - only admin/super_admin can resend invitations
+  const { data: currentUserProfile } = await supabase
     .from('users')
-    .select('email')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  const currentRole = currentUserProfile?.role as UserRole;
+  if (currentRole !== 'admin' && currentRole !== 'super_admin') {
+    return { success: false, error: 'Insufficient permissions' };
+  }
+
+  // Get target user from public.users
+  const { data: targetUser } = await supabase
+    .from('users')
+    .select('email, confirmed_at')
     .eq('id', userId)
     .single();
 
-  if (!user) {
+  if (!targetUser) {
     return { success: false, error: 'User not found' };
   }
 
-  // Check if already confirmed
-  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
-
-  if (authUser?.user?.confirmed_at) {
+  // Check if user already confirmed (AC 9)
+  if (targetUser.confirmed_at !== null) {
     return { success: false, error: 'User already confirmed' };
   }
 
-  // Resend invite
-  const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(user.email);
+  // Resend invitation via Admin API
+  const supabaseAdmin = createAdminClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  if (error) {
+  const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    targetUser.email,
+    { redirectTo: `${appUrl}/login` }
+  );
+
+  if (inviteError) {
     return { success: false, error: 'Failed to resend invitation' };
   }
 
@@ -414,9 +438,22 @@ const statusConfig = {
   - Adding application-level rate limiting with Redis/upstash if needed
   - Adding UI debounce (button disabled during request already implemented)
 
+### Test Summary
+
+| Test File | Test Count | Description |
+|-----------|------------|-------------|
+| `src/actions/user.test.ts` | 30 tests | createUser, getUsers, resendInvitation with auth/rollback |
+| `src/app/(app)/admin/users/components/UserTable.test.tsx` | 13 tests | Status column, Resend button visibility/click |
+| `src/app/(app)/admin/users/components/StatusBadge.test.tsx` | 6 tests | Badge colors and labels |
+| `src/app/(app)/admin/users/components/UserRow.test.tsx` | 4 tests | Mobile view with status |
+| `src/lib/supabase/admin.test.ts` | 3 tests | Admin client creation |
+
+**Total: 56+ tests covering Story 7.2a functionality**
+
 ### Change Log
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-01-04 | Initial implementation - all tasks complete | Dev Agent |
 | 2026-01-04 | Code review fixes: authorization check, rollback test, file list | Dev Agent |
+| 2026-01-04 | Documentation update: Dev Notes code snippets, security considerations | Dev Agent |

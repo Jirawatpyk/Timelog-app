@@ -99,6 +99,12 @@
   }
 
   /* Touch Target Utilities - Story 8.4 */
+  /*
+   * NOTE: These utility classes are reserved for custom components.
+   * Base UI components (Button, Input, Select) use direct Tailwind classes (h-11, size-11).
+   * Use these utilities when creating custom interactive elements outside the UI library.
+   */
+
   /* Minimum touch target (WCAG 2.5.5 compliance) */
   .touch-target {
     min-width: 44px;

@@ -86,8 +86,8 @@ export function InstallPrompt({ minVisits = MIN_VISITS_TO_SHOW }: InstallPromptP
             </div>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20"
+              size="icon-sm"
+              className="text-primary-foreground hover:bg-primary-foreground/20"
               onClick={handleDismiss}
               aria-label="Close"
             >
@@ -138,8 +138,8 @@ export function InstallPrompt({ minVisits = MIN_VISITS_TO_SHOW }: InstallPromptP
           </Button>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20"
+            size="icon-sm"
+            className="text-primary-foreground hover:bg-primary-foreground/20"
             onClick={handleDismiss}
             aria-label="Dismiss"
           >

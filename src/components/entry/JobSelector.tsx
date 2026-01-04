@@ -56,7 +56,7 @@ export function JobSelector({
     return (
       <div className="space-y-2">
         <Label>Job</Label>
-        <Skeleton className="h-9 w-full rounded-md" data-testid="job-selector-loading" />
+        <Skeleton className="h-11 w-full rounded-md" data-testid="job-selector-loading" />
       </div>
     );
   }

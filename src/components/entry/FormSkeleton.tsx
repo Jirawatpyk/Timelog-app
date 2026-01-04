@@ -57,7 +57,7 @@ interface SelectorSkeletonProps {
 
 /**
  * Selector Skeleton Component
- * Matches height of Select components (h-9 = 36px, shadcn default)
+ * Matches height of Select components (h-11 = 44px, touch-optimized per Story 8.4)
  */
 export function SelectorSkeleton({ optional }: SelectorSkeletonProps) {
   return (
@@ -68,7 +68,7 @@ export function SelectorSkeleton({ optional }: SelectorSkeletonProps) {
           <Skeleton className="h-3 w-12" data-testid="optional-skeleton-badge" />
         )}
       </div>
-      <Skeleton className="h-9 w-full rounded-md" />
+      <Skeleton className="h-11 w-full rounded-md" />
     </div>
   );
 }
@@ -88,14 +88,14 @@ export function DurationSkeleton() {
         {[1, 2, 3, 4, 5].map((i) => (
           <Skeleton
             key={i}
-            className="h-8 w-[60px] rounded-md"
+            className="h-10 w-[60px] rounded-md"
             data-testid="preset-button-skeleton"
           />
         ))}
       </div>
 
       {/* Input field skeleton */}
-      <Skeleton className="h-9 w-full rounded-md" />
+      <Skeleton className="h-11 w-full rounded-md" />
 
       {/* Helper text skeleton */}
       <Skeleton className="h-3 w-40" />

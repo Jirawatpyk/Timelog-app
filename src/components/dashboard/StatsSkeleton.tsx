@@ -38,7 +38,7 @@ export function PeriodSelectorSkeleton() {
       {[1, 2, 3].map((i) => (
         <Skeleton
           key={i}
-          className="h-9 w-24 rounded-md"
+          className="h-11 w-24 rounded-md"
           data-testid="period-tab-skeleton"
         />
       ))}

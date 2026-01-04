@@ -66,7 +66,7 @@ export function FilterSheet({
         <div className="flex items-center justify-between mb-3">
           <SheetTitle>{title}</SheetTitle>
           <SheetClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+            <Button variant="ghost" size="icon-sm" className="-mr-2">
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </Button>

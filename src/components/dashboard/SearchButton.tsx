@@ -23,7 +23,6 @@ export function SearchButton({ isActive, onClick }: SearchButtonProps) {
       size="icon"
       onClick={onClick}
       className={cn(
-        'h-9 w-9',
         isActive && 'bg-primary/10 text-primary'
       )}
       aria-label={isActive ? 'Close search' : 'Search entries'}

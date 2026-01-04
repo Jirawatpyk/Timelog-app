@@ -29,7 +29,7 @@ export function ClientSelector({ value, onChange, error }: ClientSelectorProps) 
     return (
       <div className="space-y-2">
         <Label>Client</Label>
-        <Skeleton className="h-9 w-full rounded-md" data-testid="client-selector-loading" />
+        <Skeleton className="h-11 w-full rounded-md" data-testid="client-selector-loading" />
       </div>
     );
   }

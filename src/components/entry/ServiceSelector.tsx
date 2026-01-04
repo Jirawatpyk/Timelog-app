@@ -29,7 +29,7 @@ export function ServiceSelector({ value, onChange, error }: ServiceSelectorProps
     return (
       <div className="space-y-2">
         <Label>Service</Label>
-        <Skeleton className="h-9 w-full rounded-md" data-testid="service-selector-loading" />
+        <Skeleton className="h-11 w-full rounded-md" data-testid="service-selector-loading" />
       </div>
     );
   }

@@ -117,7 +117,7 @@ export function UserFilterSheet({
             })
           }
         >
-          <SelectTrigger id="filter-department">
+          <SelectTrigger id="filter-department" className="w-full">
             <SelectValue placeholder="All Departments" />
           </SelectTrigger>
           <SelectContent>
@@ -142,7 +142,7 @@ export function UserFilterSheet({
             })
           }
         >
-          <SelectTrigger id="filter-role">
+          <SelectTrigger id="filter-role" className="w-full">
             <SelectValue placeholder="All Roles" />
           </SelectTrigger>
           <SelectContent>
@@ -166,7 +166,7 @@ export function UserFilterSheet({
             })
           }
         >
-          <SelectTrigger id="filter-status">
+          <SelectTrigger id="filter-status" className="w-full">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>

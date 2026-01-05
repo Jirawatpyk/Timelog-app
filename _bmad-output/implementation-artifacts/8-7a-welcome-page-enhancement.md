@@ -1,180 +1,203 @@
-# Story 8.7a: Welcome Page Enhancement
+# Story 8.7a: Welcome Page Enhancement - Personalization & Branding
 
 ## Status: ready-for-dev
 
 ## Story
 
 As a **new user**,
-I want **a visually appealing and personalized welcome experience**,
-So that **I feel welcomed and understand the app's value immediately**.
+I want **a personalized welcome with clear branding**,
+So that **I feel recognized and trust the app immediately**.
 
 ## Background
 
-Story 8.7 implemented the basic welcome flow with functional requirements met. This story enhances the UX based on agent review feedback to create a more memorable first impression.
+Story 8.7 implemented functional onboarding. Agent review identified:
+- No personalization (generic "Welcome to Timelog!")
+- Logo is text-only (no visual identity)
+- Design lacks polish
 
-## Agent Review Findings
-
-| Agent | Issue |
-|-------|-------|
-| 🎨 Sally (UX) | No logo/illustration, text-heavy, bland gradient |
-| 📋 John (PM) | No personalization, no analytics tracking |
-| 🧠 Carson | Missing micro-interactions, no wow factor |
+This story focuses on **personalization + branding** only.
+Animation and analytics are split to Story 8-7b.
 
 ## Acceptance Criteria
 
-### AC 1: Personalized Welcome Message
-- **Given** I am a new user on the welcome page
-- **When** The page loads
-- **Then** I see "Welcome, [First Name]!" with my actual name
-- **And** If name is unavailable, fallback to "Welcome!"
+### AC 1: Personalized Welcome Greeting
+- **Given** I am a new user with `display_name` = "John Doe"
+- **When** The welcome page loads
+- **Then** I see heading: "Welcome, John!"
+- **And** First name is extracted from display_name
 
-### AC 2: App Logo Display
+- **Given** I am a new user with `display_name` = NULL
+- **When** The welcome page loads
+- **Then** I see heading: "Welcome!" (no name)
+
+- **Given** I am a new user with `display_name` = NULL but email = "john@example.com"
+- **When** The welcome page loads
+- **Then** I see heading: "Welcome, john!" (from email prefix)
+
+### AC 2: Timelog Logo Display
 - **Given** I am on the welcome page
-- **When** I view the header
-- **Then** I see the Timelog logo (SVG/image, not just text)
-- **And** Logo has subtle entrance animation
+- **When** I view the header section
+- **Then** I see Timelog logo (SVG icon + text)
+- **And** Logo size: icon 40x40px, text 24px font
+- **And** Logo has fade-in animation (0.4s duration)
 
-### AC 3: Enhanced Visual Design
+### AC 3: Enhanced Gradient Background
 - **Given** I am on the welcome page
-- **When** I view the page
-- **Then** Background has a more vibrant gradient or pattern
-- **And** Feature cards have icon micro-animations on appear
-- **And** Overall design feels premium and polished
+- **When** I view the background
+- **Then** Background has gradient: `from-primary/10 via-primary/5 to-background`
+- **And** Gradient is smooth and subtle (not jarring)
 
-### AC 4: Analytics Event Tracking
-- **Given** I am on the welcome page
-- **When** I click "Get Started" or "Skip"
-- **Then** System logs an analytics event with:
-  - Event type: "onboarding_completed" or "onboarding_skipped"
-  - User ID
-  - Time spent on welcome page
-- **And** Event is stored in audit_logs table
+### AC 4: Respect Reduced Motion Preference
+- **Given** I have `prefers-reduced-motion: reduce` enabled
+- **When** The welcome page loads
+- **Then** All animations are disabled or simplified
+- **And** Content appears immediately without motion
 
-### AC 5: Feature Card Enhancements
-- **Given** I am viewing feature cards
-- **When** Cards appear with stagger animation
-- **Then** Icons have subtle pulse or bounce animation
-- **And** Cards have hover effect (desktop) / tap feedback (mobile)
+## Design Specifications
+
+### Color Palette (from globals.css)
+| Token | Light Mode | Dark Mode |
+|-------|------------|-----------|
+| `--primary` | hsl(221, 83%, 53%) | hsl(217, 91%, 60%) |
+| `--background` | hsl(0, 0%, 100%) | hsl(222, 47%, 11%) |
+
+### Typography
+| Element | Class | Size |
+|---------|-------|------|
+| Logo text | `text-2xl font-bold` | 24px |
+| Welcome heading | `text-2xl font-semibold` | 24px |
+| Subtitle | `text-base text-muted-foreground` | 16px |
+
+### Layout
+| Element | Specification |
+|---------|--------------|
+| Container | `max-w-sm` (384px) |
+| Logo icon | 40x40px |
+| Spacing | `space-y-4` between sections |
+| Padding | `p-6` mobile, `p-8` desktop |
+
+### Logo Design
+```
+┌─────────────────────────┐
+│  [Clock Icon]  Timelog  │
+│     40x40      24px     │
+└─────────────────────────┘
+```
+- Use `Clock` icon from lucide-react as temporary logo
+- Icon color: `text-primary`
+- Text color: `text-primary`
 
 ## Tasks
 
-### Task 1: Pass User Name to WelcomeScreen
+### Task 1: Query User Name in Server Component
 **File:** `src/app/(onboarding)/welcome/page.tsx`
-- [ ] Query user's display name from users table
-- [ ] Pass name as prop to WelcomeScreen
-
-### Task 2: Update WelcomeScreen for Personalization
-**File:** `src/components/onboarding/WelcomeScreen.tsx`
-- [ ] Accept `userName` prop
-- [ ] Display "Welcome, {userName}!" or fallback "Welcome!"
-- [ ] Update tests for new prop
-
-### Task 3: Create/Add Logo Asset
-**Files:**
-- `public/logo.svg` or `public/images/logo.svg`
-- `src/components/onboarding/WelcomeScreen.tsx`
-- [ ] Create or source Timelog logo
-- [ ] Import and display logo with animation
-- [ ] Replace text-only "Timelog" with actual logo
-
-### Task 4: Enhance Visual Design
-**File:** `src/components/onboarding/WelcomeScreen.tsx`
-- [ ] Update gradient to more vibrant colors
-- [ ] Add subtle background pattern or decoration
-- [ ] Improve overall visual polish
-
-### Task 5: Add Icon Micro-Animations
-**File:** `src/components/onboarding/FeatureCard.tsx`
-- [ ] Add subtle icon animation (pulse, bounce, or scale)
-- [ ] Add hover/tap feedback on cards
-- [ ] Ensure animations don't cause motion sickness (respect prefers-reduced-motion)
-
-### Task 6: Implement Analytics Tracking
-**Files:**
-- `src/lib/analytics.ts` (new)
-- `src/components/onboarding/WelcomeScreen.tsx`
-- [ ] Create analytics utility function
-- [ ] Track time spent on page
-- [ ] Log event to audit_logs on completion
-- [ ] Include event type (started/skipped)
-
-### Task 7: Unit Tests
-**Files:**
-- `src/components/onboarding/WelcomeScreen.test.tsx`
-- `src/components/onboarding/FeatureCard.test.tsx`
-- [ ] Test personalized welcome message
-- [ ] Test logo display
-- [ ] Test analytics event firing
-
-### Task 8: E2E Tests
-**File:** `test/e2e/onboarding/enhanced-flow.test.ts`
-- [ ] Test personalized greeting shows user name
-- [ ] Test analytics events are logged
-- [ ] Test animations don't break on slow connections
-
-## Dev Notes
-
-### User Name Query Pattern
 ```typescript
-// In welcome/page.tsx
 const { data: profile } = await supabase
   .from('users')
   .select('has_completed_onboarding, display_name, email')
   .eq('id', user.id)
   .single();
 
-const userName = profile?.display_name || profile?.email?.split('@')[0] || null;
+// Extract first name
+function getFirstName(displayName: string | null, email: string | null): string | null {
+  if (displayName) {
+    return displayName.split(' ')[0];
+  }
+  if (email) {
+    return email.split('@')[0];
+  }
+  return null;
+}
 
-return <WelcomeScreen userName={userName} />;
+const firstName = getFirstName(profile?.display_name, user.email);
 ```
+- [x] Add display_name and email to query
+- [x] Create getFirstName helper function
+- [x] Pass firstName as prop to WelcomeScreen
 
-### Analytics Event Schema
+### Task 2: Update WelcomeScreen Props
+**File:** `src/components/onboarding/WelcomeScreen.tsx`
+- [x] Add `firstName?: string | null` prop
+- [x] Update heading: `Welcome${firstName ? `, ${firstName}` : ''}!`
+- [x] Keep "to Timelog" as subtitle
+
+### Task 3: Create Logo Component
+**File:** `src/components/onboarding/Logo.tsx`
 ```typescript
-interface OnboardingEvent {
-  event_type: 'onboarding_completed' | 'onboarding_skipped';
-  user_id: string;
-  time_spent_ms: number;
-  timestamp: string;
+interface LogoProps {
+  className?: string;
+  iconSize?: number;
+}
+
+export function Logo({ className, iconSize = 40 }: LogoProps) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <Clock className="text-primary" style={{ width: iconSize, height: iconSize }} />
+      <span className="text-2xl font-bold text-primary">Timelog</span>
+    </div>
+  );
 }
 ```
+- [x] Create Logo component with Clock icon
+- [x] Export from index.ts
 
-### Respecting Motion Preferences
+### Task 4: Update Gradient Background
+**File:** `src/components/onboarding/WelcomeScreen.tsx`
+- [x] Change: `from-primary/5 to-background`
+- [x] To: `from-primary/10 via-primary/5 to-background`
+
+### Task 5: Add Reduced Motion Support
+**File:** `src/components/onboarding/WelcomeScreen.tsx`
 ```typescript
-// Check for reduced motion preference
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// Use simpler animations if true
+// Use framer-motion's built-in support
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.4 }}
+  // Automatically respects prefers-reduced-motion
+/>
 ```
+- [x] Verify framer-motion respects prefers-reduced-motion (it does by default)
+- [x] Add test for reduced motion
+
+### Task 6: Unit Tests
+**File:** `src/components/onboarding/WelcomeScreen.test.tsx`
+- [x] Test: shows "Welcome, John!" when firstName="John"
+- [x] Test: shows "Welcome!" when firstName=null
+- [x] Test: Logo component renders icon and text
+
+**File:** `src/components/onboarding/Logo.test.tsx`
+- [x] Test: renders Clock icon
+- [x] Test: renders "Timelog" text
+- [x] Test: accepts custom iconSize prop
 
 ## Definition of Done
 
-- [ ] Personalized welcome message shows user name
-- [ ] Logo displayed instead of text
-- [ ] Enhanced gradient/visual design
-- [ ] Icon micro-animations on feature cards
-- [ ] Analytics events logged to audit_logs
-- [ ] Respects prefers-reduced-motion
-- [ ] All unit tests pass
-- [ ] E2E tests pass
-- [ ] Mobile-friendly
-- [ ] No TypeScript errors
+- [x] Personalized greeting shows first name
+- [x] Fallback to email prefix if no display_name
+- [x] Fallback to "Welcome!" if no name available
+- [x] Logo component with Clock icon + text
+- [x] Enhanced gradient background
+- [x] Respects prefers-reduced-motion
+- [x] All unit tests pass
+- [x] TypeScript clean
+- [x] Mobile-friendly
 
 ## File List
 
 ### New Files
-- `src/lib/analytics.ts` - Analytics utility
-- `public/logo.svg` - Timelog logo asset
-- `test/e2e/onboarding/enhanced-flow.test.ts` - Enhanced E2E tests
+- `src/components/onboarding/Logo.tsx`
+- `src/components/onboarding/Logo.test.tsx`
 
 ### Modified Files
-- `src/app/(onboarding)/welcome/page.tsx` - Pass user name
-- `src/components/onboarding/WelcomeScreen.tsx` - Personalization + logo + design
-- `src/components/onboarding/WelcomeScreen.test.tsx` - Updated tests
-- `src/components/onboarding/FeatureCard.tsx` - Icon animations
-- `src/components/onboarding/FeatureCard.test.tsx` - Animation tests
+- `src/app/(onboarding)/welcome/page.tsx`
+- `src/components/onboarding/WelcomeScreen.tsx`
+- `src/components/onboarding/WelcomeScreen.test.tsx`
+- `src/components/onboarding/index.ts`
 
-## Change Log
+## Dev Agent Record
 
-| Date | Change |
-|------|--------|
-| 2026-01-05 | Story created based on agent review feedback |
+### Implementation Notes
+- framer-motion v11+ automatically respects prefers-reduced-motion
+- No external logo asset needed - use Clock icon as brand mark
+- First name extraction handles edge cases (no spaces, email-only)

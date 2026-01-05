@@ -7,6 +7,9 @@ import { Pagination } from '@/components/shared/Pagination';
 import { createClient } from '@/lib/supabase/server';
 import type { UserFilters, UserRole, UserStatus } from '@/types/domain';
 
+// Force dynamic rendering - this page requires authentication
+export const dynamic = 'force-dynamic';
+
 interface UsersPageProps {
   searchParams: Promise<{
     page?: string;

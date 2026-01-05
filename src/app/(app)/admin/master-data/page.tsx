@@ -29,6 +29,9 @@ import { DepartmentsList } from './components/DepartmentsList';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
+// Force dynamic rendering - this page requires authentication and user role check
+export const dynamic = 'force-dynamic';
+
 interface MasterDataPageProps {
   searchParams: Promise<{ tab?: string }>;
 }

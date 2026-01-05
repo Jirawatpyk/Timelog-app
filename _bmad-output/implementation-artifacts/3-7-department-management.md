@@ -1,6 +1,6 @@
 # Story 3.7: Department Management
 
-## Status: review-ready
+## Status: done
 
 ## Story
 

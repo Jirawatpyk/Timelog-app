@@ -1,6 +1,6 @@
 # Story 8.5: Pull-to-Refresh
 
-## Status: ready-for-dev
+## Status: partially-implemented
 
 ## Story
 
@@ -43,306 +43,181 @@ So that **I can update the view with a natural gesture**.
 - **Then** Pull-to-refresh doesn't activate
 - **And** Normal scroll behavior occurs
 
+### AC 6: Haptic Feedback
+- **Given** Pull-to-refresh is supported
+- **When** I pull past the threshold
+- **Then** Device vibrates briefly (if supported)
+- **And** Graceful fallback on unsupported devices
+
+## Implementation Status
+
+### Already Implemented
+- `PullToRefresh` component exists at `src/components/shared/PullToRefresh.tsx`
+- `@use-gesture/react@10.3.1` installed
+- Uses `framer-motion` for smooth animations
+- Has `isLoading`, `disabled`, `threshold` props
+- Uses `PULL_THRESHOLD_PX` from `@/constants/time`
+- Unit tests exist (7 tests passing)
+
+### Remaining Work
+- Integrate with Dashboard page
+- Integrate with Team page
+- Add haptic feedback
+- Add E2E tests
+
 ## Tasks
 
-### Task 1: Install @use-gesture/react
-**File:** `package.json`
-- [ ] Install @use-gesture/react package
-- [ ] Verify peer dependencies
+### Task 1: Install Dependencies
+**Status:** COMPLETE
+- [x] @use-gesture/react installed (v10.3.1)
+- [x] framer-motion already available
 
-### Task 2: Create usePullToRefresh Hook
-**File:** `src/hooks/use-pull-to-refresh.ts`
-- [ ] Track pull distance with useDrag
-- [ ] Calculate pull progress (0-100%)
-- [ ] Define threshold (60px)
-- [ ] Handle release logic
-- [ ] Return { pullDistance, isRefreshing, isPulling, progress }
+### Task 2: Create PullToRefresh Component
+**Status:** COMPLETE
+**File:** `src/components/shared/PullToRefresh.tsx`
+- [x] Pull gesture detection using @use-gesture/react
+- [x] Visual indicator with progress
+- [x] Loading spinner during refresh
+- [x] Smooth animations with framer-motion
+- [x] `isLoading` prop for external control
+- [x] `disabled` prop
+- [x] `threshold` prop (default from constants)
+- [x] Scroll position check (only at top)
+- [x] Resistance factor for natural feel
 
-### Task 3: Create PullToRefreshContainer Component
-**File:** `src/components/shared/PullToRefreshContainer.tsx`
-- [ ] Wrap content with pull gesture
-- [ ] Position indicator above content
-- [ ] Handle pull animation
-- [ ] Accept onRefresh callback
+### Task 3: Unit Tests for Component
+**Status:** COMPLETE
+**File:** `src/components/shared/PullToRefresh.test.tsx`
+- [x] Test renders children
+- [x] Test pull indicator visibility
+- [x] Test accessible loading state
+- [x] Test loading spinner display
+- [x] Test threshold styling
+- [x] Test aria-live accessibility
 
-### Task 4: Create PullIndicator Component
-**File:** `src/components/shared/PullIndicator.tsx`
-- [ ] Circular progress indicator
-- [ ] Animate based on pull progress
-- [ ] Spinning state when refreshing
-- [ ] Smooth hide animation
+### Task 4: Add Haptic Feedback
+**File:** `src/components/shared/PullToRefresh.tsx`
+- [ ] Add haptic feedback when threshold is reached
+- [ ] Use `navigator.vibrate(10)` API
+- [ ] Check for API support before calling
+- [ ] Graceful fallback (no-op on unsupported devices)
 
 ### Task 5: Integrate with Dashboard
-**File:** `src/app/(app)/dashboard/page.tsx`
-- [ ] Wrap content with PullToRefreshContainer
-- [ ] Implement onRefresh to reload data
-- [ ] Use router.refresh() or revalidate
+**File:** `src/components/dashboard/DashboardContent.tsx` or `src/app/(app)/dashboard/page.tsx`
+- [ ] Wrap dashboard content with PullToRefresh
+- [ ] Implement onRefresh callback using router.refresh()
+- [ ] Pass appropriate className for layout
+- [ ] Test refresh triggers data reload
 
 ### Task 6: Integrate with Team Dashboard
-**File:** `src/app/(app)/team/page.tsx`
-- [ ] Wrap content with PullToRefreshContainer
-- [ ] Implement onRefresh to reload data
-- [ ] Use router.refresh() or revalidate
+**File:** `src/components/team/TeamDashboardClient.tsx` or `src/app/(app)/team/page.tsx`
+- [ ] Wrap team content with PullToRefresh
+- [ ] Implement onRefresh callback using router.refresh()
+- [ ] Coordinate with existing polling (pause during refresh)
+- [ ] Test refresh triggers data reload
 
-### Task 7: Handle Scroll Position
-**File:** `src/hooks/use-pull-to-refresh.ts`
-- [ ] Check scrollTop before activating
-- [ ] Only enable at top of scroll
-- [ ] Prevent conflicts with normal scroll
+### Task 7: Add CSS for PWA Overscroll
+**File:** `src/app/globals.css`
+- [ ] Add `overscroll-behavior-y: none` to html/body
+- [ ] Prevent native pull-to-refresh in PWA mode
+- [ ] Test in standalone PWA mode
 
-### Task 8: Style Pull Indicator
-**File:** `src/components/shared/PullIndicator.tsx`
-- [ ] Match app theme colors
-- [ ] Smooth transitions
-- [ ] Proper z-index
-- [ ] Shadow for depth
-
-### Task 9: Add Haptic Feedback
-**File:** `src/components/shared/PullToRefreshContainer.tsx`
-- [ ] Vibrate on threshold reach (if supported)
-- [ ] Use navigator.vibrate API
-- [ ] Graceful fallback
-
-### Task 10: Test on Real Devices
-**File:** Manual testing
-- [ ] Test on iOS Safari
-- [ ] Test on Android Chrome
-- [ ] Test in PWA mode
-- [ ] Verify native feel
+### Task 8: E2E Tests
+**File:** `test/e2e/pwa/pull-to-refresh.test.ts`
+- [ ] Test pull gesture triggers refresh on Dashboard
+- [ ] Test pull gesture triggers refresh on Team
+- [ ] Test cancel pull (below threshold) doesn't refresh
+- [ ] Test pull-to-refresh disabled when scrolled down
+- [ ] Test loading indicator appears during refresh
+- [ ] Test data updates after refresh
 
 ## Dev Notes
 
-### Architecture Pattern
-- Custom hook for gesture logic
-- Container component for wrapping content
-- Server component refresh via router.refresh()
-
-### usePullToRefresh Hook
+### Existing Component
+The `PullToRefresh` component already exists with these features:
 ```typescript
-// src/hooks/use-pull-to-refresh.ts
-'use client';
-
-import { useState, useCallback, useRef } from 'react';
-import { useDrag } from '@use-gesture/react';
-
-interface UsePullToRefreshOptions {
-  onRefresh: () => Promise<void>;
-  threshold?: number;
-  maxPull?: number;
-}
-
-export function usePullToRefresh({
-  onRefresh,
-  threshold = 60,
-  maxPull = 120,
-}: UsePullToRefreshOptions) {
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const bind = useDrag(
-    ({ movement: [, my], direction: [, dy], active, cancel }) => {
-      // Only activate when at top of scroll
-      const scrollTop = containerRef.current?.scrollTop ?? 0;
-      if (scrollTop > 0) {
-        cancel();
-        return;
-      }
-
-      // Only allow downward pull
-      if (dy < 0) {
-        cancel();
-        return;
-      }
-
-      if (active) {
-        // Apply resistance
-        const resistance = 0.5;
-        const distance = Math.min(my * resistance, maxPull);
-        setPullDistance(Math.max(0, distance));
-      } else {
-        // Released
-        if (pullDistance >= threshold && !isRefreshing) {
-          handleRefresh();
-        } else {
-          setPullDistance(0);
-        }
-      }
-    },
-    {
-      axis: 'y',
-      filterTaps: true,
-      pointer: { touch: true },
-    }
-  );
-
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    setPullDistance(threshold); // Keep at threshold during refresh
-
-    // Haptic feedback
-    if ('vibrate' in navigator) {
-      navigator.vibrate(10);
-    }
-
-    try {
-      await onRefresh();
-    } finally {
-      setIsRefreshing(false);
-      setPullDistance(0);
-    }
-  }, [onRefresh, threshold]);
-
-  const progress = Math.min((pullDistance / threshold) * 100, 100);
-  const isPulling = pullDistance > 0;
-
-  return {
-    bind,
-    containerRef,
-    pullDistance,
-    isRefreshing,
-    isPulling,
-    progress,
-  };
-}
-```
-
-### PullToRefreshContainer Component
-```typescript
-// src/components/shared/PullToRefreshContainer.tsx
-'use client';
-
-import { ReactNode } from 'react';
-import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
-import { PullIndicator } from '@/components/shared/PullIndicator';
-import { cn } from '@/lib/utils';
-
-interface PullToRefreshContainerProps {
+// src/components/shared/PullToRefresh.tsx
+interface PullToRefreshProps {
   children: ReactNode;
-  onRefresh: () => Promise<void>;
-  className?: string;
-}
-
-export function PullToRefreshContainer({
-  children,
-  onRefresh,
-  className,
-}: PullToRefreshContainerProps) {
-  const {
-    bind,
-    containerRef,
-    pullDistance,
-    isRefreshing,
-    progress,
-  } = usePullToRefresh({ onRefresh });
-
-  return (
-    <div
-      ref={containerRef}
-      {...bind()}
-      className={cn('relative overflow-auto touch-pan-y', className)}
-      style={{ overscrollBehavior: 'none' }}
-    >
-      {/* Pull Indicator */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 z-10 transition-transform"
-        style={{
-          transform: `translateX(-50%) translateY(${pullDistance - 40}px)`,
-        }}
-      >
-        <PullIndicator progress={progress} isRefreshing={isRefreshing} />
-      </div>
-
-      {/* Content */}
-      <div
-        style={{
-          transform: `translateY(${pullDistance}px)`,
-          transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none',
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
+  onRefresh: () => Promise<void> | void;
+  threshold?: number;      // Default: PULL_THRESHOLD_PX (60)
+  isLoading?: boolean;     // External loading state
+  disabled?: boolean;      // Disable pull gesture
 }
 ```
 
-### PullIndicator Component
+### Integration Pattern (Client Component)
 ```typescript
-// src/components/shared/PullIndicator.tsx
-'use client';
-
-import { RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-interface PullIndicatorProps {
-  progress: number;
-  isRefreshing: boolean;
-}
-
-export function PullIndicator({ progress, isRefreshing }: PullIndicatorProps) {
-  return (
-    <div
-      className={cn(
-        'flex items-center justify-center',
-        'w-10 h-10 rounded-full bg-background shadow-lg',
-        'transition-opacity duration-200',
-        progress === 0 && !isRefreshing && 'opacity-0'
-      )}
-    >
-      <RefreshCw
-        className={cn(
-          'w-5 h-5 text-primary transition-transform',
-          isRefreshing && 'animate-spin'
-        )}
-        style={{
-          transform: isRefreshing
-            ? undefined
-            : `rotate(${(progress / 100) * 360}deg)`,
-        }}
-      />
-    </div>
-  );
-}
-```
-
-### Dashboard Integration
-```typescript
-// src/app/(app)/dashboard/page.tsx
-import { PullToRefreshContainer } from '@/components/shared/PullToRefreshContainer';
-
-export default function DashboardPage() {
-  return (
-    <PullToRefreshContainer
-      onRefresh={async () => {
-        'use server';
-        revalidatePath('/dashboard');
-      }}
-      className="h-full"
-    >
-      {/* Dashboard content */}
-    </PullToRefreshContainer>
-  );
-}
-
-// Or with client-side refresh
+// src/components/dashboard/DashboardContent.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { PullToRefresh } from '@/components/shared/PullToRefresh';
 
-export default function DashboardClient() {
+export function DashboardContent({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
+    setIsRefreshing(true);
     router.refresh();
-    // Wait for refresh to complete
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Small delay to ensure server has processed
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    setIsRefreshing(false);
   };
 
   return (
-    <PullToRefreshContainer onRefresh={handleRefresh}>
-      {/* Content */}
-    </PullToRefreshContainer>
+    <PullToRefresh onRefresh={handleRefresh} isLoading={isRefreshing}>
+      {children}
+    </PullToRefresh>
+  );
+}
+```
+
+### Haptic Feedback Addition
+```typescript
+// Add to PullToRefresh.tsx handleRefresh function
+const handleRefresh = useCallback(async () => {
+  if (isRefreshing || disabled) return;
+
+  // Haptic feedback on threshold reach
+  if ('vibrate' in navigator) {
+    navigator.vibrate(10);
+  }
+
+  setIsRefreshing(true);
+  try {
+    await onRefresh();
+  } finally {
+    setIsRefreshing(false);
+  }
+}, [onRefresh, isRefreshing, disabled]);
+```
+
+### Team Dashboard Integration with Polling
+```typescript
+// src/components/team/TeamDashboardClient.tsx
+export function TeamDashboardClient({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { pausePolling, resumePolling } = usePolling();
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    pausePolling(); // Pause polling during manual refresh
+
+    router.refresh();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    setIsRefreshing(false);
+    resumePolling(); // Resume polling after refresh
+  };
+
+  return (
+    <PullToRefresh onRefresh={handleRefresh} isLoading={isRefreshing}>
+      {children}
+    </PullToRefresh>
   );
 }
 ```
@@ -351,56 +226,57 @@ export default function DashboardClient() {
 ```css
 /* src/app/globals.css */
 
-/* Prevent native pull-to-refresh in PWA */
-html, body {
-  overscroll-behavior-y: none;
+/* Prevent native pull-to-refresh in PWA standalone mode */
+@media all and (display-mode: standalone) {
+  html, body {
+    overscroll-behavior-y: none;
+  }
 }
 
-/* Allow custom pull-to-refresh container */
-.pull-to-refresh-container {
-  overscroll-behavior: none;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
+/* Alternative: always disable native pull-to-refresh */
+html {
+  overscroll-behavior-y: none;
 }
 ```
 
 ### Component Dependencies
-- @use-gesture/react for touch gestures
-- lucide-react for RefreshCw icon
-- router.refresh() for Server Component revalidation
+- `@use-gesture/react` - Touch gesture detection
+- `framer-motion` - Animations
+- `lucide-react` - Loader2 icon
+- `@/constants/time` - PULL_THRESHOLD_PX constant
 
 ### Import Convention
 ```typescript
-import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
-import { PullToRefreshContainer } from '@/components/shared/PullToRefreshContainer';
-import { PullIndicator } from '@/components/shared/PullIndicator';
+import { PullToRefresh } from '@/components/shared/PullToRefresh';
 ```
 
 ### Testing Notes
-- Disable browser's native pull-to-refresh with overscroll-behavior
-- Test on real devices (emulator gestures differ)
-- Test in PWA standalone mode
-- Verify scroll position check works
+- E2E tests require touch event simulation
+- Test on real devices for accurate gesture feel
+- PWA standalone mode may behave differently
+- Verify scroll position check prevents activation when scrolled
 
 ### Accessibility
-- Visual indicator shows progress
-- Works with touch devices
-- Does not interfere with screen readers
-- Alternative refresh available (manual button)
+- `role="status"` on loading indicator
+- `aria-live="polite"` for screen reader announcements
+- `sr-only` text: "Refreshing..." or "Pull to refresh"
+- Does not interfere with keyboard navigation
 
 ## Definition of Done
 
-- [ ] @use-gesture/react installed
-- [ ] usePullToRefresh hook created
-- [ ] PullToRefreshContainer component created
-- [ ] PullIndicator shows pull progress
+- [x] @use-gesture/react installed
+- [x] PullToRefresh component created
+- [x] Component uses framer-motion for animations
+- [x] Component has isLoading/disabled/threshold props
+- [x] Only activates at scroll top
+- [x] Threshold release triggers refresh
+- [x] Cancel pull bounces back
+- [x] Unit tests pass (7 tests)
+- [ ] Haptic feedback on threshold reach
 - [ ] Dashboard has pull-to-refresh
 - [ ] Team dashboard has pull-to-refresh
-- [ ] Only activates at scroll top
-- [ ] Threshold release triggers refresh
-- [ ] Cancel pull bounces back
-- [ ] Haptic feedback on threshold
-- [ ] Native feel on iOS/Android
-- [ ] Works in PWA mode
+- [ ] PWA overscroll CSS added
+- [ ] Works in PWA standalone mode
+- [ ] E2E tests pass
 - [ ] No TypeScript errors
 - [ ] All imports use @/ aliases

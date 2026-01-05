@@ -82,8 +82,17 @@
   * {
     @apply border-border;
   }
+
+  /* Story 8.5: Prevent native pull-to-refresh in PWA mode */
+  html {
+    overscroll-behavior-y: none;
+  }
+
   body {
     @apply bg-background text-foreground;
+    /* Prevent iOS bounce effect in PWA */
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

@@ -1,5 +1,5 @@
 /**
- * Dashboard Components - Story 5.1, 5.2, 5.3, 5.6, 5.7, 5.8
+ * Dashboard Components - Story 5.1, 5.2, 5.3, 5.6, 5.7, 5.8, 8.5
  *
  * Barrel export for dashboard components.
  */
@@ -40,6 +40,9 @@ export { EmptyStateBase } from './EmptyStateBase';
 export { EmptyPeriodState } from './EmptyPeriodState';
 export { EmptyCombinedState } from './EmptyCombinedState';
 export { EmptyFirstTimeState } from './EmptyFirstTimeState';
+
+// Story 8.5 - Pull-to-refresh wrapper
+export { DashboardRefreshWrapper } from './DashboardRefreshWrapper';
 
 // Legacy skeleton exports (Story 4.9)
 export { EntryListSkeleton, EntryCardSkeleton } from './EntryListSkeleton';

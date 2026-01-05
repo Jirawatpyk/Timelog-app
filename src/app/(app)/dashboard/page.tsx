@@ -1,9 +1,11 @@
 /**
- * Dashboard Page - Story 5.1, 5.6, 5.7
+ * Dashboard Page - Story 5.1, 5.6, 5.7, 8.5
  *
  * Server Component that displays user's time entries organized by period.
  * Uses URL state for period selection (AC4), client filtering (Story 5.6),
  * and text search (Story 5.7).
+ *
+ * Story 8.5: Wrapped with DashboardRefreshWrapper for pull-to-refresh.
  *
  * Per Architecture: NO TanStack Query - Server Components only
  */
@@ -12,6 +14,7 @@ import { Suspense } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { PeriodSelector } from '@/components/dashboard/PeriodSelector';
 import { DashboardWrapper } from '@/components/dashboard/DashboardWrapper';
+import { DashboardRefreshWrapper } from '@/components/dashboard/DashboardRefreshWrapper';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { FilterChip } from '@/components/dashboard/FilterChip';
@@ -33,36 +36,38 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const activeClient = clients.find((c) => c.id === filter.clientId);
 
   return (
-    <div className="flex flex-col gap-4">
-      <ErrorToast />
-      <DashboardHeader />
+    <DashboardRefreshWrapper>
+      <div className="flex flex-col gap-4">
+        <ErrorToast />
+        <DashboardHeader />
 
-      <DashboardWrapper
-        clients={clients}
-        currentClientId={filter.clientId}
-        currentSearchQuery={filter.searchQuery}
-      >
-        <PeriodSelector currentPeriod={period} />
-      </DashboardWrapper>
+        <DashboardWrapper
+          clients={clients}
+          currentClientId={filter.clientId}
+          currentSearchQuery={filter.searchQuery}
+        >
+          <PeriodSelector currentPeriod={period} />
+        </DashboardWrapper>
 
-      {/* Active Filter Chips */}
-      {activeClient && (
-        <div className="flex gap-2 flex-wrap">
-          <FilterChip
-            label="Client"
-            value={activeClient.name}
-            paramName="client"
+        {/* Active Filter Chips */}
+        {activeClient && (
+          <div className="flex gap-2 flex-wrap">
+            <FilterChip
+              label="Client"
+              value={activeClient.name}
+              paramName="client"
+            />
+          </div>
+        )}
+
+        <Suspense fallback={<DashboardSkeleton />}>
+          <DashboardContent
+            period={period}
+            filter={filter}
+            clientName={activeClient?.name}
           />
-        </div>
-      )}
-
-      <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardContent
-          period={period}
-          filter={filter}
-          clientName={activeClient?.name}
-        />
-      </Suspense>
-    </div>
+        </Suspense>
+      </div>
+    </DashboardRefreshWrapper>
   );
 }

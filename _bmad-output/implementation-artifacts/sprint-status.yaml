@@ -125,7 +125,7 @@ development_status:
   8-2-service-worker-caching: done
   8-3-offline-message-display: done
   8-4-touch-optimized-ui: done
-  8-5-pull-to-refresh: ready-for-dev
+  8-5-pull-to-refresh: done
   8-6-audit-log-database-trigger: ready-for-dev
   8-7-first-time-user-flow: ready-for-dev
   8-8-contextual-guidance-tooltips: ready-for-dev

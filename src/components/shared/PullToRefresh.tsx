@@ -7,12 +7,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { PULL_THRESHOLD_PX } from '@/constants/time';
 
+/**
+ * Triggers haptic feedback using the Vibration API.
+ * Safely checks for API support before calling.
+ * No-op on unsupported devices.
+ */
+export function triggerHapticFeedback(): void {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(10);
+  }
+}
+
 interface PullToRefreshProps {
   /** Content to display */
   children: ReactNode;
   /** Callback when refresh is triggered */
   onRefresh: () => Promise<void> | void;
-  /** Custom threshold in pixels (default: 60) */
+  /** Custom threshold in pixels (default: PULL_THRESHOLD_PX from constants) */
   threshold?: number;
   /** External loading state control */
   isLoading?: boolean;
@@ -42,6 +53,9 @@ export function PullToRefresh({
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing || disabled) return;
+
+    // Haptic feedback on threshold reach
+    triggerHapticFeedback();
 
     setIsRefreshing(true);
     try {
@@ -106,7 +120,7 @@ export function PullToRefresh({
             transition={{ duration: 0.2 }}
           >
             <div
-              className={`flex items-center justify-center transition-transform duration-150 ${
+              className={`flex items-center justify-center gap-2 transition-transform duration-150 ${
                 isAboveThreshold ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
@@ -119,6 +133,12 @@ export function PullToRefresh({
                       : undefined,
                 }}
               />
+              {/* AC 1: Show pull progress percentage */}
+              {!isLoading && !isRefreshing && pullDistance > 0 && (
+                <span className="text-xs font-medium tabular-nums">
+                  {Math.min(Math.round((pullDistance / threshold) * 100), 100)}%
+                </span>
+              )}
               <span className="sr-only">
                 {isLoading || isRefreshing ? 'Refreshing...' : 'Pull to refresh'}
               </span>

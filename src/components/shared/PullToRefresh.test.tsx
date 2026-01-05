@@ -94,4 +94,61 @@ describe('PullToRefresh', () => {
     const status = screen.getByRole('status');
     expect(status).toHaveAttribute('aria-live', 'polite');
   });
+
+  describe('Haptic Feedback', () => {
+    let originalNavigator: Navigator;
+
+    beforeEach(() => {
+      originalNavigator = global.navigator;
+      // Reset module cache to ensure fresh import with mocked navigator
+      vi.resetModules();
+    });
+
+    afterEach(() => {
+      // Restore original navigator
+      Object.defineProperty(global, 'navigator', {
+        value: originalNavigator,
+        configurable: true,
+      });
+      vi.resetModules();
+    });
+
+    it('calls navigator.vibrate when supported', async () => {
+      const mockVibrate = vi.fn();
+      Object.defineProperty(global, 'navigator', {
+        value: { vibrate: mockVibrate },
+        configurable: true,
+      });
+
+      // Fresh import after setting up navigator mock
+      const { triggerHapticFeedback } = await import('./PullToRefresh');
+      triggerHapticFeedback();
+
+      expect(mockVibrate).toHaveBeenCalledWith(10);
+    });
+
+    it('does not throw when navigator.vibrate is not supported', async () => {
+      Object.defineProperty(global, 'navigator', {
+        value: {},
+        configurable: true,
+      });
+
+      const { triggerHapticFeedback } = await import('./PullToRefresh');
+
+      // Should not throw
+      expect(() => triggerHapticFeedback()).not.toThrow();
+    });
+
+    it('does not throw when navigator is undefined', async () => {
+      Object.defineProperty(global, 'navigator', {
+        value: undefined,
+        configurable: true,
+      });
+
+      const { triggerHapticFeedback } = await import('./PullToRefresh');
+
+      // Should not throw
+      expect(() => triggerHapticFeedback()).not.toThrow();
+    });
+  });
 });

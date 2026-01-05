@@ -179,7 +179,26 @@ export async function trackEvent({ eventType, properties, sessionId }: TrackEven
 - [ ] Create trackEvent server action
 - [ ] Handle errors gracefully (don't break UX if analytics fails)
 
-### Task 3: Add Time Tracking Hook
+### Task 3: Create Session ID Utility
+**File:** `src/lib/session.ts`
+```typescript
+const SESSION_KEY = 'timelog_session_id';
+
+export function getSessionId(): string {
+  let sessionId = sessionStorage.getItem(SESSION_KEY);
+
+  if (!sessionId) {
+    sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    sessionStorage.setItem(SESSION_KEY, sessionId);
+  }
+
+  return sessionId;
+}
+```
+- [ ] Create getSessionId utility
+- [ ] Add unit tests (mock sessionStorage)
+
+### Task 4: Add Time Tracking Hook
 **File:** `src/hooks/use-time-spent.ts`
 ```typescript
 import { useState, useEffect, useRef } from 'react';
@@ -205,7 +224,7 @@ export function useTimeSpent() {
 - [ ] Create useTimeSpent hook
 - [ ] Add unit tests
 
-### Task 4: Integrate Analytics in WelcomeScreen
+### Task 5: Integrate Analytics in WelcomeScreen
 **File:** `src/components/onboarding/WelcomeScreen.tsx`
 ```typescript
 const { getTimeSpent } = useTimeSpent();
@@ -230,7 +249,7 @@ const handleComplete = async (method: 'get_started' | 'skip') => {
 - [ ] Call trackEvent on completion
 - [ ] Pass method ('get_started' or 'skip') to handler
 
-### Task 5: Add Icon Animation to FeatureCard
+### Task 6: Add Icon Animation to FeatureCard
 **File:** `src/components/onboarding/FeatureCard.tsx`
 ```typescript
 <motion.div
@@ -251,7 +270,7 @@ const handleComplete = async (method: 'get_started' | 'skip') => {
 - [ ] Add scale keyframe animation
 - [ ] Delay after card appears
 
-### Task 6: Add Hover/Tap Feedback to FeatureCard
+### Task 7: Add Hover/Tap Feedback to FeatureCard
 **File:** `src/components/onboarding/FeatureCard.tsx`
 ```typescript
 <motion.div
@@ -268,7 +287,7 @@ const handleComplete = async (method: 'get_started' | 'skip') => {
 - [ ] Add whileTap for mobile scale effect
 - [ ] Add cursor-pointer and touch-feedback classes
 
-### Task 7: Unit Tests
+### Task 8: Unit Tests
 **Files:**
 - `src/lib/analytics.test.ts`
 - `src/hooks/use-time-spent.test.ts`
@@ -278,7 +297,7 @@ const handleComplete = async (method: 'get_started' | 'skip') => {
 - [ ] Test useTimeSpent returns elapsed time
 - [ ] Test FeatureCard has whileHover/whileTap props
 
-### Task 8: E2E Tests
+### Task 9: E2E Tests
 **File:** `test/e2e/onboarding/analytics.test.ts`
 - [ ] Test analytics event created on "Get Started"
 - [ ] Test analytics event created on "Skip"
@@ -306,6 +325,8 @@ const handleComplete = async (method: 'get_started' | 'skip') => {
 - `supabase/migrations/YYYYMMDD_016_analytics_events.sql`
 - `src/lib/analytics.ts`
 - `src/lib/analytics.test.ts`
+- `src/lib/session.ts`
+- `src/lib/session.test.ts`
 - `src/hooks/use-time-spent.ts`
 - `src/hooks/use-time-spent.test.ts`
 - `test/e2e/onboarding/analytics.test.ts`
@@ -329,3 +350,43 @@ const handleComplete = async (method: 'get_started' | 'skip') => {
 3. **Fire and forget** - Analytics failures don't block UX
 
 4. **Tab visibility tracking** - Optional accuracy improvement
+
+### Session ID Generation
+
+Session ID is used to group events from the same browser session.
+
+```typescript
+// src/lib/session.ts
+const SESSION_KEY = 'timelog_session_id';
+
+export function getSessionId(): string {
+  // Check sessionStorage first (persists for tab lifetime)
+  let sessionId = sessionStorage.getItem(SESSION_KEY);
+
+  if (!sessionId) {
+    // Generate new session ID: timestamp + random string
+    sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    sessionStorage.setItem(SESSION_KEY, sessionId);
+  }
+
+  return sessionId;
+}
+```
+
+**Usage in WelcomeScreen:**
+```typescript
+import { getSessionId } from '@/lib/session';
+
+// In handleComplete
+trackEvent({
+  eventType: 'onboarding_completed',
+  properties: { method, time_spent_ms: getTimeSpent() },
+  sessionId: getSessionId(),
+});
+```
+
+**Why sessionStorage?**
+- Persists across page navigations within same tab
+- Cleared when tab/browser closes
+- No cookie consent needed
+- Simple and reliable

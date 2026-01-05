@@ -111,15 +111,15 @@ function getFirstName(displayName: string | null, email: string | null): string 
 
 const firstName = getFirstName(profile?.display_name, user.email);
 ```
-- [x] Add display_name and email to query
-- [x] Create getFirstName helper function
-- [x] Pass firstName as prop to WelcomeScreen
+- [ ] Add display_name and email to query
+- [ ] Create getFirstName helper function
+- [ ] Pass firstName as prop to WelcomeScreen
 
 ### Task 2: Update WelcomeScreen Props
 **File:** `src/components/onboarding/WelcomeScreen.tsx`
-- [x] Add `firstName?: string | null` prop
-- [x] Update heading: `Welcome${firstName ? `, ${firstName}` : ''}!`
-- [x] Keep "to Timelog" as subtitle
+- [ ] Add `firstName?: string | null` prop
+- [ ] Update heading: `Welcome${firstName ? `, ${firstName}` : ''}!`
+- [ ] Keep "to Timelog" as subtitle
 
 ### Task 3: Create Logo Component
 **File:** `src/components/onboarding/Logo.tsx`
@@ -138,13 +138,13 @@ export function Logo({ className, iconSize = 40 }: LogoProps) {
   );
 }
 ```
-- [x] Create Logo component with Clock icon
-- [x] Export from index.ts
+- [ ] Create Logo component with Clock icon
+- [ ] Export from index.ts
 
 ### Task 4: Update Gradient Background
 **File:** `src/components/onboarding/WelcomeScreen.tsx`
-- [x] Change: `from-primary/5 to-background`
-- [x] To: `from-primary/10 via-primary/5 to-background`
+- [ ] Change: `from-primary/5 to-background`
+- [ ] To: `from-primary/10 via-primary/5 to-background`
 
 ### Task 5: Add Reduced Motion Support
 **File:** `src/components/onboarding/WelcomeScreen.tsx`
@@ -157,31 +157,41 @@ export function Logo({ className, iconSize = 40 }: LogoProps) {
   // Automatically respects prefers-reduced-motion
 />
 ```
-- [x] Verify framer-motion respects prefers-reduced-motion (it does by default)
-- [x] Add test for reduced motion
+- [ ] Verify framer-motion respects prefers-reduced-motion (it does by default)
+- [ ] Add test for reduced motion
 
 ### Task 6: Unit Tests
 **File:** `src/components/onboarding/WelcomeScreen.test.tsx`
-- [x] Test: shows "Welcome, John!" when firstName="John"
-- [x] Test: shows "Welcome!" when firstName=null
-- [x] Test: Logo component renders icon and text
+- [ ] Test: shows "Welcome, John!" when firstName="John"
+- [ ] Test: shows "Welcome!" when firstName=null
+- [ ] Test: Logo component renders icon and text
 
 **File:** `src/components/onboarding/Logo.test.tsx`
-- [x] Test: renders Clock icon
-- [x] Test: renders "Timelog" text
-- [x] Test: accepts custom iconSize prop
+- [ ] Test: renders Clock icon
+- [ ] Test: renders "Timelog" text
+- [ ] Test: accepts custom iconSize prop
+
+## Success Metrics
+
+| Metric | Baseline | Target | How to Measure |
+|--------|----------|--------|----------------|
+| Skip Rate | Unknown | < 30% | analytics_events (8-7b) |
+| Time on Welcome | Unknown | 5-15s | time_spent_ms (8-7b) |
+| First Entry Completion | Unknown | > 80% | Track in dashboard |
+
+> Note: Baseline will be established after 8-7b analytics implementation.
 
 ## Definition of Done
 
-- [x] Personalized greeting shows first name
-- [x] Fallback to email prefix if no display_name
-- [x] Fallback to "Welcome!" if no name available
-- [x] Logo component with Clock icon + text
-- [x] Enhanced gradient background
-- [x] Respects prefers-reduced-motion
-- [x] All unit tests pass
-- [x] TypeScript clean
-- [x] Mobile-friendly
+- [ ] Personalized greeting shows first name
+- [ ] Fallback to email prefix if no display_name
+- [ ] Fallback to "Welcome!" if no name available
+- [ ] Logo component with Clock icon + text
+- [ ] Enhanced gradient background
+- [ ] Respects prefers-reduced-motion
+- [ ] All unit tests pass
+- [ ] TypeScript clean
+- [ ] Mobile-friendly
 
 ## File List
 

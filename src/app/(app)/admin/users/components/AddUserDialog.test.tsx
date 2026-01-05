@@ -229,6 +229,7 @@ describe('AddUserDialog', () => {
         role: 'staff',
         department_id: TEST_DEPT_ID,
         is_active: true,
+        has_completed_onboarding: false,
         created_at: new Date().toISOString(),
       },
     });

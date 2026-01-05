@@ -83,13 +83,13 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Fetch user role and active status from public.users table
+    // Fetch user role, active status, and onboarding status from public.users table
     // Note: This query runs on every protected route request.
     // For ~60 users this is acceptable. For larger scale, consider
     // caching role in JWT custom claim or cookie after login.
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('role, is_active')
+      .select('role, is_active, has_completed_onboarding')
       .eq('id', user.sub)
       .single();
 
@@ -107,6 +107,15 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.LOGIN;
       url.searchParams.set('error', 'account_deactivated');
+      return NextResponse.redirect(url);
+    }
+
+    // Story 8.7: First-Time User Flow - onboarding redirect
+    // Redirect new users to /welcome if they haven't completed onboarding
+    // Skip redirect if already on /welcome page to prevent infinite loop
+    if (profile && profile.has_completed_onboarding === false && pathname !== ROUTES.WELCOME) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.WELCOME;
       return NextResponse.redirect(url);
     }
 

@@ -1,6 +1,6 @@
 # Story 8.7: First-Time User Flow
 
-## Status: ready-for-dev
+## Status: done
 
 ## Story
 
@@ -13,12 +13,12 @@ So that **I can start using the app immediately**.
 ### AC 1: Welcome Screen Display
 - **Given** I am a new user (first login)
 - **When** I complete authentication
-- **Then** I see a welcome screen: "ยินดีต้อนรับสู่ Timelog!"
-- **And** Screen shows 3 key features with illustrations
-- **And** I see "เริ่มต้นใช้งาน" button
+- **Then** I see a welcome screen: "Welcome to Timelog!"
+- **And** Screen shows 3 key features with icons
+- **And** I see "Get Started" button
 
 ### AC 2: Complete Onboarding
-- **Given** I tap "เริ่มต้นใช้งาน"
+- **Given** I tap "Get Started"
 - **When** Onboarding completes
 - **Then** I am taken to /entry page
 - **And** First-time flag is set in user preferences
@@ -33,95 +33,88 @@ So that **I can start using the app immediately**.
 ### AC 4: Feature Highlights
 - **Given** Welcome screen is displayed
 - **When** I view the content
-- **Then** I see feature 1: "บันทึกเวลาง่ายๆ" with clock icon
-- **And** I see feature 2: "ดูสรุปรายวัน/สัปดาห์" with chart icon
-- **And** I see feature 3: "รายการล่าสุดเพื่อกรอกเร็ว" with lightning icon
+- **Then** I see feature 1: "Easy Time Logging" with Clock icon
+- **And** I see feature 2: "Daily/Weekly Summary" with BarChart icon
+- **And** I see feature 3: "Quick Entry from Recent" with Zap icon
 
 ### AC 5: Skip Option
 - **Given** I am on the welcome screen
 - **When** I want to skip
-- **Then** I can tap "ข้าม" link at bottom
+- **Then** I can tap "Skip" link at bottom
 - **And** Onboarding is marked complete
 - **And** I proceed to /entry
 
 ## Tasks
 
 ### Task 1: Add Onboarding Flag to Users Table
-**File:** `supabase/migrations/010_user_onboarding.sql`
-- [ ] Add has_completed_onboarding boolean column
-- [ ] Default to false for new users
-- [ ] Update RLS if needed
+**File:** `supabase/migrations/20260105073913_015_user_onboarding.sql`
+- [x] Add `has_completed_onboarding` boolean column (default false)
+- [x] Update existing users to true (they're not new)
+- [x] No RLS changes needed (uses existing user policies)
 
 ### Task 2: Create Welcome Page
-**File:** `src/app/(app)/welcome/page.tsx`
-- [ ] Server component to check onboarding status
-- [ ] Redirect if already completed
-- [ ] Render WelcomeScreen client component
+**File:** `src/app/(onboarding)/welcome/page.tsx`
+- [x] Server component to check onboarding status
+- [x] Redirect to /entry if already completed
+- [x] Render WelcomeScreen client component
+- [x] Separate route group for clean fullscreen design (no nav chrome)
 
-### Task 3: Create WelcomeScreen Component
-**File:** `src/components/onboarding/WelcomeScreen.tsx`
-- [ ] "ยินดีต้อนรับสู่ Timelog!" heading
-- [ ] 3 feature cards with icons
-- [ ] "เริ่มต้นใช้งาน" primary button
-- [ ] "ข้าม" secondary link
+### Task 3: Create WelcomeScreen and FeatureCard Components
+**Files:**
+- `src/components/onboarding/WelcomeScreen.tsx`
+- `src/components/onboarding/FeatureCard.tsx`
+- [x] "Welcome to Timelog!" heading
+- [x] 3 feature cards with lucide-react icons (Clock, BarChart3, Zap)
+- [x] "Get Started" primary button
+- [x] "Skip" secondary link
+- [x] Mobile-first design with gradient background
+- [x] Stagger animation for feature cards
 
-### Task 4: Create Feature Card Component
-**File:** `src/components/onboarding/FeatureCard.tsx`
-- [ ] Icon prop
-- [ ] Title prop
-- [ ] Description prop
-- [ ] Consistent styling
-
-### Task 5: Create Complete Onboarding Action
+### Task 4: Create Complete Onboarding Action
 **File:** `src/actions/onboarding.ts`
-- [ ] completeOnboarding server action
-- [ ] Update user's has_completed_onboarding
-- [ ] Redirect to /entry
+- [x] `completeOnboarding()` server action
+- [x] Update user's `has_completed_onboarding` to true
+- [x] Return `ActionResult<void>` (client handles redirect)
 
-### Task 6: Update Auth Flow
-**File:** `src/app/(auth)/login/page.tsx` or middleware
-- [ ] Check onboarding status after login
-- [ ] Redirect new users to /welcome
-- [ ] Redirect returning users to /entry
+### Task 5: Update Middleware for Onboarding Check
+**File:** `src/lib/supabase/proxy.ts`
+- [x] After auth check, query onboarding status
+- [x] Redirect new users to /welcome
+- [x] Redirect returning users to /entry (or requested page)
+- [x] Skip check for /welcome route itself
 
-### Task 7: Create Onboarding Check Hook
-**File:** `src/hooks/use-onboarding-status.ts`
-- [ ] Check if user has completed onboarding
-- [ ] Return loading state
-- [ ] Handle edge cases
+### Task 6: Unit Tests
+**Files:**
+- `src/components/onboarding/WelcomeScreen.test.tsx`
+- `src/components/onboarding/FeatureCard.test.tsx`
+- `src/actions/onboarding.test.ts`
+- [x] Test WelcomeScreen renders all elements
+- [x] Test FeatureCard with different icons
+- [x] Test completeOnboarding action success/error
 
-### Task 8: Add Illustrations/Icons
-**File:** `src/components/onboarding/WelcomeScreen.tsx`
-- [ ] Use lucide-react icons
-- [ ] Clock for time entry
-- [ ] BarChart for dashboard
-- [ ] Zap for quick entry
-
-### Task 9: Style Welcome Screen
-**File:** `src/components/onboarding/WelcomeScreen.tsx`
-- [ ] Mobile-first design
-- [ ] Center content vertically
-- [ ] Branded colors
-- [ ] Smooth animations
-
-### Task 10: Test Onboarding Flow
+### Task 7: E2E Tests
 **File:** `test/e2e/onboarding/flow.test.ts`
-- [ ] Test new user sees welcome
-- [ ] Test complete onboarding
-- [ ] Test returning user skips
-- [ ] Test skip option works
+- [x] Test new user sees welcome screen
+- [x] Test "Get Started" completes onboarding
+- [x] Test "Skip" completes onboarding
+- [x] Test returning user skips welcome
+- [x] Test flag persists across sessions
 
 ## Dev Notes
 
 ### Architecture Pattern
-- Server-side onboarding check
+- Server-side onboarding check in middleware
 - Client component for interactive welcome
-- Server action for completion
-- Cookie or database flag for state
+- Server action for completion (returns ActionResult)
+- Database flag for persistent state
 
 ### Migration: User Onboarding Flag
 ```sql
--- supabase/migrations/010_user_onboarding.sql
+-- supabase/migrations/YYYYMMDDHHMMSS_015_user_onboarding.sql
+
+-- Migration: 015_user_onboarding
+-- Story 8.7: First-Time User Flow
+-- AC 2: First-time flag in user preferences
 
 -- Add onboarding flag to users table
 ALTER TABLE users
@@ -130,11 +123,14 @@ ADD COLUMN IF NOT EXISTS has_completed_onboarding BOOLEAN DEFAULT FALSE;
 -- Update existing users to mark as completed (they're not new)
 UPDATE users SET has_completed_onboarding = TRUE
 WHERE created_at < NOW() - INTERVAL '1 day';
+
+COMMENT ON COLUMN users.has_completed_onboarding
+IS 'Whether user has completed first-time onboarding flow';
 ```
 
 ### Welcome Page (Server Component)
 ```typescript
-// src/app/(app)/welcome/page.tsx
+// src/app/(onboarding)/welcome/page.tsx
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { WelcomeScreen } from '@/components/onboarding/WelcomeScreen';
@@ -160,37 +156,53 @@ export default async function WelcomePage() {
 }
 ```
 
-### WelcomeScreen Component
+### WelcomeScreen Component (Simplified Example)
+> Note: Actual implementation includes framer-motion animations, useRef for focus, and useEffect for accessibility.
+
 ```typescript
 // src/components/onboarding/WelcomeScreen.tsx
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Clock, BarChart3, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeatureCard } from '@/components/onboarding/FeatureCard';
 import { completeOnboarding } from '@/actions/onboarding';
+import { toast } from 'sonner';
 
 const features = [
   {
     icon: Clock,
-    title: 'บันทึกเวลาง่ายๆ',
-    description: 'กรอกข้อมูลการทำงานได้รวดเร็ว',
+    title: 'Easy Time Logging',
+    description: 'Record your work hours quickly and easily',
   },
   {
     icon: BarChart3,
-    title: 'ดูสรุปรายวัน/สัปดาห์',
-    description: 'ติดตามชั่วโมงการทำงานของคุณ',
+    title: 'Daily/Weekly Summary',
+    description: 'Track your logged hours at a glance',
   },
   {
     icon: Zap,
-    title: 'รายการล่าสุดเพื่อกรอกเร็ว',
-    description: 'แตะเพื่อกรอกแบบฟอร์มอัตโนมัติ',
+    title: 'Quick Entry from Recent',
+    description: 'Tap to auto-fill from previous entries',
   },
 ];
 
 export function WelcomeScreen() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleComplete = async () => {
-    await completeOnboarding();
+    setIsLoading(true);
+    const result = await completeOnboarding();
+
+    if (result.success) {
+      router.push('/entry');
+    } else {
+      toast.error(result.error || 'Failed to complete onboarding');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -202,10 +214,10 @@ export function WelcomeScreen() {
 
       {/* Welcome Message */}
       <h2 className="text-2xl font-semibold text-center mb-2">
-        ยินดีต้อนรับสู่ Timelog!
+        Welcome to Timelog!
       </h2>
       <p className="text-muted-foreground text-center mb-8">
-        ระบบบันทึกเวลาการทำงานสำหรับทีม
+        Time tracking for teams
       </p>
 
       {/* Feature Cards */}
@@ -226,14 +238,16 @@ export function WelcomeScreen() {
           onClick={handleComplete}
           className="w-full h-12 text-lg"
           size="lg"
+          disabled={isLoading}
         >
-          เริ่มต้นใช้งาน
+          {isLoading ? 'Loading...' : 'Get Started'}
         </Button>
         <button
           onClick={handleComplete}
-          className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+          disabled={isLoading}
+          className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
         >
-          ข้าม
+          Skip
         </button>
       </div>
     </div>
@@ -245,7 +259,6 @@ export function WelcomeScreen() {
 ```typescript
 // src/components/onboarding/FeatureCard.tsx
 import { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface FeatureCardProps {
   icon: LucideIcon;
@@ -273,34 +286,34 @@ export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps
 // src/actions/onboarding.ts
 'use server';
 
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import type { ActionResult } from '@/types/domain';
 
-export async function completeOnboarding() {
+export async function completeOnboarding(): Promise<ActionResult<void>> {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
 
-  // Update onboarding status
   const { error } = await supabase
     .from('users')
     .update({ has_completed_onboarding: true })
     .eq('id', user.id);
 
   if (error) {
-    console.error('Failed to complete onboarding:', error);
-    // Still redirect even on error
+    return { success: false, error: error.message };
   }
 
-  redirect('/entry');
+  return { success: true, data: undefined };
 }
 ```
 
-### Auth Flow Update
+### Middleware Update Pattern
 ```typescript
-// In middleware.ts or post-login logic
-async function handlePostLogin(userId: string) {
+// In middleware.ts - add after auth check
+async function getOnboardingRedirect(userId: string): Promise<string | null> {
   const supabase = await createClient();
 
   const { data: profile } = await supabase
@@ -313,15 +326,15 @@ async function handlePostLogin(userId: string) {
     return '/welcome';
   }
 
-  return '/entry';
+  return null; // No redirect needed
 }
 ```
 
 ### Component Dependencies
-- lucide-react for icons
+- lucide-react (Clock, BarChart3, Zap icons)
 - shadcn/ui Button
-- Server actions for completion
-- Supabase for state storage
+- sonner for toast notifications
+- framer-motion (optional, for stagger animation)
 
 ### Import Convention
 ```typescript
@@ -331,29 +344,88 @@ import { completeOnboarding } from '@/actions/onboarding';
 ```
 
 ### Testing Notes
-- Create new user for testing
-- Verify redirect logic
-- Test both complete and skip paths
-- Check flag persistence
+- Create new user for E2E testing
+- Use service role to reset onboarding flag between tests
+- Test both "Get Started" and "Skip" paths
+- Verify flag persists across browser sessions
 
 ### Accessibility
-- Focus management on load
-- Button is keyboard accessible
+- Focus on "Get Started" button on page load
+- Keyboard accessible buttons
 - Sufficient color contrast
-- Screen reader friendly
+- Screen reader friendly with proper headings
 
 ## Definition of Done
 
-- [ ] has_completed_onboarding column added
-- [ ] Welcome page created at /welcome
-- [ ] WelcomeScreen component with 3 features
-- [ ] FeatureCard component reusable
-- [ ] completeOnboarding action works
-- [ ] New users redirected to /welcome
-- [ ] Returning users skip to /entry
-- [ ] "เริ่มต้นใช้งาน" button works
-- [ ] "ข้าม" link works
-- [ ] Flag persists across sessions
-- [ ] Mobile-friendly design
-- [ ] No TypeScript errors
-- [ ] All imports use @/ aliases
+- [x] `has_completed_onboarding` column added to users table
+- [x] Existing users marked as completed
+- [x] Welcome page created at /welcome
+- [x] WelcomeScreen component with 3 features (English text)
+- [x] FeatureCard component reusable
+- [x] `completeOnboarding` action returns ActionResult
+- [x] Middleware redirects new users to /welcome
+- [x] Returning users skip to /entry
+- [x] "Get Started" button works
+- [x] "Skip" link works
+- [x] Loading state during completion
+- [x] Mobile-friendly design
+- [x] Unit tests pass (24 tests)
+- [x] E2E tests pass (9 scenarios)
+- [x] No TypeScript errors
+- [x] All imports use @/ aliases
+
+## File List
+
+### New Files
+- `supabase/migrations/20260105073913_015_user_onboarding.sql`
+- `src/app/(onboarding)/layout.tsx` - Minimal layout (no nav chrome)
+- `src/app/(onboarding)/welcome/page.tsx`
+- `src/components/onboarding/WelcomeScreen.tsx`
+- `src/components/onboarding/WelcomeScreen.test.tsx`
+- `src/components/onboarding/FeatureCard.tsx`
+- `src/components/onboarding/FeatureCard.test.tsx`
+- `src/components/onboarding/index.ts`
+- `src/actions/onboarding.ts`
+- `src/actions/onboarding.test.ts`
+- `src/lib/supabase/proxy.test.ts` - Middleware unit tests
+- `test/e2e/onboarding/flow.test.ts`
+
+### Modified Files
+- `src/lib/supabase/proxy.ts` - Add onboarding check in middleware
+- `src/constants/routes.ts` - Add WELCOME route and permissions
+- `src/types/database.types.ts` - Add has_completed_onboarding field
+- `src/app/(app)/admin/users/components/AddUserDialog.test.tsx` - Add new field to mock
+- `src/app/(app)/admin/users/components/EditUserDialog.test.tsx` - Add new field to mock
+
+## Dev Agent Record
+
+### Implementation Plan
+- Task 1: Created migration 20260105073913_015_user_onboarding.sql with has_completed_onboarding column
+- Task 2-4: Created welcome page, components, and action following red-green-refactor
+- Task 5: Updated proxy.ts middleware to check onboarding status
+- Task 6: Created comprehensive unit tests (24 tests)
+- Task 7: Created E2E tests (9 scenarios)
+
+### Completion Notes
+Story 8.7 First-Time User Flow is complete.
+
+**Implementation:**
+- Added `has_completed_onboarding` boolean column to users table (default false)
+- Existing users automatically marked as completed
+- Welcome page with server-side onboarding check
+- WelcomeScreen component with framer-motion stagger animations
+- FeatureCard reusable component
+- completeOnboarding server action returning ActionResult
+- Middleware redirect logic for new/returning users
+
+**Tests:**
+- 24 unit tests passing (WelcomeScreen 14, FeatureCard 5, onboarding action 5)
+- 9 E2E test scenarios for full flow coverage
+- TypeScript clean compilation
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-01-05 | Fixed Thai→English UI, migration number, consolidated tasks, added ActionResult pattern |
+| 2026-01-05 | Implemented full story: migration, components, action, middleware, tests |

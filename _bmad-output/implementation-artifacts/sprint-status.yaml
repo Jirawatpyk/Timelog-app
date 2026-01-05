@@ -127,7 +127,7 @@ development_status:
   8-4-touch-optimized-ui: done
   8-5-pull-to-refresh: done
   8-6-audit-log-database-trigger: done
-  8-7-first-time-user-flow: review
+  8-7-first-time-user-flow: done
   8-8-contextual-guidance-tooltips: ready-for-dev
   8-9-success-animations-haptic-feedback: ready-for-dev
   epic-8-retrospective: optional

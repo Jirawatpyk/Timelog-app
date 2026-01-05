@@ -393,6 +393,7 @@ export type Database = {
           department_id: string | null
           display_name: string | null
           email: string
+          has_completed_onboarding: boolean
           id: string
           is_active: boolean
           role: string | null
@@ -402,6 +403,7 @@ export type Database = {
           department_id?: string | null
           display_name?: string | null
           email: string
+          has_completed_onboarding?: boolean
           id: string
           is_active?: boolean
           role?: string | null
@@ -411,6 +413,7 @@ export type Database = {
           department_id?: string | null
           display_name?: string | null
           email?: string
+          has_completed_onboarding?: boolean
           id?: string
           is_active?: boolean
           role?: string | null

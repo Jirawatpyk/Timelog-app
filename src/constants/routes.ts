@@ -8,6 +8,7 @@ export const ROUTES = {
   SIGN_UP: '/sign-up',
   FORGOT_PASSWORD: '/forgot-password',
   UPDATE_PASSWORD: '/update-password',
+  WELCOME: '/welcome',
   ENTRY: '/entry',
   DASHBOARD: '/dashboard',
   TEAM: '/team',
@@ -34,12 +35,14 @@ export const PUBLIC_ROUTES = [
  *
  * | Route      | staff | manager | admin | super_admin |
  * |------------|-------|---------|-------|-------------|
+ * | /welcome   |  ✅   |   ✅    |  ✅   |     ✅      |
  * | /entry     |  ✅   |   ✅    |  ✅   |     ✅      |
  * | /dashboard |  ✅   |   ✅    |  ✅   |     ✅      |
  * | /team      |  ❌   |   ✅    |  ✅   |     ✅      |
  * | /admin/*   |  ❌   |   ❌    |  ✅   |     ✅      |
  */
 export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
+  '/welcome': ['staff', 'manager', 'admin', 'super_admin'],
   '/entry': ['staff', 'manager', 'admin', 'super_admin'],
   '/dashboard': ['staff', 'manager', 'admin', 'super_admin'],
   '/team': ['manager', 'admin', 'super_admin'],
@@ -138,6 +141,6 @@ export function isPublicRoute(pathname: string): boolean {
  * isProtectedRoute('/login') // false
  */
 export function isProtectedRoute(pathname: string): boolean {
-  const protectedPrefixes = ['/entry', '/dashboard', '/team', '/admin'];
+  const protectedPrefixes = ['/welcome', '/entry', '/dashboard', '/team', '/admin'];
   return protectedPrefixes.some(prefix => pathname.startsWith(prefix));
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, BarChart3, Zap } from 'lucide-react';
+import { Clock, BarChart3, Zap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FeatureCard } from '@/components/onboarding/FeatureCard';
@@ -114,15 +114,24 @@ export function WelcomeScreen() {
           size="lg"
           disabled={isLoading}
         >
-          {isLoading ? 'Loading...' : 'Get Started'}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            'Get Started'
+          )}
         </Button>
-        <button
+        <Button
+          variant="ghost"
           onClick={handleComplete}
           disabled={isLoading}
-          className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+          className="w-full text-sm text-muted-foreground hover:text-foreground"
+          aria-label="Skip onboarding and go to time entry"
         >
           Skip
-        </button>
+        </Button>
       </motion.div>
     </div>
   );

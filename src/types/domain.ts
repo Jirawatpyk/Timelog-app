@@ -209,3 +209,22 @@ export interface UpdateUserResult {
   /** True when role changed to manager (should prompt for department assignment) */
   promptDepartment?: boolean;
 }
+
+// ============================================
+// USER FILTER TYPES (Story 7.7)
+// ============================================
+
+/**
+ * Filters for user list in admin panel
+ * Story 7.7: Filter Users
+ */
+export interface UserFilters {
+  /** Filter by department ID */
+  departmentId?: string;
+  /** Filter by role */
+  role?: UserRole;
+  /** Filter by status: active, inactive, or pending (not confirmed) */
+  status?: UserStatus;
+  /** Search by name or email */
+  search?: string;
+}

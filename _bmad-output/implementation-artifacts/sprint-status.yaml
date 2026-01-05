@@ -65,7 +65,7 @@ development_status:
   3-4-soft-delete-protection: done
   3-5-master-data-admin-ui-layout: done
   3-6-projects-jobs-admin-ui: done
-  3-7-department-management: review-ready
+  3-7-department-management: done
   epic-3-retrospective: done
 
   # Epic 4: Quick Time Entry (12 stories)
@@ -107,7 +107,7 @@ development_status:
   epic-6-retrospective: done
 
   # Epic 7: User Administration (9 stories)
-  epic-7: in-progress
+  epic-7: done
   7-1-user-list-view: done
   7-1a-admin-navigation-layout: done
   7-2-create-new-user: done
@@ -116,7 +116,7 @@ development_status:
   7-4-deactivate-user: done
   7-5-assign-roles: done
   7-6-assign-manager-departments: done
-  7-7-filter-users: ready-for-dev
+  7-7-filter-users: done
   epic-7-retrospective: optional
 
   # Epic 8: PWA & UX Polish (9 stories)

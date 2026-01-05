@@ -15,6 +15,7 @@ import type {
   PaginationParams,
   UpdateUserResult,
   User,
+  UserFilters,
   UserListItem,
   UserListResponse,
   UserRole,
@@ -26,18 +27,23 @@ const DEFAULT_PAGE_SIZE = 20;
 
 /**
  * Get paginated list of users for admin user management
+ * Story 7.7: Filter Users - Added filters parameter
+ *
  * @param params - Pagination parameters (page, limit)
+ * @param filters - Optional filters for department, role, status, search
  * @returns ActionResult with users array and total count
  */
 export async function getUsers(
-  params: PaginationParams = { page: 1, limit: DEFAULT_PAGE_SIZE }
+  params: PaginationParams = { page: 1, limit: DEFAULT_PAGE_SIZE },
+  filters?: UserFilters
 ): Promise<ActionResult<UserListResponse>> {
   const supabase = await createClient();
 
   const { page, limit } = params;
   const offset = (page - 1) * limit;
 
-  const { data, error, count } = await supabase
+  // Start building the query
+  let query = supabase
     .from('users')
     .select(
       `
@@ -50,7 +56,36 @@ export async function getUsers(
       department:departments(id, name)
     `,
       { count: 'exact' }
-    )
+    );
+
+  // Apply filters (Story 7.7)
+  if (filters?.departmentId) {
+    query = query.eq('department_id', filters.departmentId);
+  }
+
+  if (filters?.role) {
+    query = query.eq('role', filters.role);
+  }
+
+  if (filters?.status === 'active') {
+    // Active: is_active = true AND confirmed_at is not null
+    query = query.eq('is_active', true).not('confirmed_at', 'is', null);
+  } else if (filters?.status === 'inactive') {
+    // Inactive: is_active = false
+    query = query.eq('is_active', false);
+  } else if (filters?.status === 'pending') {
+    // Pending: is_active = true AND confirmed_at is null (not yet confirmed)
+    query = query.eq('is_active', true).is('confirmed_at', null);
+  }
+
+  if (filters?.search) {
+    // Sanitize search input to prevent SQL pattern injection
+    const sanitized = filters.search.replace(/[%_\\]/g, '\\$&');
+    query = query.or(`display_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+  }
+
+  // Apply pagination and ordering
+  const { data, error, count } = await query
     .range(offset, offset + limit - 1)
     .order('display_name', { ascending: true, nullsFirst: false });
 

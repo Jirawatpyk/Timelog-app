@@ -8,6 +8,8 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   baseUrl: string;
+  /** Optional query params to preserve when navigating (Story 7.7: Filter Users) */
+  searchParams?: Record<string, string | undefined>;
 }
 
 /**
@@ -19,12 +21,20 @@ interface PaginationProps {
  * - URL updates for page navigation
  * - Keyboard accessible
  */
-export function Pagination({ currentPage, totalPages, baseUrl }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, baseUrl, searchParams }: PaginationProps) {
   const hasPrevious = currentPage > 1;
   const hasNext = currentPage < totalPages;
 
   const getPageUrl = (page: number) => {
     const url = new URL(baseUrl, 'http://localhost');
+    // Preserve existing query params (Story 7.7: Filter Users)
+    if (searchParams) {
+      Object.entries(searchParams).forEach(([key, value]) => {
+        if (value && key !== 'page') {
+          url.searchParams.set(key, value);
+        }
+      });
+    }
     url.searchParams.set('page', String(page));
     return `${url.pathname}${url.search}`;
   };

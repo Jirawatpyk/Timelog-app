@@ -165,6 +165,9 @@ describe('Services RLS Policies', () => {
         active: true,
       };
 
+      // Cleanup from previous failed runs (if any)
+      await serviceClient.from('services').delete().eq('id', newService.id);
+
       const { data, error } = await serviceClient
         .from('services')
         .insert(newService)
@@ -186,6 +189,9 @@ describe('Services RLS Policies', () => {
         name: 'Toggle Test Service',
         active: true,
       };
+
+      // Cleanup from previous failed runs (if any)
+      await serviceClient.from('services').delete().eq('id', testService.id);
 
       await serviceClient.from('services').insert(testService);
 

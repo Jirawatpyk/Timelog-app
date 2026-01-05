@@ -1,8 +1,20 @@
 # Story {{epic_num}}.{{story_num}}: {{story_title}}
 
 Status: ready-for-dev
+UI Language: EN
 
-<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+<!--
+  UI Language Options:
+  - EN: All user-facing text in English (default per project-context.md)
+  - TH: All user-facing text in Thai
+
+  Note: This field ensures Dev Agent uses consistent language for:
+  - Button labels, form labels, placeholders
+  - Toast messages, error messages
+  - Empty states, confirmation dialogs
+
+  Validation is optional. Run validate-create-story for quality check before dev-story.
+-->
 
 ## Story
 

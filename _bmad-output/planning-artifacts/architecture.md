@@ -1224,6 +1224,227 @@ CREATE INDEX idx_manager_departments_manager ON manager_departments(manager_id);
 - Query key versioning: Post-MVP optimization
 - Service layer interfaces: Over-engineering for current scope
 
+## Auth Flow Diagrams
+
+> Added from Epic 7 Retrospective (AI-3) - 2026-01-05
+
+### 1. User Creation Flow
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
+│   Admin     │     │  Server      │     │  Supabase   │     │    New       │
+│   (UI)      │     │  Action      │     │  Admin API  │     │    User      │
+└─────────────┘     └──────────────┘     └─────────────┘     └──────────────┘
+       │                   │                    │                    │
+       │ Submit form       │                    │                    │
+       │ (email, name,     │                    │                    │
+       │  role, dept)      │                    │                    │
+       │──────────────────>│                    │                    │
+       │                   │                    │                    │
+       │                   │ 1. inviteUserByEmail()                  │
+       │                   │───────────────────>│                    │
+       │                   │                    │                    │
+       │                   │                    │ Creates auth.users │
+       │                   │                    │ (confirmed_at=NULL)│
+       │                   │                    │────────────────────│
+       │                   │                    │                    │
+       │                   │                    │ Sends magic link   │
+       │                   │                    │ email              │
+       │                   │                    │───────────────────>│
+       │                   │                    │                    │
+       │                   │ Returns authUser   │                    │
+       │                   │<───────────────────│                    │
+       │                   │ (user.id)          │                    │
+       │                   │                    │                    │
+       │                   │ 2. Insert public.users                  │
+       │                   │ (id = authUser.id) │                    │
+       │                   │───────────────────>│                    │
+       │                   │                    │                    │
+       │                   │ Returns newUser    │                    │
+       │                   │<───────────────────│                    │
+       │                   │                    │                    │
+       │ Toast: "User      │                    │                    │
+       │ created. Invite   │                    │                    │
+       │ sent to {email}"  │                    │                    │
+       │<──────────────────│                    │                    │
+       │                   │                    │                    │
+```
+
+**Key Points:**
+- `inviteUserByEmail()` creates both `auth.users` record AND sends email
+- `public.users.id` uses same UUID from `auth.users.id` (FK relationship)
+- `public.users.confirmed_at = NULL` marks user as "Pending"
+
+### 2. Invitation Confirmation Flow
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
+│   New       │     │  Supabase    │     │  Database   │     │   public     │
+│   User      │     │  Auth        │     │  Trigger    │     │   .users     │
+└─────────────┘     └──────────────┘     └─────────────┘     └──────────────┘
+       │                   │                    │                    │
+       │ Click magic link  │                    │                    │
+       │ from email        │                    │                    │
+       │──────────────────>│                    │                    │
+       │                   │                    │                    │
+       │                   │ Validates token    │                    │
+       │                   │ Updates auth.users │                    │
+       │                   │ confirmed_at=NOW() │                    │
+       │                   │────────────────────│                    │
+       │                   │                    │                    │
+       │                   │                    │ on_auth_user_      │
+       │                   │                    │ confirmed TRIGGER  │
+       │                   │                    │──────────────>     │
+       │                   │                    │                    │
+       │                   │                    │ sync_user_         │
+       │                   │                    │ confirmed_at()     │
+       │                   │                    │                    │
+       │                   │                    │ UPDATE public.users│
+       │                   │                    │ SET confirmed_at   │
+       │                   │                    │───────────────────>│
+       │                   │                    │                    │
+       │                   │ Creates session    │                    │
+       │                   │<───────────────────│                    │
+       │                   │                    │                    │
+       │ Redirect to /login│                    │                    │
+       │ (with session)    │                    │                    │
+       │<──────────────────│                    │                    │
+       │                   │                    │                    │
+       │ User can login    │                    │                    │
+       │ Status: "Active"  │                    │                    │
+       │                   │                    │                    │
+```
+
+**Database Trigger:**
+```sql
+-- Trigger syncs confirmed_at from auth.users to public.users
+CREATE TRIGGER on_auth_user_confirmed
+AFTER UPDATE OF confirmed_at ON auth.users
+FOR EACH ROW
+WHEN (OLD.confirmed_at IS NULL AND NEW.confirmed_at IS NOT NULL)
+EXECUTE FUNCTION public.sync_user_confirmed_at();
+```
+
+### 3. Rollback Scenarios
+
+#### Scenario A: public.users Insert Fails
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
+│   Admin     │     │  Server      │     │  Supabase   │     │  Database    │
+│   (UI)      │     │  Action      │     │  Admin API  │     │              │
+└─────────────┘     └──────────────┘     └─────────────┘     └──────────────┘
+       │                   │                    │                    │
+       │ Submit form       │                    │                    │
+       │──────────────────>│                    │                    │
+       │                   │                    │                    │
+       │                   │ 1. inviteUserByEmail()                  │
+       │                   │───────────────────>│                    │
+       │                   │                    │                    │
+       │                   │ Returns authUser   │                    │
+       │                   │<───────────────────│                    │
+       │                   │                    │                    │
+       │                   │ 2. Insert public.users                  │
+       │                   │───────────────────────────────────────>│
+       │                   │                    │                    │
+       │                   │                    │    INSERT FAILS    │
+       │                   │<───────────────────────────────────────│
+       │                   │                    │ (e.g., duplicate)  │
+       │                   │                    │                    │
+       │                   │ 3. ROLLBACK:       │                    │
+       │                   │ deleteUser(authUser.id)                 │
+       │                   │───────────────────>│                    │
+       │                   │                    │                    │
+       │                   │ Auth user deleted  │                    │
+       │                   │<───────────────────│                    │
+       │                   │                    │                    │
+       │ Error: "Email     │                    │                    │
+       │ already exists"   │                    │                    │
+       │<──────────────────│                    │                    │
+       │                   │                    │                    │
+```
+
+**Code Implementation:**
+```typescript
+// src/actions/user.ts - createUser()
+if (insertError) {
+  // Story 7.2a: AC 4 - Rollback on Failure
+  await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+
+  if (insertError.code === '23505') {
+    return { success: false, error: 'Email already exists' };
+  }
+  return { success: false, error: 'Failed to create user profile' };
+}
+```
+
+#### Scenario B: inviteUserByEmail Fails
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Admin     │     │  Server      │     │  Supabase   │
+│   (UI)      │     │  Action      │     │  Admin API  │
+└─────────────┘     └──────────────┘     └─────────────┘
+       │                   │                    │
+       │ Submit form       │                    │
+       │──────────────────>│                    │
+       │                   │                    │
+       │                   │ inviteUserByEmail()│
+       │                   │───────────────────>│
+       │                   │                    │
+       │                   │      ERROR         │
+       │                   │<───────────────────│
+       │                   │ (email service     │
+       │                   │  failure, etc.)    │
+       │                   │                    │
+       │ Error: "Failed to │   [No rollback     │
+       │ send invitation   │    needed - no     │
+       │ email"            │    records created]│
+       │<──────────────────│                    │
+       │                   │                    │
+```
+
+**No rollback needed** - Supabase's `inviteUserByEmail()` is atomic. If it fails, no records are created.
+
+### User Status State Machine
+
+```
+                     ┌─────────────────┐
+                     │                 │
+     Create User     │    PENDING      │
+    ─────────────────>│ (confirmed_at  │
+                     │    = NULL)      │
+                     │                 │
+                     └────────┬────────┘
+                              │
+                              │ Click magic link
+                              │ (confirmation)
+                              │
+                              v
+                     ┌─────────────────┐
+                     │                 │
+                     │    ACTIVE       │──────────────────┐
+                     │ (confirmed_at   │                  │
+                     │   ≠ NULL,       │ Deactivate       │
+                     │  is_active=true)│                  │
+                     │                 │                  v
+                     └────────┬────────┘         ┌────────────────┐
+                              ^                  │                │
+                              │                  │   INACTIVE     │
+                              │ Reactivate       │ (is_active     │
+                              │                  │   = false)     │
+                              └──────────────────│                │
+                                                 └────────────────┘
+```
+
+### Related Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/supabase/admin.ts` | Admin client for service-role operations |
+| `src/actions/user.ts` | `createUser()`, `resendInvitation()` |
+| `supabase/migrations/20260104071024_add_user_confirmed_at.sql` | Trigger for sync |
+
 ### RLS Testing Requirements
 
 **RLS Test Priority Rule:**
